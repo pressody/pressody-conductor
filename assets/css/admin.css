@@ -1,0 +1,299 @@
+/* Settings Screen
+------------------------------------------------------------------------------*/
+
+.pixelgradelt_conductor-screen {
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+.pixelgradelt_conductor-screen-content {
+	width: 100%;
+}
+
+.js .pixelgradelt_conductor-tab-panel {
+	display: none;
+	margin-top: 1em;
+}
+
+.pixelgradelt_conductor-tab-panel.is-active {
+	display: block;
+}
+
+.pixelgradelt_conductor-field-error {
+	color: #ff0000;
+}
+
+.pixelgradelt_conductor-composer-snippet {
+	background: #333;
+	color: #fff;
+	line-height: 1.2;
+	padding: 10px;
+	overflow: scroll;
+}
+
+.pixelgradelt_conductor-composer-snippet code {
+	background: transparent;
+}
+
+.pixelgradelt_conductor-screen-sidebar {
+	background: #fff;
+	color: #1e1e1e;
+	display: none;
+	flex: 0 0 350px;
+	overflow-y: scroll;
+	position: fixed;
+	top: 32px;
+	right: 0;
+	bottom: 0;
+	width: 350px;
+	z-index: 10;
+}
+
+.pixelgradelt_conductor-screen-sidebar .components-panel__header {
+	background: #fff;
+	border-top-width: 0;
+	padding-right: 4px;
+	position: sticky;
+	top: 0;
+	z-index: 2;
+}
+
+.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tabs {
+	background: #fff;
+	border-bottom: 1px solid #ddd;
+	position: sticky;
+	top: 49px;
+	z-index: 1;
+}
+
+.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tab-content {
+	padding: 16px;
+}
+
+.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tab-content > :first-child {
+	margin-top: 0;
+}
+
+.sidebar-is-open .pixelgradelt_conductor-screen-content {
+	margin-right: 370px;
+}
+
+.sidebar-is-open .pixelgradelt_conductor-screen-sidebar {
+	display: block;
+}
+
+.pixelgradelt_conductor-card {
+	background: #fff;
+	border: 1px solid #e5e5e5;
+	box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+	margin-top: 20px;
+	max-width: 620px;
+	padding: 0.7em 2em 1em;
+	position: relative;
+}
+
+
+/* Repository Tab
+----------------------------------------------------------------------------- */
+
+.pixelgradelt_conductor-repository .components-placeholder {
+	margin-top: 20px;
+	padding: 0.7em 2em 1em;
+	max-width: 620px;
+
+	box-shadow: inset 0 0 0 1px #ccd0d4;
+}
+
+.pixelgradelt_conductor-repository > .components-button.is-pressed {
+	padding-right: 12px;
+}
+
+.pixelgradelt_conductor-package {
+	margin-top: 20px;
+}
+
+.pixelgradelt_conductor-package thead .components-button {
+	float: right;
+}
+
+.pixelgradelt_conductor-package thead a.edit-package {
+	float: right;
+}
+
+.pixelgradelt_conductor-package .error-message {
+	color: #ff0000;
+}
+
+.pixelgradelt_conductor-package tbody th,
+.pixelgradelt_conductor-package tbody td {
+	word-break: break-all;
+}
+
+.pixelgradelt_conductor-package tbody th {
+	font-size: 13px;
+	width: 150px;
+}
+
+.pixelgradelt_conductor-release.button,
+.pixelgradelt_conductor-required-package.button,
+.pixelgradelt_conductor-required-by-solution.button {
+	height: 24px;
+	margin-bottom: 3px;
+	margin-top: 3px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+.pixelgradelt_conductor-release-actions {
+	background: #f9f9f9;
+	border: 1px solid #dedede;
+	margin-top: 1em;
+}
+
+.pixelgradelt_conductor-release-actions td,
+.pixelgradelt_conductor-release-actions th {
+	padding: 5px 10px;
+}
+
+.pixelgradelt_conductor-release-actions tbody th {
+	width: auto;
+}
+
+.pixelgradelt_conductor-release-actions tr:first-child td,
+.pixelgradelt_conductor-release-actions tr:first-child th {
+	padding-top: 8px;
+}
+
+.pixelgradelt_conductor-release-actions tr:last-child td,
+.pixelgradelt_conductor-release-actions tr:last-child th {
+	padding-bottom: 10px;
+}
+
+.pixelgradelt_conductor-release-actions .components-base-control {
+	width: 35em;
+}
+
+.pixelgradelt_conductor-release-actions .components-base-control__field {
+	margin-bottom: 1px;
+}
+
+.pixelgradelt_conductor-release-actions .components-text-control__input {
+	background: #fff;
+	max-width: 100%;
+	width: 35em;
+}
+
+@media screen and ( max-width: 782px ) {
+	.pixelgradelt_conductor-release.button {
+		line-height: normal;
+		height: auto;
+	}
+}
+
+
+/* API Keys Table
+----------------------------------------------------------------------------- */
+
+.pixelgradelt_conductor-api-key-table {
+	margin: 1em 0;
+}
+
+.pixelgradelt_conductor-api-key-table td,
+.pixelgradelt_conductor-api-key-table th {
+	width: auto;
+}
+
+.pixelgradelt_conductor-api-key-table tbody td,
+.pixelgradelt_conductor-api-key-table tbody th {
+	vertical-align: middle;
+}
+
+.pixelgradelt_conductor-api-key-table tfoot td {
+	background-color: #f9f9f9;
+}
+
+.pixelgradelt_conductor-api-key-table tfoot td input {
+	margin-left: 0;
+	padding: 0 6px;
+	width: 20em;
+}
+
+.pixelgradelt_conductor-api-key-table tfoot td label {
+	display: inline-block;
+	line-height: 1;
+}
+
+.pixelgradelt_conductor-api-key-table tfoot td .spinner {
+	float: none;
+}
+
+.pixelgradelt_conductor-api-key-table .column-actions {
+	text-align: right;
+}
+
+.pixelgradelt_conductor-api-key-table .column-token input {
+	font-family: monospace;
+	max-width: 282px;
+}
+
+.screen-profile .pixelgradelt_conductor-api-key-table .column-user,
+.screen-user-edit .pixelgradelt_conductor-api-key-table .column-user,
+.network-admin.profile-php .pixelgradelt_conductor-api-key-table .column-user,
+.network-admin.user-edit-php .pixelgradelt_conductor-api-key-table .column-user {
+	display: none;
+}
+
+.pixelgradelt_conductor-api-key-form .components-base-control {
+	width: 25em;
+}
+
+.pixelgradelt_conductor-api-key-form .components-base-control__field {
+	margin-bottom: 1px;
+}
+
+.pixelgradelt_conductor-api-key-form .components-text-control__input {
+	height: 36px;
+}
+
+/* Composer Tab
+----------------------------------------------------------------------------- */
+
+input.pixelgradelt_conductor-cli-field {
+	background: #f6f6f6;
+	font-family: monospace;
+	max-width: 720px;
+}
+
+/* Edit package screen
+----------------------------------------------------------------------------- */
+.package-authors__list .package-author {
+	float: left;
+	margin-right: 15px;
+}
+
+.pixelgradelt_conductor-solution-preview .components-placeholder {
+	margin-top: 20px;
+	padding: 0.7em 2em 1em;
+
+	box-shadow: inset 0 0 0 1px #ccd0d4;
+}
+
+.pixelgradelt_conductor-solution-preview a.edit-package {
+	display: none;
+}
+
+/* Other
+----------------------------------------------------------------------------- */
+
+.cf-complex__group--collapsed .cf-complex__group-head {
+	border-bottom: 1px solid #e2e4e7;
+}
+
+.package-manual-releases .cf-complex__group-body .cf-field__body .cf-file__inner {
+	width: auto;
+	height: 100px;
+}
+
+.wp-list-table .package-list_link:hover {
+	text-decoration: underline;
+}

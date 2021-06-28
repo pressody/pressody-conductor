@@ -1,0 +1,881 @@
+# Copyright (C) 2021 Pixelgrade
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: PixelgradeLT Conductor 0.7.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/pixelgradelt-conductor\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2021-05-26T10:39:58+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.5.0\n"
+"X-Domain: pixelgradelt_conductor\n"
+
+#. Plugin Name of the plugin
+#: src/Integration/Members.php:44
+#: src/Screen/Settings.php:100
+msgid "PixelgradeLT Conductor"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/pixelgradelt/pixelgradelt-conductor"
+msgstr ""
+
+#. Description of the plugin
+msgid "Define and manage PixelgradeLT solutions to be purchased and used on customers' websites. Ensures the connection with WooCommerce."
+msgstr ""
+
+#. Author of the plugin
+msgid "Pixelgrade"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://pixelgrade.com/"
+msgstr ""
+
+#. translators: %s: documentation URL
+#: src/functions.php:159
+msgid "PixelgradeLT Conductor is missing required dependencies. <a href=\"%s\" target=\"_blank\" rel=\"noopener noreferer\">Learn more.</a>"
+msgstr ""
+
+#: src/Integration/Members.php:64
+msgid "View Solutions"
+msgstr ""
+
+#: src/Integration/Members.php:72
+msgid "Manage Options"
+msgstr ""
+
+#: src/Integration/Members.php:80
+msgid "Manage Solution Types"
+msgstr ""
+
+#: src/Integration/Members.php:88
+msgid "Manage Solution Categories"
+msgstr ""
+
+#: src/Logging/Handler/FileLogHandler.php:402
+#: src/Logging/Handler/FileLogHandler.php:424
+msgid "This method should not be called before plugins_loaded."
+msgstr ""
+
+#. translators: 1: class name 2: WC_Log_Handler_Interface
+#: src/Logging/Logger.php:84
+msgid "The provided handler %1$s does not implement %2$s."
+msgstr ""
+
+#. translators: 1: WC_Logger::log 2: level
+#: src/Logging/Logger.php:109
+msgid "%1$s was called with an invalid level \"%2$s\"."
+msgstr ""
+
+#: src/Provider/HealthCheck.php:61
+msgid "Health Check"
+msgstr ""
+
+#. translators: %s: permalink screen URL
+#: src/Provider/HealthCheck.php:101
+msgid "PixelgradeLT Conductor requires pretty permalinks to be enabled. <a href=\"%s\">Enable permalinks</a>."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:124
+#: src/REST/ApiKeysController.php:398
+msgid "The ID for the user associated with the API Key."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:148
+msgid "Sorry, you are not allowed to view API keys."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:156
+msgid "Sorry, you are not allowed to view API keys for this user."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:198
+msgid "Sorry, you are not allowed to create API keys."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:206
+msgid "Sorry, you are not allowed to create API keys for this user."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:258
+msgid "Invalid API Key token."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:266
+msgid "Sorry, you are not allowed to delete API keys."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:274
+msgid "Sorry, you are not allowed to delete API Keys for this user."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:370
+msgid "The date the API key was created."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:376
+msgid "The date the API key was last used."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:382
+msgid "A descriptive name for the API key."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:391
+msgid "The API Key token."
+msgstr ""
+
+#: src/REST/ApiKeysController.php:404
+msgid "The username for the user associated with the API key."
+msgstr ""
+
+#: src/REST/SolutionsController.php:110
+msgid "Sorry, you are not allowed to view solutions."
+msgstr ""
+
+#: src/REST/SolutionsController.php:170
+msgid "Limit results to a solution by its post ID."
+msgstr ""
+
+#: src/REST/SolutionsController.php:177
+msgid "Limit results to solutions of one or more types."
+msgstr ""
+
+#: src/REST/SolutionsController.php:316
+msgid "The package authors details."
+msgstr ""
+
+#: src/REST/SolutionsController.php:322
+msgid "Package data formatted for Composer."
+msgstr ""
+
+#: src/REST/SolutionsController.php:328
+#: src/REST/SolutionsController.php:394
+msgid "Composer package name."
+msgstr ""
+
+#: src/REST/SolutionsController.php:334
+msgid "Composer package type."
+msgstr ""
+
+#: src/REST/SolutionsController.php:343
+msgid "The package description."
+msgstr ""
+
+#: src/REST/SolutionsController.php:349
+msgid "The package URL."
+msgstr ""
+
+#: src/REST/SolutionsController.php:356
+msgid "The name of the package."
+msgstr ""
+
+#: src/REST/SolutionsController.php:362
+msgid "A list of package releases."
+msgstr ""
+
+#: src/REST/SolutionsController.php:371
+msgid "A URL to download the release."
+msgstr ""
+
+#: src/REST/SolutionsController.php:377
+msgid "The release version."
+msgstr ""
+
+#: src/REST/SolutionsController.php:385
+msgid "A list of required packages."
+msgstr ""
+
+#: src/REST/SolutionsController.php:400
+msgid "The required package version constraint."
+msgstr ""
+
+#: src/REST/SolutionsController.php:405
+msgid "The required package stability constraint."
+msgstr ""
+
+#: src/REST/SolutionsController.php:410
+msgid "The required package post edit link."
+msgstr ""
+
+#: src/REST/SolutionsController.php:415
+msgid "The required package display name/string."
+msgstr ""
+
+#: src/REST/SolutionsController.php:423
+msgid "The package slug."
+msgstr ""
+
+#: src/REST/SolutionsController.php:430
+msgid "Type of package."
+msgstr ""
+
+#: src/REST/SolutionsController.php:439
+msgid "The package visibility (public, draft, private, etc.)"
+msgstr ""
+
+#: src/Screen/EditSolution.php:216
+msgid "Add solution title"
+msgstr ""
+
+#: src/Screen/EditSolution.php:231
+msgid ""
+"<strong>The post slug is, at the same time, the Composer PROJECT NAME.</strong><br>\n"
+"In the end this will be joined with the vendor name (like so: <code>vendor/slug</code>) to form the package name to be used in composer.json.<br>\n"
+"The slug/name must be lowercased and consist of words separated by <code>-</code> or <code>_</code>. It also must respect <a href=\"https://regexr.com/5sr9h\" target=\"_blank\">this regex</a>"
+msgstr ""
+
+#: src/Screen/EditSolution.php:290
+#: src/SolutionManager.php:138
+msgid "Solution Type"
+msgstr ""
+
+#: src/Screen/EditSolution.php:300
+msgid "General Configuration"
+msgstr ""
+
+#: src/Screen/EditSolution.php:305
+msgid "Section Description"
+msgstr ""
+
+#: src/Screen/EditSolution.php:306
+msgid "Configure details about <strong>the solution itself,</strong> as it will be exposed for consumption."
+msgstr ""
+
+#: src/Screen/EditSolution.php:308
+msgid "Short Description"
+msgstr ""
+
+#: src/Screen/EditSolution.php:309
+msgid "Description"
+msgstr ""
+
+#: src/Screen/EditSolution.php:310
+msgid "Solution Homepage URL"
+msgstr ""
+
+#: src/Screen/EditSolution.php:311
+msgid "This could be a URL to a page that presents details about this solution."
+msgstr ""
+
+#: src/Screen/EditSolution.php:315
+msgid "Required Parts Configuration"
+msgstr ""
+
+#: src/Screen/EditSolution.php:320
+msgid "Required Parts Description"
+msgstr ""
+
+#: src/Screen/EditSolution.php:321
+msgid ""
+"Here you edit and configure <strong>the list of LT Records parts</strong> this solution depends on.<br>\n"
+"For each required part you can <strong>specify a version range</strong> to better control the part releases/versions required. Set to <code>*</code> to <strong>use the latest available required-part release that matches all constraints</strong> (other parts present on a site might impose stricter limits).<br>\n"
+"Learn more about Composer <a href=\"https://getcomposer.org/doc/articles/versions.md#writing-version-constraints\" target=\"_blank\">versions</a> or <a href=\"https://semver.mwl.be/?package=madewithlove%2Fhtaccess-cli&constraint=%3C1.2%20%7C%7C%20%3E1.6&stability=stable\" target=\"_blank\">play around</a> with version ranges."
+msgstr ""
+
+#: src/Screen/EditSolution.php:325
+msgid "Required Parts"
+msgstr ""
+
+#: src/Screen/EditSolution.php:326
+msgid ""
+"The order is not important, from a logic standpoint. Also, if you add <strong>the same part multiple times</strong> only the last one will take effect since it will overwrite the previous ones.<br>\n"
+"<strong>FYI:</strong> Each required part label is comprised of the standardized <code>package_name</code> and the <code>#post_id</code>."
+msgstr ""
+
+#: src/Screen/EditSolution.php:331
+msgid "Choose one of the LT Records Parts"
+msgstr ""
+
+#: src/Screen/EditSolution.php:336
+msgid "Version Range"
+msgstr ""
+
+#: src/Screen/EditSolution.php:340
+msgid "Stability"
+msgstr ""
+
+#: src/Screen/EditSolution.php:342
+msgid "Stable"
+msgstr ""
+
+#: src/Screen/EditSolution.php:343
+msgid "RC"
+msgstr ""
+
+#: src/Screen/EditSolution.php:344
+msgid "Beta"
+msgstr ""
+
+#: src/Screen/EditSolution.php:345
+msgid "Alpha"
+msgstr ""
+
+#: src/Screen/EditSolution.php:346
+msgid "Dev"
+msgstr ""
+
+#: src/Screen/EditSolution.php:360
+msgid "Dependencies Configuration"
+msgstr ""
+
+#: src/Screen/EditSolution.php:365
+msgid "Dependencies Description"
+msgstr ""
+
+#: src/Screen/EditSolution.php:366
+msgid "Here you edit and configure <strong>the list of other solutions</strong> the current solution depends on (requires) or excludes."
+msgstr ""
+
+#: src/Screen/EditSolution.php:368
+msgid "Required Solutions"
+msgstr ""
+
+#: src/Screen/EditSolution.php:369
+msgid ""
+"These are solutions that are <strong>automatically included in a site's composition</strong> together with the current solution. The order is not important, from a logic standpoint.<br>\n"
+"<strong>FYI:</strong> Each required solution label is comprised of the solution <code>slug</code> and the <code>#post_id</code>."
+msgstr ""
+
+#: src/Screen/EditSolution.php:374
+#: src/Screen/EditSolution.php:392
+msgid "Choose one of the configured solutions"
+msgstr ""
+
+#: src/Screen/EditSolution.php:385
+msgid "Excluded Solutions"
+msgstr ""
+
+#: src/Screen/EditSolution.php:386
+msgid ""
+"These are solutions that are <strong>automatically removed from a site's composition</strong> when the current solution is included. The order is not important, from a logic standpoint.<br>\n"
+"The excluded solutions only take effect in <strong>a purchase context (add to cart, etc.), not in a Composer context. When a solution is selected, its excluded solutions (and those of its required solutions) are removed from the customer's site selection.</strong><br>\n"
+"<strong>FYI:</strong> Each replaced solution label is comprised of the solution <code>slug</code> and the <code>#post_id</code>."
+msgstr ""
+
+#: src/Screen/EditSolution.php:411
+msgid "Current Solution State Details"
+msgstr ""
+
+#: src/Screen/EditSolution.php:512
+msgid "%s - #%s"
+msgstr ""
+
+#: src/Screen/EditSolution.php:518
+msgid "Pick a solution, carefully.."
+msgstr ""
+
+#: src/Screen/EditSolution.php:540
+msgid "Pick a part, carefully.."
+msgstr ""
+
+#: src/Screen/EditSolution.php:585
+msgid "You need to provide a LT Records parts endpoint and a LT Records API key in Settings > LT Conductor."
+msgstr ""
+
+#: src/Screen/EditSolution.php:607
+msgid "Something went wrong and we couldn't get the LT Records parts from the provided endpoint."
+msgstr ""
+
+#: src/Screen/EditSolution.php:643
+msgid "You MUST set a unique name (title) for creating a new package."
+msgstr ""
+
+#: src/Screen/EditSolution.php:656
+msgid "You MUST choose a %s for creating a new solution."
+msgstr ""
+
+#: src/Screen/EditSolution.php:729
+msgid "Please bear in mind that Publish/Update may take a while since we do some heavy lifting behind the scenes.<br>Exercise patience 🦉"
+msgstr ""
+
+#: src/Screen/EditUser.php:104
+msgid "PixelgradeLT Conductor API Keys"
+msgstr ""
+
+#. translators: %s: <code>pixelgradelt_conductor</code>
+#: src/Screen/EditUser.php:109
+#: views/tabs/access.php:23
+msgid "The password for all API Keys is %s. Use the API key as the username."
+msgstr ""
+
+#: src/Screen/ListSolutions.php:76
+#: src/Screen/ListSolutions.php:90
+msgid "All %s"
+msgstr ""
+
+#: src/Screen/Settings.php:101
+msgid "LT Conductor"
+msgstr ""
+
+#: src/Screen/Settings.php:181
+msgid "General"
+msgstr ""
+
+#: src/Screen/Settings.php:188
+msgid "LT Records Communication"
+msgstr ""
+
+#: src/Screen/Settings.php:202
+msgid "Vendor"
+msgstr ""
+
+#: src/Screen/Settings.php:210
+msgid "Github OAuth Token"
+msgstr ""
+
+#: src/Screen/Settings.php:218
+msgid "Packages Repository Endpoint"
+msgstr ""
+
+#: src/Screen/Settings.php:226
+msgid "Parts Repository Endpoint"
+msgstr ""
+
+#: src/Screen/Settings.php:234
+msgid "Access API Key"
+msgstr ""
+
+#: src/Screen/Settings.php:284
+msgid "Repository"
+msgstr ""
+
+#: src/Screen/Settings.php:288
+msgid "Access"
+msgstr ""
+
+#: src/Screen/Settings.php:293
+msgid "Composer"
+msgstr ""
+
+#: src/Screen/Settings.php:297
+msgid "Settings"
+msgstr ""
+
+#: src/Screen/Settings.php:301
+msgid "System Status"
+msgstr ""
+
+#: src/SolutionManager.php:89
+msgid "LT Solutions"
+msgstr ""
+
+#: src/SolutionManager.php:90
+msgid "LT Solution"
+msgstr ""
+
+#: src/SolutionManager.php:91
+msgctxt "Admin Menu text"
+msgid "LT Solutions"
+msgstr ""
+
+#: src/SolutionManager.php:92
+msgctxt "LT Solution"
+msgid "Add New"
+msgstr ""
+
+#: src/SolutionManager.php:93
+msgid "Add New LT Solution"
+msgstr ""
+
+#: src/SolutionManager.php:94
+msgid "New LT Solution"
+msgstr ""
+
+#: src/SolutionManager.php:95
+msgid "Edit LT Solution"
+msgstr ""
+
+#: src/SolutionManager.php:96
+msgid "View LT Solution"
+msgstr ""
+
+#: src/SolutionManager.php:97
+msgid "All Solutions"
+msgstr ""
+
+#: src/SolutionManager.php:98
+msgid "Search Solutions"
+msgstr ""
+
+#: src/SolutionManager.php:99
+msgid "No solutions found."
+msgstr ""
+
+#: src/SolutionManager.php:100
+msgid "No solutions found in Trash."
+msgstr ""
+
+#: src/SolutionManager.php:101
+msgid "Uploaded to this solution"
+msgstr ""
+
+#: src/SolutionManager.php:102
+msgid "Filter solutions list"
+msgstr ""
+
+#: src/SolutionManager.php:103
+msgid "Solutions list navigation"
+msgstr ""
+
+#: src/SolutionManager.php:104
+msgid "LT Solutions list"
+msgstr ""
+
+#: src/SolutionManager.php:109
+msgid "Solutions to be purchased and used to determine the PixelgradeLT parts delivered to PixelgradeLT users."
+msgstr ""
+
+#: src/SolutionManager.php:137
+msgid "Solution Types"
+msgstr ""
+
+#: src/SolutionManager.php:139
+msgctxt "LT Solution Type"
+msgid "Add New"
+msgstr ""
+
+#: src/SolutionManager.php:140
+msgid "Add New Solution Type"
+msgstr ""
+
+#: src/SolutionManager.php:141
+msgid "Update Solution Type"
+msgstr ""
+
+#: src/SolutionManager.php:142
+msgid "New Solution Type Name"
+msgstr ""
+
+#: src/SolutionManager.php:143
+msgid "Edit Solution Type"
+msgstr ""
+
+#: src/SolutionManager.php:144
+msgid "All Solution Types"
+msgstr ""
+
+#: src/SolutionManager.php:145
+msgid "Search Solution Types"
+msgstr ""
+
+#: src/SolutionManager.php:146
+msgid "Parent Solution Type"
+msgstr ""
+
+#: src/SolutionManager.php:147
+msgid "Parent Solution Type:"
+msgstr ""
+
+#: src/SolutionManager.php:148
+msgid "No solution types found."
+msgstr ""
+
+#: src/SolutionManager.php:149
+msgid "No solution types."
+msgstr ""
+
+#: src/SolutionManager.php:150
+msgid "Solution Types list navigation"
+msgstr ""
+
+#: src/SolutionManager.php:151
+msgid "Solution Types list"
+msgstr ""
+
+#: src/SolutionManager.php:152
+msgid "&larr; Go to Solution Types"
+msgstr ""
+
+#: src/SolutionManager.php:179
+msgid "Solution Categories"
+msgstr ""
+
+#: src/SolutionManager.php:180
+msgid "Solution Category"
+msgstr ""
+
+#: src/SolutionManager.php:181
+msgctxt "LT Solution Category"
+msgid "Add New"
+msgstr ""
+
+#: src/SolutionManager.php:182
+msgid "Add New Solution Category"
+msgstr ""
+
+#: src/SolutionManager.php:183
+msgid "Update Solution Category"
+msgstr ""
+
+#: src/SolutionManager.php:184
+msgid "New Solution Category Name"
+msgstr ""
+
+#: src/SolutionManager.php:185
+msgid "Edit Solution Category"
+msgstr ""
+
+#: src/SolutionManager.php:186
+msgid "All Solution Categories"
+msgstr ""
+
+#: src/SolutionManager.php:187
+msgid "Search Solution Categories"
+msgstr ""
+
+#: src/SolutionManager.php:188
+msgid "Parent Solution Category"
+msgstr ""
+
+#: src/SolutionManager.php:189
+msgid "Parent Solution Category:"
+msgstr ""
+
+#: src/SolutionManager.php:190
+msgid "No solution categories found."
+msgstr ""
+
+#: src/SolutionManager.php:191
+msgid "No solution categories."
+msgstr ""
+
+#: src/SolutionManager.php:192
+msgid "Solution Categories list navigation"
+msgstr ""
+
+#: src/SolutionManager.php:193
+msgid "Solution Categories list"
+msgstr ""
+
+#: src/SolutionManager.php:194
+msgid "&larr; Go to Solution Categories"
+msgstr ""
+
+#: src/SolutionManager.php:221
+msgid "Solution Keywords"
+msgstr ""
+
+#: src/SolutionManager.php:222
+msgid "Solution Keyword"
+msgstr ""
+
+#: src/SolutionManager.php:223
+msgctxt "LT Solution Keyword"
+msgid "Add New"
+msgstr ""
+
+#: src/SolutionManager.php:224
+msgid "Add New Solution Keyword"
+msgstr ""
+
+#: src/SolutionManager.php:225
+msgid "Update Solution Keyword"
+msgstr ""
+
+#: src/SolutionManager.php:226
+msgid "New Solution Keyword Name"
+msgstr ""
+
+#: src/SolutionManager.php:227
+msgid "Edit Solution Keyword"
+msgstr ""
+
+#: src/SolutionManager.php:228
+msgid "All Solution Keywords"
+msgstr ""
+
+#: src/SolutionManager.php:229
+msgid "Search Solution Keywords"
+msgstr ""
+
+#: src/SolutionManager.php:230
+msgid "No solution keywords found."
+msgstr ""
+
+#: src/SolutionManager.php:231
+msgid "No solution keywords."
+msgstr ""
+
+#: src/SolutionManager.php:232
+msgid "Separate keywords with commas."
+msgstr ""
+
+#: src/SolutionManager.php:233
+msgid "Choose from the most used keywords."
+msgstr ""
+
+#: src/SolutionManager.php:234
+msgid "Most used."
+msgstr ""
+
+#: src/SolutionManager.php:235
+msgid "Solution Keywords list navigation"
+msgstr ""
+
+#: src/SolutionManager.php:236
+msgid "Solution Keywords list"
+msgstr ""
+
+#: src/SolutionManager.php:237
+msgid "&larr; Go to Solution Keywords"
+msgstr ""
+
+#: src/SolutionManager.php:598
+msgid "Missing LT Records Repo URL and/or LT Records API key in Settings > LT Conductor."
+msgstr ""
+
+#: views/tabs/access.php:17
+msgid "API Keys are used to access your PixelgradeLT Records repository and download packages. Your personal API keys appear below or you can create keys for other users by editing their accounts."
+msgstr ""
+
+#: views/tabs/access.php:31
+msgid "Read more about securing your PixelgradeLT Records repository."
+msgstr ""
+
+#: views/tabs/composer.php:23
+msgid "Your PixelgradeLT Conductor repository is available at:"
+msgstr ""
+
+#. translators: 1: <code>repositories</code>, 2: <code>composer.json</code>
+#: views/tabs/composer.php:33
+msgid "Add it to the %1$s list in your %2$s:"
+msgstr ""
+
+#. translators: 1: <code>config</code>
+#: views/tabs/composer.php:54
+msgid "Or run the %1$s command:"
+msgstr ""
+
+#: views/tabs/repository.php:22
+msgid ""
+"These are <strong>all the solutions</strong> that PixelgradeLT Conductor makes available as Composer packages, regardless of their configuration.<br>\n"
+"This view is primarily available to assist in <strong>double-checking that things work properly.</strong><br>\n"
+"If you want to <strong>dig deeper,</strong> check <a href=\"%s\" target=\"_blank\">the actual JSON</a> of the PixelgradeLT Conductor repo."
+msgstr ""
+
+#: views/tabs/system-status.php:25
+msgid "These are a series of system checks to reassure or warn you of <strong>how fit is the webserver for running PixelgradeLT Records.</strong>"
+msgstr ""
+
+#: views/tabs/system-status.php:31
+msgid "None right now."
+msgstr ""
+
+#: assets/js/components/access-table.js:17
+msgid "Add an API Key to access the PixelgradeLT Conductor repository."
+msgstr ""
+
+#: assets/js/components/access-table.js:35
+#: assets/js/components/api-key-form.js:25
+msgid "Name"
+msgstr ""
+
+#: assets/js/components/access-table.js:36
+msgid "User"
+msgstr ""
+
+#: assets/js/components/access-table.js:37
+msgid "API Key"
+msgstr ""
+
+#: assets/js/components/access-table.js:38
+msgid "Last Used"
+msgstr ""
+
+#: assets/js/components/access-table.js:39
+msgid "Created"
+msgstr ""
+
+#: assets/js/components/access-table.js:85
+msgid "Toggle dropdown"
+msgstr ""
+
+#: assets/js/components/access-table.js:89
+msgid "Revoke"
+msgstr ""
+
+#: assets/js/components/api-key-form.js:23
+msgid "API Key Name"
+msgstr ""
+
+#: assets/js/components/api-key-form.js:37
+msgid "Create API Key"
+msgstr ""
+
+#: assets/js/components/package-authors.js:31
+#: assets/js/components/releases.js:66
+#: assets/js/components/solution-required-solutions.js:31
+msgid "None"
+msgstr ""
+
+#. translators: %s: version number
+#: assets/js/components/release-actions.js:20
+msgid "Download %s"
+msgstr ""
+
+#. translators: %s: <code>composer.json</code>
+#: assets/js/components/release-actions.js:23
+msgid "Copy and paste into %s"
+msgstr ""
+
+#: assets/js/components/release-actions.js:31
+msgid "Download URL"
+msgstr ""
+
+#: assets/js/components/release-actions.js:44
+msgid "Require"
+msgstr ""
+
+#: assets/js/components/release-actions.js:60
+msgid "CLI Command"
+msgstr ""
+
+#: assets/js/components/repository.js:10
+msgid "Add Solutions"
+msgstr ""
+
+#: assets/js/components/repository.js:11
+msgid "You have not configured any Pixelgrade LT Solutions."
+msgstr ""
+
+#: assets/js/components/repository.js:18
+msgid "Add Solution"
+msgstr ""
+
+#: assets/js/components/solution-preview.js:10
+msgid "No solution details"
+msgstr ""
+
+#: assets/js/components/solution-preview.js:11
+msgid "Probably you need to do some configuring first. Go on.. don't be shy.."
+msgstr ""
+
+#: assets/js/components/solution-table.js:35
+msgid "Homepage"
+msgstr ""
+
+#: assets/js/components/solution-table.js:39
+msgid "Authors"
+msgstr ""
+
+#: assets/js/components/solution-table.js:45
+msgid "Releases"
+msgstr ""
+
+#: assets/js/components/solution-table.js:51
+msgid "Required Packages"
+msgstr ""
+
+#: assets/js/components/solution-table.js:57
+msgid "Excluded Packages"
+msgstr ""
+
+#: assets/js/components/solution-table.js:63
+msgid "Package Type"
+msgstr ""
