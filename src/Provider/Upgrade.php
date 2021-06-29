@@ -13,9 +13,6 @@ namespace PixelgradeLT\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Psr\Log\LoggerInterface;
-use PixelgradeLT\Conductor\Htaccess;
-use PixelgradeLT\Conductor\Repository\PackageRepository;
-use PixelgradeLT\Conductor\Storage\Storage;
 use PixelgradeLT\Conductor\Capabilities as Caps;
 
 use const PixelgradeLT\Conductor\VERSION;
@@ -34,13 +31,6 @@ class Upgrade extends AbstractHookProvider {
 	const VERSION_OPTION_NAME = 'pixelgradelt_conductor_version';
 
 	/**
-	 * Htaccess handler.
-	 *
-	 * @var Htaccess
-	 */
-	protected Htaccess $htaccess;
-
-	/**
 	 * Logger.
 	 *
 	 * @var LoggerInterface
@@ -48,38 +38,15 @@ class Upgrade extends AbstractHookProvider {
 	protected LoggerInterface $logger;
 
 	/**
-	 * Solution repository.
-	 *
-	 * @var PackageRepository
-	 */
-	protected PackageRepository $repository;
-
-	/**
-	 * Storage service.
-	 *
-	 * @var Storage
-	 */
-	protected Storage $storage;
-
-	/**
 	 * Constructor.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param PackageRepository $repository Solution repository.
-	 * @param Storage           $storage    Storage service.
-	 * @param Htaccess          $htaccess   Htaccess handler.
 	 * @param LoggerInterface   $logger     Logger.
 	 */
 	public function __construct(
-		PackageRepository $repository,
-		Storage $storage,
-		Htaccess $htaccess,
 		LoggerInterface $logger
 	) {
-		$this->htaccess        = $htaccess;
-		$this->repository      = $repository;
-		$this->storage         = $storage;
 		$this->logger          = $logger;
 	}
 
@@ -100,11 +67,18 @@ class Upgrade extends AbstractHookProvider {
 	public function maybe_upgrade() {
 		$saved_version = get_option( self::VERSION_OPTION_NAME, '0' );
 
-		if ( version_compare( $saved_version, '0.11.0', '<' ) ) {
+		if ( version_compare( $saved_version, '0.1.0', '<' ) ) {
 			Caps::register();
 		}
 
 		if ( version_compare( $saved_version, VERSION, '<' ) ) {
+			$this->logger->notice( 'Upgraded from version "{previous_version}" to "{new_version}".',
+				[
+					'previous_version'    => $saved_version,
+					'new_version' => VERSION,
+				]
+			);
+
 			update_option( self::VERSION_OPTION_NAME, VERSION );
 		}
 	}

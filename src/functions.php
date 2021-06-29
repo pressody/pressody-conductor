@@ -26,6 +26,22 @@ function plugin(): Plugin {
 }
 
 /**
+ * Retrieve a plugin's setting.
+ *
+ * @since 0.10.0
+ *
+ * @param string $key     Setting name.
+ * @param mixed  $default Optional. Default setting value.
+ *
+ * @return mixed
+ */
+function get_setting( string $key, $default = null ) {
+	$option = get_option( 'pixelgradelt_conductor' );
+
+	return $option[ $key ] ?? $default;
+}
+
+/**
  * Autoload mapped classes.
  *
  * @since 0.1.0
@@ -257,4 +273,33 @@ function local_rest_call( string $route, string $method = 'GET', array $query_pa
 	$server   = rest_get_server();
 
 	return $server->response_to_data( $response, false );
+}
+
+/**
+ * Determine if a user has a certain role.
+ *
+ * @param $user
+ * @param string $role
+ *
+ * @return bool
+ */
+function user_has_role( $user, $role): bool {
+
+	if (empty($user)) {
+		return false;
+	}
+
+	if (!is_a($user, 'WP_User')) {
+		return false;
+	}
+
+	if (empty($user->roles)) {
+		return false;
+	}
+
+	if (!in_array( $role, $user->roles ) ) {
+		return false;
+	}
+
+	return true;
 }

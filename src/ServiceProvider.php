@@ -38,9 +38,9 @@ class ServiceProvider implements ServiceProviderInterface {
 	 */
 	public function register( PimpleContainer $container ) {
 
-		$container['client.composer'] = function ( $container ) {
+		$container['client.composer'] = function () {
 			return new Client\ComposerClient(
-				$container['storage.composer_working_directory']
+				COMPOSER_DIR
 			);
 		};
 
@@ -56,14 +56,12 @@ class ServiceProvider implements ServiceProviderInterface {
 			return new Provider\AdminAssets();
 		};
 
-		$container['hooks.deactivation'] = function () {
-			return new Provider\Deactivation();
+		$container['hooks.capabilities'] = function () {
+			return new Provider\Capabilities();
 		};
 
-		$container['hooks.health_check'] = function ( $container ) {
-			return new Provider\HealthCheck(
-				$container['http.request']
-			);
+		$container['hooks.deactivation'] = function () {
+			return new Provider\Deactivation();
 		};
 
 		$container['hooks.i18n'] = function () {
@@ -83,13 +81,8 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['hooks.upgrade'] = function ( $container ) {
 			return new Provider\Upgrade(
-				$container['htaccess.handler'],
 				$container['logs.logger']
 			);
-		};
-
-		$container['htaccess.handler'] = function ( $container ) {
-			return new Htaccess( $container['storage.working_directory'] );
 		};
 
 		$container['http.request'] = function () {
@@ -112,12 +105,14 @@ class ServiceProvider implements ServiceProviderInterface {
 		};
 
 		$container['logs.level'] = function () {
-			// Log warnings and above when WP_DEBUG is enabled.
+			// Log everything when WP_DEBUG is enabled.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				$level = LogLevel::WARNING;
+				$level = LogLevel::DEBUG;
 			}
 
-			return $level ?? '';
+			// If WP_DEBUG is not enabled, we will still log everything from NOTICE messages and up.
+			// Only INFO and DEBUG are not logged.
+			return $level ?? LogLevel::NOTICE;
 		};
 
 		$container['logs.handlers.file'] = function () {
@@ -144,18 +139,8 @@ class ServiceProvider implements ServiceProviderInterface {
 			);
 		};
 
-		$container['storage.working_directory'] = function ( $container ) {
-			if ( \defined( 'PixelgradeLT\Conductor\WORKING_DIRECTORY' ) ) {
-				return \PixelgradeLT\Conductor\WORKING_DIRECTORY;
-			}
-
-			$path = \get_temp_dir();
-
-			return trailingslashit( apply_filters( 'pixelgradelt_conductor/working_directory', $path ) );
-		};
-
-		$container['storage.composer_working_directory'] = function ( $container ) {
-			return \path_join( $container['storage.working_directory'], 'composer/' );
+		$container['screen.settings'] = function () {
+			return new Screen\Settings();
 		};
 	}
 }

@@ -41,8 +41,8 @@ class Plugin extends BasePlugin implements Composable {
 		// Register hook providers.
 		$this
 			->register_hooks( $container->get( 'hooks.i18n' ) )
+			->register_hooks( $container->get( 'hooks.capabilities' ) )
 			->register_hooks( $container->get( 'hooks.rewrite_rules' ) )
-			->register_hooks( $container->get( 'hooks.health_check' ) )
 			->register_hooks( $container->get( 'hooks.request_handler' ) )
 			->register_hooks( $container->get( 'client.composer.custom_token_auth' ) )
 
@@ -71,10 +71,16 @@ class Plugin extends BasePlugin implements Composable {
 	}
 
 	public function define_constants(): Plugin {
-		$upload_dir = wp_upload_dir( null, false );
+		if ( ! defined( 'PixelgradeLT\Conductor\STORAGE_DIR' ) ) {
+			define( 'PixelgradeLT\Conductor\STORAGE_DIR', \path_join( \LT_ROOT_DIR, 'lt/' ) );
+		}
 
 		if ( ! defined( 'PixelgradeLT\Conductor\LOG_DIR' ) ) {
-			define( 'PixelgradeLT\Conductor\LOG_DIR', $upload_dir['basedir'] . '/pixelgradelt-conductor-logs/' );
+			define( 'PixelgradeLT\Conductor\LOG_DIR', \path_join( STORAGE_DIR, 'logs/conductor/' ) );
+		}
+
+		if ( ! defined( 'PixelgradeLT\Conductor\COMPOSER_DIR' ) ) {
+			define( 'PixelgradeLT\Conductor\COMPOSER_DIR', \path_join( STORAGE_DIR, 'composer/' ) );
 		}
 
 		return $this;

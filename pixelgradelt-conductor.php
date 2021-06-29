@@ -75,7 +75,6 @@ $pixelgradelt_conductor = plugin()
 	->define_constants()
 	->set_container( $pixelgradelt_conductor_container )
 	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.activation' ) )
-	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.deactivation' ) )
-	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.authentication' ) );
+	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.deactivation' ) );
 
 add_action( 'plugins_loaded', [ $pixelgradelt_conductor, 'compose' ], 5 );
