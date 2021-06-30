@@ -45,7 +45,7 @@ class Plugin extends BasePlugin implements Composable {
 			->register_hooks( $container->get( 'hooks.rewrite_rules' ) )
 			->register_hooks( $container->get( 'hooks.request_handler' ) )
 			->register_hooks( $container->get( 'client.composer.custom_token_auth' ) )
-
+			->register_hooks( $container->get( 'composition.manager' ) )
 			->register_hooks( $container->get( 'logs.manager' ) );
 
 		if ( is_admin() ) {

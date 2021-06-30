@@ -72,14 +72,14 @@ class Upgrade extends AbstractHookProvider {
 		}
 
 		if ( version_compare( $saved_version, VERSION, '<' ) ) {
-			$this->logger->notice( 'Upgraded from version "{previous_version}" to "{new_version}".',
-				[
-					'previous_version'    => $saved_version,
-					'new_version' => VERSION,
-				]
-			);
-
-			update_option( self::VERSION_OPTION_NAME, VERSION );
+			if ( update_option( self::VERSION_OPTION_NAME, VERSION ) ) {
+				$this->logger->notice( 'Upgraded from version "{previous_version}" to "{new_version}".',
+					[
+						'previous_version'    => $saved_version,
+						'new_version' => VERSION,
+					]
+				);
+			}
 		}
 	}
 }

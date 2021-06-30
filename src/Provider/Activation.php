@@ -47,16 +47,18 @@ class Activation extends AbstractHookProvider {
 		update_option( 'pixelgradelt_conductor_flush_rewrite_rules', 'yes' );
 
 		$this->create_cron_jobs();
-		$this->create_or_update_tables();
+//		$this->create_or_update_tables();
 	}
 
 	/**
 	 * Create cron jobs (clear them first).
 	 */
 	private function create_cron_jobs() {
-		wp_clear_scheduled_hook( 'pixelgradelt_conductor_cleanup_logs' );
+		wp_clear_scheduled_hook( 'pixelgradelt_conductor/cleanup_logs' );
+		wp_schedule_event( time() + ( 3 * HOUR_IN_SECONDS ), 'daily', 'pixelgradelt_conductor/cleanup_logs' );
 
-		wp_schedule_event( time() + ( 3 * HOUR_IN_SECONDS ), 'daily', 'pixelgradelt_conductor_cleanup_logs' );
+		wp_clear_scheduled_hook( 'pixelgradelt_conductor/check_update' );
+		wp_schedule_event( time() + ( 2 * HOUR_IN_SECONDS ), 'daily', 'pixelgradelt_conductor/check_update' );
 	}
 
 	private function create_or_update_tables() {

@@ -69,10 +69,10 @@ abstract class LogHandler implements LogHandlerInterface {
 
 		$entry = str_replace( $search, $replace, $entry );
 
-//		// Append additional context data.
-//		if ( ! empty( $temp_context ) ) {
-//			$entry .= ' ' . wp_json_encode( $temp_context, \JSON_UNESCAPED_SLASHES );
-//		}
+		// Append additional context data.
+		if ( ! empty( $temp_context ) ) {
+			$entry .= ' ' . wp_json_encode( $temp_context, \JSON_UNESCAPED_SLASHES );
+		}
 
 		return apply_filters(
 			'pixelgradelt_conductor/format_log_entry',

@@ -17,6 +17,7 @@ use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceIterator;
 use Pimple\ServiceProviderInterface;
+use PixelgradeLT\Conductor\Composition\CompositionManager;
 use PixelgradeLT\Conductor\Exception\PixelgradeltConductorException;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
 use PixelgradeLT\Conductor\Logging\Logger;
@@ -46,6 +47,10 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['client.composer.custom_token_auth'] = function () {
 			return new Client\CustomTokenAuthentication();
+		};
+
+		$container['composition.manager'] = function ( $container ) {
+			return new CompositionManager( $container['logs.logger'] );
 		};
 
 		$container['hooks.activation'] = function () {
