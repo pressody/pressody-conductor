@@ -55,7 +55,7 @@ class CompositionManager extends AbstractHookProvider {
 	 */
 	public function register_hooks() {
 		$this->add_action( 'pixelgradelt_conductor/check_update', 'check_update' );
-		$this->add_action( 'after_setup_theme', 'check_update' );
+//		$this->add_action( 'after_setup_theme', 'check_update' );
 	}
 
 	/**
@@ -66,9 +66,7 @@ class CompositionManager extends AbstractHookProvider {
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
 		) {
-			$this->logger->warning( 'Could not check for composition update because there are missing or empty environment variables.',
-				[]
-			);
+			$this->logger->warning( 'Could not check for composition update because there are missing or empty environment variables.' );
 
 			return false;
 		}
@@ -81,7 +79,7 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 		try {
-			$composerJsonContents = $composerJsonFile->read();
+			$composerJsonCurrentContents = $composerJsonFile->read();
 		} catch ( \RuntimeException $e ) {
 			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
 				[
@@ -111,7 +109,7 @@ class CompositionManager extends AbstractHookProvider {
 			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_REFRESH_URL ) ),
 			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
 			'body'      => json_encode( [
-				'composer' => $composerJsonContents,
+				'composer' => $composerJsonCurrentContents,
 			] ),
 		];
 
@@ -136,17 +134,23 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		// We get back the entire repo with it's Composer-specific structure.
-		// Retain only the parts package-names list.
-		$repo = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! empty( $repo['packages'] ) && is_array( $repo['packages'] ) ) {
-			foreach ( $repo['packages'] as $package_name => $package_releases ) {
-				if ( empty( $package_releases ) ) {
-					continue;
-				}
+		// We get back the entire composer.json contents.
+		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
 
-				$parts[] = $package_name;
-			}
+		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
+		try {
+			$composerJsonFile->write( $receivedComposerJson, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		} catch ( \Exception $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be written with the updated contents: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $e,
+				]
+			);
+
+			return false;
 		}
+
+		return true;
 	}
 }
