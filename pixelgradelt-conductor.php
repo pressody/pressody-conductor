@@ -61,6 +61,10 @@ spl_autoload_register( __NAMESPACE__ . '\autoloader_classmap' );
 // Load the WordPress plugin administration API.
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
+// Load the Action Scheduler directly since it does not use Composer autoload.
+// @link https://github.com/woocommerce/action-scheduler/issues/471
+require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+
 // Create a container and register a service provider.
 $pixelgradelt_conductor_container = new Container();
 $pixelgradelt_conductor_container->register( new ServiceProvider() );

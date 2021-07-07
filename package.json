@@ -32,8 +32,9 @@
 		"{assets,languages,src,views}/**",
 		"vendor/autoload.php",
 		"vendor/composer/*.php",
+		"vendor/woocommerce/action-scheduler/**",
 		"vendor/htmlburger/carbon-fields/**",
-		"vendor/{cedaro/wp-plugin,composer/semver,psr/container}/src/**",
+		"vendor/{automattic/jetpack-constants,cedaro/wp-plugin,composer/semver,hashids/hashids,oscarotero/env,psr/container,vlucas/phpdotenv}/src/**",
 		"vendor/psr/log/Psr/**",
 		"vendor/pimple/pimple/src/Pimple/!(Tests){*.php,**/*.php}"
 	]
