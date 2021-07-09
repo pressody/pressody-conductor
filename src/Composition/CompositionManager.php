@@ -74,17 +74,23 @@ class CompositionManager extends AbstractHookProvider {
 
 	/**
 	 * Maybe schedule the action/event to run the update check at, if it is not already scheduled.
+	 *
+	 * @since 0.1.0
 	 */
 	protected function schedule_check_update_event() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight' );
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'pixelgrade-conductor' );
 		}
 	}
 
 	/**
 	 * Check with LT Records if the current site composition should be updated.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return bool
 	 */
-	protected function check_update() {
+	protected function check_update(): bool {
 		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )

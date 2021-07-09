@@ -68,13 +68,20 @@ class LogsManager extends AbstractHookProvider {
 
 	/**
 	 * Maybe schedule the action/event to run logs cleanup at, if it is not already scheduled.
+	 *
+	 * @since 0.1.0
 	 */
 	protected function schedule_cleanup_logs_event() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight' );
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'pixelgrade-conductor' );
 		}
 	}
 
+	/**
+	 * Calls the logger's clean expired logs logic.
+	 *
+	 * @since 0.1.0
+	 */
 	protected function cleanup_logs() {
 		if ( is_callable( array( $this->logger, 'clear_expired_logs' ) ) ) {
 			$this->logger->clear_expired_logs();
