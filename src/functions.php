@@ -115,7 +115,7 @@ function get_authorization_header(): ?string {
  * Plugins can be identified by their plugin file (relative path to the main
  * plugin file from the root plugin directory) or their slug.
  *
- * This doesn't validate whether or not the plugin actually exists.
+ * This doesn't validate whether the plugin actually exists.
  *
  * @since 0.1.0
  *
