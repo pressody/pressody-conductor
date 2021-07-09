@@ -13,6 +13,7 @@ namespace PixelgradeLT\Conductor\Composition;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Composer\Json\JsonFile;
+use PixelgradeLT\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 use Seld\JsonLint\ParsingException;
 use function PixelgradeLT\Conductor\is_debug_mode;
@@ -25,6 +26,15 @@ use WP_Http as HTTP;
  * @since 0.1.0
  */
 class CompositionManager extends AbstractHookProvider {
+
+	/**
+	 * Queue.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var QueueInterface
+	 */
+	protected QueueInterface $queue;
 
 	/**
 	 * Logger.
@@ -40,11 +50,14 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @since 0.1.0
 	 *
+	 * @param QueueInterface  $queue  Queue.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
+		QueueInterface $queue,
 		LoggerInterface $logger
 	) {
+		$this->queue  = $queue;
 		$this->logger = $logger;
 	}
 
@@ -54,8 +67,18 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function register_hooks() {
-		$this->add_action( 'pixelgradelt_conductor/check_update', 'check_update' );
+		$this->add_action( 'init', 'schedule_check_update_event' );
+		$this->add_action( 'pixelgradelt_conductor/midnight', 'check_update' );
 //		$this->add_action( 'after_setup_theme', 'check_update' );
+	}
+
+	/**
+	 * Maybe schedule the action/event to run the update check at, if it is not already scheduled.
+	 */
+	protected function schedule_check_update_event() {
+		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight' );
+		}
 	}
 
 	/**

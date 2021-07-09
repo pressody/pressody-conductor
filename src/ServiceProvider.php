@@ -50,7 +50,10 @@ class ServiceProvider implements ServiceProviderInterface {
 		};
 
 		$container['composition.manager'] = function ( $container ) {
-			return new CompositionManager( $container['logs.logger'] );
+			return new CompositionManager(
+				$container['queue.action'],
+				$container['logs.logger']
+			);
 		};
 
 		$container['hooks.activation'] = function () {
@@ -125,7 +128,14 @@ class ServiceProvider implements ServiceProviderInterface {
 		};
 
 		$container['logs.manager'] = function ( $container ) {
-			return new LogsManager( $container['logs.logger'] );
+			return new LogsManager(
+				$container['logs.logger'],
+				$container['queue.action']
+			);
+		};
+
+		$container['queue.action'] = function () {
+			return new Queue\ActionQueue();
 		};
 
 		$container['route.composer.solutions'] = function ( $container ) {

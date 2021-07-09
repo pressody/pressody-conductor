@@ -2,16 +2,17 @@
 /**
  * Logs management routines.
  *
- * @package PixelgradeLT
+ * @since   0.1.0
  * @license GPL-2.0-or-later
- * @since 0.1.0
+ * @package PixelgradeLT
  */
 
-declare ( strict_types = 1 );
+declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Logging;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
+use PixelgradeLT\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -31,16 +32,28 @@ class LogsManager extends AbstractHookProvider {
 	protected LoggerInterface $logger;
 
 	/**
+	 * Queue.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @var QueueInterface
+	 */
+	protected QueueInterface $queue;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param LoggerInterface   $logger          Logger.
+	 * @param LoggerInterface $logger Logger.
+	 * @param QueueInterface  $queue  Queue.
 	 */
 	public function __construct(
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		QueueInterface $queue
 	) {
-		$this->logger          = $logger;
+		$this->logger = $logger;
+		$this->queue  = $queue;
 	}
 
 	/**
@@ -49,7 +62,17 @@ class LogsManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function register_hooks() {
-		$this->add_action( 'pixelgradelt_conductor/cleanup_logs', 'cleanup_logs' );
+		$this->add_action( 'init', 'schedule_cleanup_logs_event' );
+		$this->add_action( 'pixelgradelt_conductor/midnight', 'cleanup_logs' );
+	}
+
+	/**
+	 * Maybe schedule the action/event to run logs cleanup at, if it is not already scheduled.
+	 */
+	protected function schedule_cleanup_logs_event() {
+		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight' );
+		}
 	}
 
 	protected function cleanup_logs() {
