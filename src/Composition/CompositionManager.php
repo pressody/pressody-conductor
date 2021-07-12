@@ -19,7 +19,6 @@ use Seld\JsonLint\ParsingException;
 use function PixelgradeLT\Conductor\is_debug_mode;
 use function PixelgradeLT\Conductor\is_dev_url;
 use WP_Http as HTTP;
-use function PixelgradeLT\Conductor\is_plugin_file;
 
 /**
  * Class to manage the site composition.
@@ -122,20 +121,105 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function register_hooks() {
-		$this->add_action( 'init', 'schedule_events' );
+		$this->add_action( 'init', 'schedule_recurring_events' );
 
 		$this->add_action( 'pixelgradelt_conductor/midnight', 'check_update' );
-		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes' );
+		$this->add_action( 'pixelgradelt_conductor/updated_composer_json', 'maybe_update_composition_plugins_and_themes_cache' );
+		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes_cache' );
 		//		$this->add_action( 'after_setup_theme', 'check_update' );
-		$this->add_action( 'after_setup_theme', 'maybe_update_composition_plugins_and_themes' );
+		$this->add_action( 'after_setup_theme', 'maybe_update_composition_plugins_and_themes_cache' );
+
+		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
+		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
+			$this,
+			'activate_composition_plugins_and_themes',
+		] );
 	}
 
 	/**
-	 * Maybe schedule the actions/events, if it is not already scheduled.
+	 * Get a composition's plugin data.
+	 *
+	 * Don't provide a plugin file path to get all plugins' data.
+	 *
+	 * @param string $plugin_file The plugin's file path identifier relative to the plugins folder.
+	 *                            Leave empty to get all composition's plugins data.
+	 *
+	 * @return null|array The plugin data if a valid $plugin_file was provided.
+	 *               null if the provided $plugin_file could not be found.
+	 *               An associative array with all the composition's plugins if no $plugin_file was provided,
+	 *               with each key being the plugin file path.
+	 */
+	public function get_composition_plugin( string $plugin_file = '' ): ?array {
+		$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
+		if ( empty( $cached_data ) ) {
+			$this->maybe_update_composition_plugins_and_themes_cache();
+			$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
+		}
+
+		if ( empty( $cached_data ) ) {
+			if ( ! empty( $plugin_file ) ) {
+				return null;
+			}
+
+			return [];
+		}
+
+		if ( ! empty( $plugin_file ) ) {
+			if ( isset( $cached_data[ $plugin_file ] ) ) {
+				return $cached_data[ $plugin_file ];
+			}
+
+			return null;
+		}
+
+		return $cached_data;
+	}
+
+	/**
+	 * Get a composition's theme data.
+	 *
+	 * Don't provide a theme directory to get all themes' data.
+	 *
+	 * @param string $theme_dir   The theme's directory name.
+	 *                            Leave empty to get all composition's themes data.
+	 *
+	 * @return null|array The theme data if a valid $theme_dir was provided.
+	 *               null if the provided $theme_dir could not be found.
+	 *               An associative array with all the composition's themes if no $theme_dir was provided,
+	 *               with each key being the theme directory name (stylesheet).
+	 */
+	public function get_composition_theme( string $theme_dir = '' ): ?array {
+		$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
+		if ( empty( $cached_data ) ) {
+			$this->maybe_update_composition_plugins_and_themes_cache();
+			$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
+		}
+
+		if ( empty( $cached_data ) ) {
+			if ( ! empty( $theme_dir ) ) {
+				return null;
+			}
+
+			return [];
+		}
+
+		if ( ! empty( $theme_dir ) ) {
+			if ( isset( $cached_data[ $theme_dir ] ) ) {
+				return $cached_data[ $theme_dir ];
+			}
+
+			return null;
+		}
+
+		return $cached_data;
+	}
+
+	/**
+	 * Maybe schedule the recurring actions/events, if it is not already scheduled.
 	 *
 	 * @since 0.1.0
 	 */
-	protected function schedule_events() {
+	protected function schedule_recurring_events() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
 			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'pixelgrade-conductor' );
 		}
@@ -146,7 +230,155 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Check with LT Records if the current site composition should be updated.
+	 * Schedule the async event to attempt to active all the plugins and themes registered in the composition.
+	 *
+	 * @since 0.1.0
+	 */
+	protected function schedule_activate_composition_plugins_and_themes() {
+		$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'pixelgrade-conductor' );
+	}
+
+	public function activate_composition_plugins_and_themes() {
+		// Handle plugins first.
+		$plugins = $this->get_composition_plugin();
+		if ( ! empty( $plugins ) ) {
+			foreach ( $plugins as $plugin_file => $plugin_data ) {
+				if ( \is_plugin_active( $plugin_file ) ) {
+					continue;
+				}
+
+				$result = \activate_plugin( $plugin_file );
+				if ( \is_wp_error( $result ) ) {
+					$this->logger->error( 'The composition\'s PLUGIN ACTIVATION failed with "{code}": {message}',
+						[
+							'code'    => $result->get_error_code(),
+							'message' => $result->get_error_message(),
+							'data'    => $result->get_error_data(),
+						]
+					);
+
+					continue;
+				}
+
+				$this->logger->info( 'The composition\'s PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}", was automatically ACTIVATED.',
+					[
+						'plugin_name'            => $plugin_data['name'],
+						'plugin_file'            => $plugin_data['plugin-file'],
+						'plugin_package'         => $plugin_data['package-name'],
+						'plugin_package_version' => $plugin_data['version'],
+					]
+				);
+			}
+		}
+
+		// Handle themes.
+		// For themes, the logic is somewhat more convoluted since we can only have a single theme active at any one time.
+		// Also, the user might bring his or hers own themes (or child-themes).
+		// So, we will only force activate if one of the core themes is active.
+		// @todo Maybe explore a more enforceable path to activate LT Theme(s).
+		$themes = $this->get_composition_theme();
+		if ( ! empty( $themes ) ) {
+			// Get the currently active theme.
+			$current_theme = \wp_get_theme();
+
+			$default_core_theme = \WP_Theme::get_core_default_theme();
+
+			// If we have a core theme active, we can proceed.
+			if ( ( false !== $default_core_theme && $current_theme->get_stylesheet() === $default_core_theme->get_stylesheet() )
+			     || preg_match( '/^twenty/i', $current_theme->get_stylesheet() )
+			     || 'the wordpress team' === trim( strtolower( $current_theme->get( 'Author' ) ) ) ) {
+
+				// Search for a child theme to activate.
+				$theme_to_activate = false;
+				foreach ( $themes as $theme_dir => $theme_data ) {
+					// Better safe than sorry.
+					if ( $theme_dir === $current_theme->get_stylesheet() ) {
+						continue;
+					}
+
+					// If we find a child theme, we need to make sure that we have the parent available also.
+					if ( $theme_data['stylesheet'] !== $theme_data['template'] && isset( $themes[ $theme_data['template'] ] ) ) {
+						$theme_to_activate = $theme_data;
+
+						break;
+					}
+				}
+
+				if ( ! empty( $theme_to_activate ) ) {
+					$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
+					if ( \is_wp_error( $requirements ) ) {
+						$this->logger->error( 'Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+							[
+								'code'    => $requirements->get_error_code(),
+								'message' => $requirements->get_error_message(),
+								'theme_name'            => $theme_to_activate['name'],
+								'theme_dir'             => $theme_to_activate['stylesheet'],
+								'theme_package'         => $theme_to_activate['package-name'],
+								'theme_package_version' => $theme_to_activate['version'],
+								'data'    => $requirements->get_error_data(),
+							]
+						);
+
+						$theme_to_activate = false;
+					} else {
+						\switch_theme( $theme_to_activate['stylesheet'] );
+					}
+				}
+
+				if ( empty( $theme_to_activate ) ) {
+					// Search for a regular/parent theme to activate.
+					foreach ( $themes as $theme_dir => $theme_data ) {
+						// Better safe than sorry.
+						if ( $theme_dir === $current_theme->get_stylesheet() ) {
+							continue;
+						}
+
+						// Exclude child-themes.
+						if ( $theme_data['stylesheet'] === $theme_data['template'] ) {
+							$theme_to_activate = $theme_data;
+
+							break;
+						}
+					}
+
+					if ( ! empty( $theme_to_activate ) ) {
+						$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
+						if ( \is_wp_error( $requirements ) ) {
+							$this->logger->error( 'Found THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+								[
+									'code'                  => $requirements->get_error_code(),
+									'message'               => $requirements->get_error_message(),
+									'theme_name'            => $theme_to_activate['name'],
+									'theme_dir'             => $theme_to_activate['stylesheet'],
+									'theme_package'         => $theme_to_activate['package-name'],
+									'theme_package_version' => $theme_to_activate['version'],
+									'data'                  => $requirements->get_error_data(),
+								]
+							);
+
+							$theme_to_activate = false;
+						} else {
+							\switch_theme( $theme_to_activate['stylesheet'] );
+						}
+					}
+				}
+
+				if ( ! empty( $theme_to_activate ) ) {
+					$this->logger->info( 'The composition\'s THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", was automatically ACTIVATED.',
+						[
+							'theme_name'            => $theme_to_activate['name'],
+							'theme_dir'             => $theme_to_activate['stylesheet'],
+							'theme_package'         => $theme_to_activate['package-name'],
+							'theme_package_version' => $theme_to_activate['version'],
+						]
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check with LT Records if the current site composition should be updated and update it.
 	 *
 	 * @since 0.1.0
 	 *
@@ -205,7 +437,18 @@ class CompositionManager extends AbstractHookProvider {
 		];
 
 		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
-		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) >= HTTP::BAD_REQUEST ) {
+		if ( is_wp_error( $response ) ) {
+			$this->logger->error( 'The composition update check failed with code "{code}": {message}',
+				[
+					'code'    => $response->get_error_code(),
+					'message' => $response->get_error_message(),
+					'data'    => $response->get_error_data(),
+				]
+			);
+
+			return false;
+		}
+		if ( wp_remote_retrieve_response_code( $response ) >= HTTP::BAD_REQUEST ) {
 			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
 			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
 			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
@@ -228,9 +471,18 @@ class CompositionManager extends AbstractHookProvider {
 		// We get back the entire composer.json contents.
 		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
 
+		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
+
+		// Test if we should update.
+		$currentContent = @file_get_contents( $composerJsonFile->getPath() );
+		$newContent     = JsonFile::encode( $receivedComposerJson, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
+		if ( $currentContent && ( $currentContent == $newContent ) ) {
+			return false;
+		}
+
 		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
 		try {
-			$composerJsonFile->write( $receivedComposerJson, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
 		} catch ( \Exception $e ) {
 			$this->logger->error( 'The site\'s composer.json file could not be written with the updated contents: {message}',
 				[
@@ -242,17 +494,29 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
+		$this->logger->info( 'The site\'s composer.json file has been updated.' );
+
+		/**
+		 * After the composer.json has been updated.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array $newContents The written composer.json data.
+		 * @param array $oldContents The previous composer.json data.
+		 */
+		do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+
 		return true;
 	}
 
 	/**
-	 * Check the `composer.lock` file for modifications and update the data we have about the included plugins and themes.
+	 * Check the `composer.lock` file for modifications and update the data we cache about the included plugins and themes.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @return bool
 	 */
-	protected function maybe_update_composition_plugins_and_themes(): bool {
+	protected function maybe_update_composition_plugins_and_themes_cache(): bool {
 		// Read the current contents of the site's composer.lock.
 		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
@@ -325,7 +589,7 @@ class CompositionManager extends AbstractHookProvider {
 		 * Log what has actually happened with plugins
 		 */
 		$removed_plugins = array_diff_key( $old_plugins, $plugins );
-		$added_plugins = array_diff_key( $plugins, $old_plugins );
+		$added_plugins   = array_diff_key( $plugins, $old_plugins );
 		$updated_plugins = array_intersect_key( $plugins, $old_plugins );
 		foreach ( $updated_plugins as $key => $plugin_data ) {
 			if ( \version_compare( $plugin_data['version'], $old_plugins[ $key ]['version'], '=' ) ) {
@@ -336,21 +600,21 @@ class CompositionManager extends AbstractHookProvider {
 		if ( ! empty( $removed_plugins ) ) {
 			$message = '[COMPOSITION UPDATE] The following PLUGINS have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_plugins as $plugin_file => $plugin_data ) {
-				$message .=  '    - ' . $plugin_data['name'] . ' ('. $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
+				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $added_plugins ) ) {
 			$message = '[COMPOSITION UPDATE] The following PLUGINS have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_plugins as $plugin_file => $plugin_data ) {
-				$message .=  '    - ' . $plugin_data['name'] . ' ('. $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
+				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $updated_plugins ) ) {
 			$message = '[COMPOSITION UPDATE] The following PLUGINS have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_plugins as $plugin_file => $plugin_data ) {
-				$message .=  '    - ' . $plugin_data['name'] . ' ('. $plugin_file . ') - from version v' . $old_plugins[ $plugin_file ]['version'] . ' to version v'. $plugins[ $plugin_file ]['version'] . PHP_EOL;
+				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - from version v' . $old_plugins[ $plugin_file ]['version'] . ' to version v' . $plugins[ $plugin_file ]['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
@@ -359,7 +623,7 @@ class CompositionManager extends AbstractHookProvider {
 		 * Log what has actually happened with themes
 		 */
 		$removed_themes = array_diff_key( $old_themes, $themes );
-		$added_themes = array_diff_key( $themes, $old_themes );
+		$added_themes   = array_diff_key( $themes, $old_themes );
 		$updated_themes = array_intersect_key( $themes, $old_themes );
 		foreach ( $updated_themes as $key => $plugin_data ) {
 			if ( \version_compare( $plugin_data['version'], $old_themes[ $key ]['version'], '=' ) ) {
@@ -370,21 +634,21 @@ class CompositionManager extends AbstractHookProvider {
 		if ( ! empty( $removed_themes ) ) {
 			$message = '[COMPOSITION UPDATE] The following THEMES have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_themes as $stylesheet => $theme_data ) {
-				$message .=  '    - ' . $theme_data['name'] . ' ('. $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
+				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $added_themes ) ) {
 			$message = '[COMPOSITION UPDATE] The following THEMES have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_themes as $stylesheet => $theme_data ) {
-				$message .=  '    - ' . $theme_data['name'] . ' ('. $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
+				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $updated_themes ) ) {
 			$message = '[COMPOSITION UPDATE] The following THEMES have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_themes as $stylesheet => $theme_data ) {
-				$message .=  '    - ' . $theme_data['name'] . ' ('. $stylesheet . ') - from version v' . $old_themes[ $stylesheet ]['version'] . ' to version v'. $themes[ $stylesheet ]['version'] . PHP_EOL;
+				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - from version v' . $old_themes[ $stylesheet ]['version'] . ' to version v' . $themes[ $stylesheet ]['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
@@ -392,6 +656,16 @@ class CompositionManager extends AbstractHookProvider {
 		// Save the plugins and themes data.
 		update_option( self::COMPOSITION_PLUGINS_OPTION_NAME, $plugins, true );
 		update_option( self::COMPOSITION_THEMES_OPTION_NAME, $themes, true );
+
+		/**
+		 * After the composition's plugins and themes list has been updated.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array $plugins The current composition plugins data.
+		 * @param array $themes  The current composition themes data.
+		 */
+		do_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
 
 		return true;
 	}
@@ -445,23 +719,23 @@ class CompositionManager extends AbstractHookProvider {
 
 		return [
 			$plugin_file => [
-				'name'         => $plugin_data['Name'] ?? $package['name'],
-				'plugin-file'  => $plugin_file,
-				'package-name' => $package['name'],
-				'version'      => $package['version'],
-				'description'  => $package['description'] ?? $plugin_data['Description'],
-				'homepage'     => $package['homepage'] ?? $plugin_data['PluginURI'],
-				'authors'      => $package['authors'] ??
-				                  ( ! empty( $plugin_data['Author'] ) ?
-					                  [
-						                  [
-							                  'name'     => $plugin_data['Author'],
-							                  'homepage' => $plugin_data['AuthorURI'],
-						                  ],
-					                  ]
-					                  :
-					                  [] ),
-				'ltpart-plugin' => $is_lt_part_plugin
+				'name'          => $plugin_data['Name'] ?? $package['name'],
+				'plugin-file'   => $plugin_file,
+				'package-name'  => $package['name'],
+				'version'       => $package['version'],
+				'description'   => $package['description'] ?? $plugin_data['Description'],
+				'homepage'      => $package['homepage'] ?? $plugin_data['PluginURI'],
+				'authors'       => $package['authors'] ??
+				                   ( ! empty( $plugin_data['Author'] ) ?
+					                   [
+						                   [
+							                   'name'     => $plugin_data['Author'],
+							                   'homepage' => $plugin_data['AuthorURI'],
+						                   ],
+					                   ]
+					                   :
+					                   [] ),
+				'ltpart-plugin' => $is_lt_part_plugin,
 			],
 		];
 	}
@@ -530,6 +804,7 @@ class CompositionManager extends AbstractHookProvider {
 			$stylesheet => [
 				'name'         => $theme_data['Name'] ?? $package['name'],
 				'stylesheet'   => $stylesheet,
+				'template'     => $theme_data['Template'],
 				'package-name' => $package['name'],
 				'version'      => $package['version'],
 				'description'  => $package['description'] ?? $theme_data['Description'],
@@ -569,7 +844,7 @@ class CompositionManager extends AbstractHookProvider {
 		return [
 			$theme->get_stylesheet() => [
 				'Name'        => $theme->get( 'Name' ),
-				'ThemeURI'         => $theme->display( 'ThemeURI', true, false ),
+				'ThemeURI'    => $theme->display( 'ThemeURI', true, false ),
 				'Description' => $theme->display( 'Description', true, false ),
 				'Author'      => $theme->display( 'Author', true, false ),
 				'AuthorURI'   => $theme->display( 'AuthorURI', true, false ),
