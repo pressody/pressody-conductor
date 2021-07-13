@@ -124,12 +124,12 @@ class CompositionManager extends AbstractHookProvider {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
 		$this->add_action( 'pixelgradelt_conductor/midnight', 'check_update' );
-		$this->add_action( 'pixelgradelt_conductor/updated_composer_json', 'maybe_update_composition_plugins_and_themes_cache' );
 		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes_cache' );
-		//		$this->add_action( 'after_setup_theme', 'check_update' );
-		$this->add_action( 'after_setup_theme', 'maybe_update_composition_plugins_and_themes_cache' );
+		//$this->add_action( 'after_setup_theme', 'check_update' );
+		//$this->add_action( 'after_setup_theme', 'maybe_update_composition_plugins_and_themes_cache' );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
+//		$this->add_action( 'init', 'schedule_activate_composition_plugins_and_themes' );
 		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
 			$this,
 			'activate_composition_plugins_and_themes',
@@ -235,7 +235,9 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	protected function schedule_activate_composition_plugins_and_themes() {
-		$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'pixelgrade-conductor' );
+		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/activate_composition_plugins_and_themes' ) ) {
+			$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'pixelgrade-conductor' );
+		}
 	}
 
 	public function activate_composition_plugins_and_themes() {
@@ -389,7 +391,7 @@ class CompositionManager extends AbstractHookProvider {
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
 		) {
-			$this->logger->warning( 'Could not check for composition update because there are missing or empty environment variables.' );
+			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.' );
 
 			return false;
 		}
@@ -438,7 +440,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
 		if ( is_wp_error( $response ) ) {
-			$this->logger->error( 'The composition update check failed with code "{code}": {message}',
+			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
 				[
 					'code'    => $response->get_error_code(),
 					'message' => $response->get_error_message(),
@@ -452,7 +454,7 @@ class CompositionManager extends AbstractHookProvider {
 			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
 			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
 			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
-			$this->logger->error( 'The composition update check failed with code "{code}": {message}',
+			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
 				[
 					'code'    => $body['code'],
 					'message' => $body['message'],
@@ -484,7 +486,7 @@ class CompositionManager extends AbstractHookProvider {
 		try {
 			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
 		} catch ( \Exception $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be written with the updated contents: {message}',
+			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -494,7 +496,7 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		$this->logger->info( 'The site\'s composer.json file has been updated.' );
+		$this->logger->info( 'The site\'s composer.json file has been updated via the LT Records check.' );
 
 		/**
 		 * After the composer.json has been updated.
@@ -656,6 +658,7 @@ class CompositionManager extends AbstractHookProvider {
 		// Save the plugins and themes data.
 		update_option( self::COMPOSITION_PLUGINS_OPTION_NAME, $plugins, true );
 		update_option( self::COMPOSITION_THEMES_OPTION_NAME, $themes, true );
+		update_option( self::COMPOSER_LOCK_HASH_OPTION_NAME, $composerLockJsonCurrentContents['content-hash'], true );
 
 		/**
 		 * After the composition's plugins and themes list has been updated.
@@ -804,7 +807,7 @@ class CompositionManager extends AbstractHookProvider {
 			$stylesheet => [
 				'name'         => $theme_data['Name'] ?? $package['name'],
 				'stylesheet'   => $stylesheet,
-				'template'     => $theme_data['Template'],
+				'template'     => $theme_data['Template'], // If the template is different than stylesheet, we have a child-theme.
 				'package-name' => $package['name'],
 				'version'      => $package['version'],
 				'description'  => $package['description'] ?? $theme_data['Description'],
