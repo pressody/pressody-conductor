@@ -76,6 +76,10 @@ class ServiceProvider implements ServiceProviderInterface {
 			return new I18n();
 		};
 
+		$container['hooks.maintenance'] = function () {
+			return new Provider\Maintenance();
+		};
+
 		$container['hooks.request_handler'] = function ( $container ) {
 			return new Provider\RequestHandler(
 				$container['http.request'],

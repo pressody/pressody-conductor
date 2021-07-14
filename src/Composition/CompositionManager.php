@@ -125,15 +125,10 @@ class CompositionManager extends AbstractHookProvider {
 
 		$this->add_action( 'pixelgradelt_conductor/midnight', 'check_update' );
 		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes_cache' );
-		//$this->add_action( 'after_setup_theme', 'check_update' );
-		//$this->add_action( 'after_setup_theme', 'maybe_update_composition_plugins_and_themes_cache' );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
-//		$this->add_action( 'init', 'schedule_activate_composition_plugins_and_themes' );
-		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
-			$this,
-			'activate_composition_plugins_and_themes',
-		] );
+		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [ $this, 'handle_composition_plugins_activation', ], 20 );
+		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [ $this, 'handle_composition_themes_activation', ], 30 );
 	}
 
 	/**
@@ -172,6 +167,7 @@ class CompositionManager extends AbstractHookProvider {
 			return null;
 		}
 
+		// Return all plugins data if no single plugin was targeted or found.
 		return $cached_data;
 	}
 
@@ -240,8 +236,7 @@ class CompositionManager extends AbstractHookProvider {
 		}
 	}
 
-	public function activate_composition_plugins_and_themes() {
-		// Handle plugins first.
+	public function handle_composition_plugins_activation() {
 		$plugins = $this->get_composition_plugin();
 		if ( ! empty( $plugins ) ) {
 			foreach ( $plugins as $plugin_file => $plugin_data ) {
@@ -251,7 +246,23 @@ class CompositionManager extends AbstractHookProvider {
 
 				$result = \activate_plugin( $plugin_file );
 				if ( \is_wp_error( $result ) ) {
-					$this->logger->error( 'The composition\'s PLUGIN ACTIVATION failed with "{code}": {message}',
+					if ( 'plugin_not_found' === $result->get_error_code() ) {
+						// We will silently deactivate it to prevent the user notice regarding plugin not found.
+						\deactivate_plugins( $plugin_file, true );
+
+						$this->logger->warning( '[COMPOSITION] Encountered MISSING composition PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}". Silently deactivated it.',
+							[
+								'plugin_name'            => $plugin_data['name'],
+								'plugin_file'            => $plugin_data['plugin-file'],
+								'plugin_package'         => $plugin_data['package-name'],
+								'plugin_package_version' => $plugin_data['version'],
+							]
+						);
+
+						continue;
+					}
+
+					$this->logger->error( '[COMPOSITION] The composition\'s PLUGIN ACTIVATION failed with "{code}": {message}',
 						[
 							'code'    => $result->get_error_code(),
 							'message' => $result->get_error_message(),
@@ -262,7 +273,7 @@ class CompositionManager extends AbstractHookProvider {
 					continue;
 				}
 
-				$this->logger->info( 'The composition\'s PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}", was automatically ACTIVATED.',
+				$this->logger->info( '[COMPOSITION] The composition\'s PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}", was automatically ACTIVATED.',
 					[
 						'plugin_name'            => $plugin_data['name'],
 						'plugin_file'            => $plugin_data['plugin-file'],
@@ -273,7 +284,11 @@ class CompositionManager extends AbstractHookProvider {
 			}
 		}
 
-		// Handle themes.
+		// Since there might be removed plugin packages we instruct WordPress to validate the active plugins (it will silently deactivate missing plugins).
+		validate_active_plugins();
+	}
+
+	public function handle_composition_themes_activation() {
 		// For themes, the logic is somewhat more convoluted since we can only have a single theme active at any one time.
 		// Also, the user might bring his or hers own themes (or child-themes).
 		// So, we will only force activate if one of the core themes is active.
@@ -309,7 +324,7 @@ class CompositionManager extends AbstractHookProvider {
 				if ( ! empty( $theme_to_activate ) ) {
 					$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
 					if ( \is_wp_error( $requirements ) ) {
-						$this->logger->error( 'Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+						$this->logger->error( '[COMPOSITION] Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
 							[
 								'code'    => $requirements->get_error_code(),
 								'message' => $requirements->get_error_message(),
@@ -346,7 +361,7 @@ class CompositionManager extends AbstractHookProvider {
 					if ( ! empty( $theme_to_activate ) ) {
 						$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
 						if ( \is_wp_error( $requirements ) ) {
-							$this->logger->error( 'Found THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+							$this->logger->error( '[COMPOSITION] Found THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
 								[
 									'code'                  => $requirements->get_error_code(),
 									'message'               => $requirements->get_error_message(),
@@ -366,7 +381,7 @@ class CompositionManager extends AbstractHookProvider {
 				}
 
 				if ( ! empty( $theme_to_activate ) ) {
-					$this->logger->info( 'The composition\'s THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", was automatically ACTIVATED.',
+					$this->logger->info( '[COMPOSITION] The composition\'s THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", was automatically ACTIVATED.',
 						[
 							'theme_name'            => $theme_to_activate['name'],
 							'theme_dir'             => $theme_to_activate['stylesheet'],
@@ -377,6 +392,9 @@ class CompositionManager extends AbstractHookProvider {
 				}
 			}
 		}
+
+		// Since there might be removed theme packages we instruct WordPress to validate the current theme (it will silently fallback to the default theme).
+		validate_current_theme();
 	}
 
 	/**
@@ -391,7 +409,7 @@ class CompositionManager extends AbstractHookProvider {
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
 		) {
-			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.' );
+			$this->logger->warning( '[COMPOSITION] Could not check for composition update with LT Records because there are missing or empty environment variables.' );
 
 			return false;
 		}
@@ -399,14 +417,14 @@ class CompositionManager extends AbstractHookProvider {
 		// Read the current contents of the site's composer.json (the composition).
 		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
 		if ( ! $composerJsonFile->exists() ) {
-			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.' );
+			$this->logger->error( '[COMPOSITION] The site\'s composer.json file doesn\'t exist.' );
 
 			return false;
 		}
 		try {
 			$composerJsonCurrentContents = $composerJsonFile->read();
 		} catch ( \RuntimeException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
+			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be read: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -415,7 +433,7 @@ class CompositionManager extends AbstractHookProvider {
 
 			return false;
 		} catch ( ParsingException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
+			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be parsed: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -440,7 +458,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
 		if ( is_wp_error( $response ) ) {
-			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+			$this->logger->error( '[COMPOSITION] The composition update check with LT Records failed with code "{code}": {message}',
 				[
 					'code'    => $response->get_error_code(),
 					'message' => $response->get_error_message(),
@@ -454,7 +472,7 @@ class CompositionManager extends AbstractHookProvider {
 			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
 			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
 			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
-			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+			$this->logger->error( '[COMPOSITION] The composition update check with LT Records failed with code "{code}": {message}',
 				[
 					'code'    => $body['code'],
 					'message' => $body['message'],
@@ -486,7 +504,7 @@ class CompositionManager extends AbstractHookProvider {
 		try {
 			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
 		} catch ( \Exception $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
+			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -496,7 +514,7 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		$this->logger->info( 'The site\'s composer.json file has been updated via the LT Records check.' );
+		$this->logger->info( '[COMPOSITION] The site\'s composer.json file has been UPDATED via the LT Records check.' );
 
 		/**
 		 * After the composer.json has been updated.
@@ -522,14 +540,14 @@ class CompositionManager extends AbstractHookProvider {
 		// Read the current contents of the site's composer.lock.
 		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
-			$this->logger->warning( 'The site\'s composer.lock file doesn\'t exist.' );
+			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t exist.' );
 
 			return false;
 		}
 		try {
 			$composerLockJsonCurrentContents = $composerLockJsonFile->read();
 		} catch ( \RuntimeException $e ) {
-			$this->logger->error( 'The site\'s composer.lock file could not be read: {message}',
+			$this->logger->error( '[COMPOSITION] The site\'s composer.lock file could not be read: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -538,7 +556,7 @@ class CompositionManager extends AbstractHookProvider {
 
 			return false;
 		} catch ( ParsingException $e ) {
-			$this->logger->error( 'The site\'s composer.lock file could not be parsed: {message}',
+			$this->logger->error( '[COMPOSITION] The site\'s composer.lock file could not be parsed: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
@@ -549,13 +567,13 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( empty( $composerLockJsonCurrentContents['content-hash'] ) ) {
-			$this->logger->warning( 'The site\'s composer.lock file doesn\'t have a "content-hash" entry.' );
+			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t have a "content-hash" entry.' );
 
 			return false;
 		}
 
 		if ( empty( $composerLockJsonCurrentContents['packages'] ) ) {
-			$this->logger->warning( 'The site\'s composer.lock file doesn\'t have any installed packages.' );
+			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t have any installed packages.' );
 
 			return false;
 		}
@@ -600,21 +618,21 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( ! empty( $removed_plugins ) ) {
-			$message = '[COMPOSITION UPDATE] The following PLUGINS have been REMOVED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following PLUGINS have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $added_plugins ) ) {
-			$message = '[COMPOSITION UPDATE] The following PLUGINS have been ADDED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following PLUGINS have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $updated_plugins ) ) {
-			$message = '[COMPOSITION UPDATE] The following PLUGINS have been UPDATED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following PLUGINS have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - from version v' . $old_plugins[ $plugin_file ]['version'] . ' to version v' . $plugins[ $plugin_file ]['version'] . PHP_EOL;
 			}
@@ -634,21 +652,21 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( ! empty( $removed_themes ) ) {
-			$message = '[COMPOSITION UPDATE] The following THEMES have been REMOVED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following THEMES have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $added_themes ) ) {
-			$message = '[COMPOSITION UPDATE] The following THEMES have been ADDED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following THEMES have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message );
 		}
 		if ( ! empty( $updated_themes ) ) {
-			$message = '[COMPOSITION UPDATE] The following THEMES have been UPDATED, according to composer.lock:' . PHP_EOL;
+			$message = '[COMPOSITION] The following THEMES have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - from version v' . $old_themes[ $stylesheet ]['version'] . ' to version v' . $themes[ $stylesheet ]['version'] . PHP_EOL;
 			}
@@ -687,7 +705,7 @@ class CompositionManager extends AbstractHookProvider {
 		// Extract the package individual name (without the vendor). This represents the plugin folder.
 		$plugin_folder = trim( substr( $package['name'], strpos( $package['name'], '/' ) + 1 ), '/' );
 		if ( empty( $plugin_folder ) ) {
-			$this->logger->error( 'Encountered invalid package name in composer.lock: {packageName}',
+			$this->logger->error( '[COMPOSITION] Encountered invalid package name in composer.lock: {packageName}',
 				[
 					'packageName' => $package['name'],
 				]
@@ -699,7 +717,7 @@ class CompositionManager extends AbstractHookProvider {
 		$plugin_data = $this->get_plugin_data( $plugin_folder );
 		// This means we couldn't find the plugin.
 		if ( ! $plugin_data ) {
-			$this->logger->warning( 'Encountered WP plugin "{packageName}" in composer.lock for which we couldn\'t extract the plugin data.',
+			$this->logger->warning( '[COMPOSITION] Encountered WP plugin "{packageName}" in composer.lock for which we couldn\'t extract the plugin data.',
 				[
 					'packageName' => $package['name'],
 				]
@@ -778,7 +796,7 @@ class CompositionManager extends AbstractHookProvider {
 		// Extract the package individual name (without the vendor). This represents the theme folder.
 		$theme_folder = trim( substr( $package['name'], strpos( $package['name'], '/' ) + 1 ), '/' );
 		if ( empty( $theme_folder ) ) {
-			$this->logger->error( 'Encountered invalid package name in composer.lock: {packageName}',
+			$this->logger->error( '[COMPOSITION] Encountered invalid package name in composer.lock: {packageName}',
 				[
 					'packageName' => $package['name'],
 				]
@@ -790,7 +808,7 @@ class CompositionManager extends AbstractHookProvider {
 		$theme_data = $this->get_theme_data( $theme_folder );
 		// This means we couldn't find the theme.
 		if ( ! $theme_data ) {
-			$this->logger->warning( 'Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data.',
+			$this->logger->warning( '[COMPOSITION] Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data.',
 				[
 					'packageName' => $package['name'],
 				]
