@@ -123,7 +123,8 @@ class CompositionManager extends AbstractHookProvider {
 	public function register_hooks() {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
-		$this->add_action( 'pixelgradelt_conductor/midnight', 'check_update' );
+		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
+		// add_action( 'admin_init', [ $this, 'check_update' ] );
 		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes_cache' );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
@@ -208,6 +209,352 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		return $cached_data;
+	}
+
+	/**
+	 * Check with LT Records if the current site composition is valid, should be updated, and update it if LT Records provides updated contents.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param bool $skip_write Whether to skip writing the updated composition contents to composer.json.
+	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
+	 * @return bool
+	 */
+	public function check_update( bool $skip_write = false, bool $debug = false ): bool {
+		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
+		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
+		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
+		) {
+			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		// Read the current contents of the site's composer.json (the composition).
+		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		if ( ! $composerJsonFile->exists() ) {
+			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+		try {
+			$composerJsonCurrentContents = $composerJsonFile->read();
+		} catch ( \RuntimeException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		} catch ( ParsingException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		$request_args = [
+			'headers'   => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Basic ' . base64_encode( LT_RECORDS_API_KEY . ':' . LT_RECORDS_API_PWD ),
+			],
+			'timeout'   => 5,
+			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_REFRESH_URL ) ),
+			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
+			'body'      => json_encode( [
+				'composer' => $composerJsonCurrentContents,
+			] ),
+		];
+
+		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
+		if ( is_wp_error( $response ) ) {
+			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+				[
+					'code'    => $response->get_error_code(),
+					'message' => $response->get_error_message(),
+					'data'    => $response->get_error_data(),
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+		if ( wp_remote_retrieve_response_code( $response ) >= HTTP::BAD_REQUEST ) {
+			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
+			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
+			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
+			if ( 'rest_invalid_fingerprint' === $body['code'] ) {
+				$this->logger->error( 'The composition update check with LT Records failed with code "{code}". Most likely, this means that the composer.json file was EDITED MANUALLY!',
+					[
+						'code'        => $body['code'],
+						'message'     => $body['message'],
+						'data'        => $body['data'],
+						'logCategory' => 'composition',
+					]
+				);
+			} else {
+				$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+					[
+						'code'        => $body['code'],
+						'message'     => $body['message'],
+						'data'        => $body['data'],
+						'logCategory' => 'composition',
+					]
+				);
+			}
+
+			return false;
+		}
+
+		// If we have nothing to update, bail.
+		if ( wp_remote_retrieve_response_code( $response ) === HTTP::NO_CONTENT ) {
+			$this->logger->info( 'The site\'s composition (composer.json file) doesn\'t need updating.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return true;
+		}
+
+		// We get back the entire composer.json contents.
+		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
+
+		// Double check if we should actually update.
+		// We need to ignore the time entry since that represents the time LT Records generated the composition.
+		// Most of the time it is the current time() and would lead to update without the need to.
+		$tempComposerJsonCurrentContents = $composerJsonCurrentContents;
+		unset( $tempComposerJsonCurrentContents['time'] );
+		$currentContent = JsonFile::encode( $tempComposerJsonCurrentContents, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
+		$tempReceivedComposerJson = $receivedComposerJson;
+		unset( $tempReceivedComposerJson['time'] );
+		$newContent     = JsonFile::encode( $tempReceivedComposerJson, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
+		if ( $currentContent === $newContent ) {
+			$this->logger->info( 'The site\'s composition (composer.json file) doesn\'t need updating.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return true;
+		}
+
+		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
+		if ( ! $skip_write ) {
+			try {
+				$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
+			} catch ( \Exception $e ) {
+				$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
+					[
+						'message'   => $e->getMessage(),
+						'exception' => $debug ? $e : null,
+						'logCategory' => 'composition',
+					]
+				);
+
+				return false;
+			}
+
+			$this->logger->info( 'The site\'s composer.json contents have been UPDATED with the contents provided by LT Records.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			/**
+			 * After the composer.json has been updated.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array $newContents The written composer.json data.
+			 * @param array $oldContents The previous composer.json data.
+			 */
+			do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+		} else {
+			$this->logger->warning( 'The site\'s composer.json contents need to be UPDATED according to LT Records.',
+				[
+					'logCategory' => 'composition',
+				] + ( $debug ? [ 'newComposerJson' => $receivedComposerJson ] : [] )
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Based on the composition's LT details reinitialise the site's composition.
+	 *
+	 * The LT details are stored under the "extra" entry of composer.json.
+	 * We are only interested in "lt-composition" (the encrypted LT details)
+	 * since that is what we need to initialize a composition.
+	 *
+	 * After a reinitialisation it is best to run an update check to get the composition up-to-speed.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
+	 * @return bool
+	 */
+	public function reinitialise( bool $debug = false ): bool {
+		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
+		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
+		     || ! defined( 'LT_RECORDS_COMPOSITION_CREATE_URL' ) || empty( LT_RECORDS_COMPOSITION_CREATE_URL )
+		) {
+			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		// Read the current contents of the site's composer.json (the composition).
+		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		if ( ! $composerJsonFile->exists() ) {
+			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+		try {
+			$composerJsonCurrentContents = $composerJsonFile->read();
+		} catch ( \RuntimeException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		} catch ( ParsingException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		if ( empty( $composerJsonCurrentContents['extra']['lt-composition'] ) ) {
+			$this->logger->warning( 'The site\'s composition (composer.json file) doesn\'t have the encrypted LT details (["extra"]["lt-composition"]).',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		$request_args = [
+			'headers'   => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Basic ' . base64_encode( LT_RECORDS_API_KEY . ':' . LT_RECORDS_API_PWD ),
+			],
+			'timeout'   => 5,
+			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_CREATE_URL ) ),
+			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
+			'body'      => json_encode( [
+				'ltdetails' => $composerJsonCurrentContents['extra']['lt-composition'],
+			] ),
+		];
+
+		$response = wp_remote_post( LT_RECORDS_COMPOSITION_CREATE_URL, $request_args );
+		if ( is_wp_error( $response ) ) {
+			$this->logger->error( 'The empty composition creation by LT Records failed with code "{code}": {message}',
+				[
+					'code'    => $response->get_error_code(),
+					'message' => $response->get_error_message(),
+					'data'    => $response->get_error_data(),
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+		if ( wp_remote_retrieve_response_code( $response ) !== HTTP::CREATED ) {
+			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
+			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
+			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
+			$this->logger->error( 'The empty composition creation by LT Records failed with code "{code}": {message}',
+				[
+					'code'        => $body['code'],
+					'message'     => $body['message'],
+					'data'        => $body['data'],
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		// We get back the "empty" composer.json contents.
+		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
+
+		// Now we need to prepare the new contents and write them the same way Composer does it.
+		try {
+			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
+		} catch ( \Exception $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
+				[
+					'message'   => $e->getMessage(),
+					'exception' => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		$this->logger->info( 'The site\'s composer.json has been replaced with a basic, "empty" composition.',
+			[
+				'logCategory' => 'composition',
+			]
+		);
+
+		/**
+		 * After the composer.json has been reinitialised.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array $newContents The written composer.json data.
+		 * @param array $oldContents The previous composer.json data.
+		 */
+		do_action( 'pixelgradelt_conductor/reinitialised_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+
+		return true;
 	}
 
 	/**
@@ -398,138 +745,6 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Check with LT Records if the current site composition should be updated and update it.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @return bool
-	 */
-	protected function check_update(): bool {
-		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
-		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
-		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
-		) {
-			$this->logger->warning( '[COMPOSITION] Could not check for composition update with LT Records because there are missing or empty environment variables.' );
-
-			return false;
-		}
-
-		// Read the current contents of the site's composer.json (the composition).
-		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
-		if ( ! $composerJsonFile->exists() ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.json file doesn\'t exist.' );
-
-			return false;
-		}
-		try {
-			$composerJsonCurrentContents = $composerJsonFile->read();
-		} catch ( \RuntimeException $e ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be read: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $e,
-				]
-			);
-
-			return false;
-		} catch ( ParsingException $e ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be parsed: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $e,
-				]
-			);
-
-			return false;
-		}
-
-		$request_args = [
-			'headers'   => [
-				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . base64_encode( LT_RECORDS_API_KEY . ':' . LT_RECORDS_API_PWD ),
-			],
-			'timeout'   => 5,
-			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_REFRESH_URL ) ),
-			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
-			'body'      => json_encode( [
-				'composer' => $composerJsonCurrentContents,
-			] ),
-		];
-
-		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
-		if ( is_wp_error( $response ) ) {
-			$this->logger->error( '[COMPOSITION] The composition update check with LT Records failed with code "{code}": {message}',
-				[
-					'code'    => $response->get_error_code(),
-					'message' => $response->get_error_message(),
-					'data'    => $response->get_error_data(),
-				]
-			);
-
-			return false;
-		}
-		if ( wp_remote_retrieve_response_code( $response ) >= HTTP::BAD_REQUEST ) {
-			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
-			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
-			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
-			$this->logger->error( '[COMPOSITION] The composition update check with LT Records failed with code "{code}": {message}',
-				[
-					'code'    => $body['code'],
-					'message' => $body['message'],
-					'data'    => $body['data'],
-				]
-			);
-
-			return false;
-		}
-
-		// If we have nothing to update, bail.
-		if ( wp_remote_retrieve_response_code( $response ) === HTTP::NO_CONTENT ) {
-			return false;
-		}
-
-		// We get back the entire composer.json contents.
-		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
-
-		// Test if we should update.
-		$currentContent = @file_get_contents( $composerJsonFile->getPath() );
-		$newContent     = JsonFile::encode( $receivedComposerJson, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
-		if ( $currentContent && ( $currentContent == $newContent ) ) {
-			return false;
-		}
-
-		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
-		try {
-			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
-		} catch ( \Exception $e ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $e,
-				]
-			);
-
-			return false;
-		}
-
-		$this->logger->info( '[COMPOSITION] The site\'s composer.json file has been UPDATED via the LT Records check.' );
-
-		/**
-		 * After the composer.json has been updated.
-		 *
-		 * @since 0.1.0
-		 *
-		 * @param array $newContents The written composer.json data.
-		 * @param array $oldContents The previous composer.json data.
-		 */
-		do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
-
-		return true;
-	}
-
-	/**
 	 * Check the `composer.lock` file for modifications and update the data we cache about the included plugins and themes.
 	 *
 	 * @since 0.1.0
@@ -540,26 +755,32 @@ class CompositionManager extends AbstractHookProvider {
 		// Read the current contents of the site's composer.lock.
 		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
-			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t exist.' );
+			$this->logger->warning( 'The site\'s composer.lock file doesn\'t exist.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
 
 			return false;
 		}
 		try {
 			$composerLockJsonCurrentContents = $composerLockJsonFile->read();
 		} catch ( \RuntimeException $e ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.lock file could not be read: {message}',
+			$this->logger->error( 'The site\'s composer.lock file could not be read: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
+					'logCategory' => 'composition',
 				]
 			);
 
 			return false;
 		} catch ( ParsingException $e ) {
-			$this->logger->error( '[COMPOSITION] The site\'s composer.lock file could not be parsed: {message}',
+			$this->logger->error( 'The site\'s composer.lock file could not be parsed: {message}',
 				[
 					'message'   => $e->getMessage(),
 					'exception' => $e,
+					'logCategory' => 'composition',
 				]
 			);
 
@@ -567,13 +788,21 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( empty( $composerLockJsonCurrentContents['content-hash'] ) ) {
-			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t have a "content-hash" entry.' );
+			$this->logger->warning( 'The site\'s composer.lock file doesn\'t have a "content-hash" entry.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
 
 			return false;
 		}
 
 		if ( empty( $composerLockJsonCurrentContents['packages'] ) ) {
-			$this->logger->warning( '[COMPOSITION] The site\'s composer.lock file doesn\'t have any installed packages.' );
+			$this->logger->warning( 'The site\'s composer.lock file doesn\'t have any installed packages.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
 
 			return false;
 		}
@@ -618,25 +847,37 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( ! empty( $removed_plugins ) ) {
-			$message = '[COMPOSITION] The following PLUGINS have been REMOVED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following PLUGINS have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 		if ( ! empty( $added_plugins ) ) {
-			$message = '[COMPOSITION] The following PLUGINS have been ADDED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following PLUGINS have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 		if ( ! empty( $updated_plugins ) ) {
-			$message = '[COMPOSITION] The following PLUGINS have been UPDATED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following PLUGINS have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_plugins as $plugin_file => $plugin_data ) {
 				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - from version v' . $old_plugins[ $plugin_file ]['version'] . ' to version v' . $plugins[ $plugin_file ]['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 
 		/**
@@ -652,25 +893,37 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		if ( ! empty( $removed_themes ) ) {
-			$message = '[COMPOSITION] The following THEMES have been REMOVED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following THEMES have been REMOVED, according to composer.lock:' . PHP_EOL;
 			foreach ( $removed_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 		if ( ! empty( $added_themes ) ) {
-			$message = '[COMPOSITION] The following THEMES have been ADDED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following THEMES have been ADDED, according to composer.lock:' . PHP_EOL;
 			foreach ( $added_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - v' . $theme_data['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 		if ( ! empty( $updated_themes ) ) {
-			$message = '[COMPOSITION] The following THEMES have been UPDATED, according to composer.lock:' . PHP_EOL;
+			$message = 'The following THEMES have been UPDATED, according to composer.lock:' . PHP_EOL;
 			foreach ( $updated_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - from version v' . $old_themes[ $stylesheet ]['version'] . ' to version v' . $themes[ $stylesheet ]['version'] . PHP_EOL;
 			}
-			$this->logger->info( $message );
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
 		}
 
 		// Save the plugins and themes data.
@@ -705,9 +958,10 @@ class CompositionManager extends AbstractHookProvider {
 		// Extract the package individual name (without the vendor). This represents the plugin folder.
 		$plugin_folder = trim( substr( $package['name'], strpos( $package['name'], '/' ) + 1 ), '/' );
 		if ( empty( $plugin_folder ) ) {
-			$this->logger->error( '[COMPOSITION] Encountered invalid package name in composer.lock: {packageName}',
+			$this->logger->error( 'Encountered invalid package name in composer.lock: {packageName}',
 				[
 					'packageName' => $package['name'],
+					'logCategory' => 'composition',
 				]
 			);
 
@@ -717,9 +971,10 @@ class CompositionManager extends AbstractHookProvider {
 		$plugin_data = $this->get_plugin_data( $plugin_folder );
 		// This means we couldn't find the plugin.
 		if ( ! $plugin_data ) {
-			$this->logger->warning( '[COMPOSITION] Encountered WP plugin "{packageName}" in composer.lock for which we couldn\'t extract the plugin data.',
+			$this->logger->warning( 'Encountered WP plugin "{packageName}" in composer.lock for which we couldn\'t extract the plugin data.',
 				[
 					'packageName' => $package['name'],
+					'logCategory' => 'composition',
 				]
 			);
 
@@ -796,9 +1051,10 @@ class CompositionManager extends AbstractHookProvider {
 		// Extract the package individual name (without the vendor). This represents the theme folder.
 		$theme_folder = trim( substr( $package['name'], strpos( $package['name'], '/' ) + 1 ), '/' );
 		if ( empty( $theme_folder ) ) {
-			$this->logger->error( '[COMPOSITION] Encountered invalid package name in composer.lock: {packageName}',
+			$this->logger->error( 'Encountered invalid package name in composer.lock: {packageName}',
 				[
 					'packageName' => $package['name'],
+					'logCategory' => 'composition',
 				]
 			);
 
@@ -808,9 +1064,10 @@ class CompositionManager extends AbstractHookProvider {
 		$theme_data = $this->get_theme_data( $theme_folder );
 		// This means we couldn't find the theme.
 		if ( ! $theme_data ) {
-			$this->logger->warning( '[COMPOSITION] Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data.',
+			$this->logger->warning( 'Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data.',
 				[
 					'packageName' => $package['name'],
+					'logCategory' => 'composition',
 				]
 			);
 

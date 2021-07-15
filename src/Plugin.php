@@ -86,4 +86,23 @@ class Plugin extends BasePlugin implements Composable {
 
 		return $this;
 	}
+
+	/**
+	 * Register all of our CLI commands.
+	 *
+	 * @return $this
+	 */
+	public function register_wp_cli_commands(): Plugin {
+		if ( ! defined( 'WP_CLI' ) || ! \WP_CLI ) {
+			return $this;
+		}
+
+		try {
+			\WP_CLI::add_command( 'lt composition', '\PixelgradeLT\Conductor\CLI\Composition' );
+		} catch ( \Exception $e ) {
+			// Nothing right now.
+		}
+
+		return $this;
+	}
 }

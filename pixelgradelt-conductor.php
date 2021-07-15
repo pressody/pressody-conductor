@@ -78,6 +78,7 @@ $pixelgradelt_conductor = plugin()
 	->set_url( plugin_dir_url( __FILE__ ) )
 	->define_constants()
 	->set_container( $pixelgradelt_conductor_container )
+	->register_wp_cli_commands()
 	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.activation' ) )
 	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.deactivation' ) );
 

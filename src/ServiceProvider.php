@@ -19,6 +19,7 @@ use Pimple\ServiceIterator;
 use Pimple\ServiceProviderInterface;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
 use PixelgradeLT\Conductor\Exception\PixelgradeltConductorException;
+use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
 use PixelgradeLT\Conductor\Logging\Logger;
 use PixelgradeLT\Conductor\Logging\LogsManager;
@@ -47,6 +48,22 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['client.composer.custom_token_auth'] = function () {
 			return new Client\CustomTokenAuthentication();
+		};
+
+		$container['cli.composition.manager'] = function ( $container ) {
+			return new CompositionManager(
+				$container['queue.action'],
+				$container['cli.logger']
+			);
+		};
+
+		$container['cli.logger'] = function ( $container ) {
+			return new Logger(
+				LogLevel::DEBUG,
+				[
+					$container['logs.handlers.cli'],
+				]
+			);
 		};
 
 		$container['composition.manager'] = function ( $container ) {
@@ -129,6 +146,10 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['logs.handlers.file'] = function () {
 			return new FileLogHandler();
+		};
+
+		$container['logs.handlers.cli'] = function () {
+			return new CLILogHandler();
 		};
 
 		$container['logs.manager'] = function ( $container ) {
