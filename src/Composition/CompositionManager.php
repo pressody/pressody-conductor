@@ -125,11 +125,17 @@ class CompositionManager extends AbstractHookProvider {
 
 		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
 		// add_action( 'admin_init', [ $this, 'check_update' ] );
-		$this->add_action( 'pixelgradelt_conductor/hourly', 'maybe_update_composition_plugins_and_themes_cache' );
+		add_action( 'pixelgradelt_conductor/hourly', [ $this, 'refresh_composition_db_cache' ] );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
-		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [ $this, 'handle_composition_plugins_activation', ], 20 );
-		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [ $this, 'handle_composition_themes_activation', ], 30 );
+		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
+			$this,
+			'handle_composition_plugins_activation',
+		], 20 );
+		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
+			$this,
+			'handle_composition_themes_activation',
+		], 30 );
 	}
 
 	/**
@@ -148,7 +154,7 @@ class CompositionManager extends AbstractHookProvider {
 	public function get_composition_plugin( string $plugin_file = '' ): ?array {
 		$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
 		if ( empty( $cached_data ) ) {
-			$this->maybe_update_composition_plugins_and_themes_cache();
+			$this->refresh_composition_db_cache();
 			$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
 		}
 
@@ -188,7 +194,7 @@ class CompositionManager extends AbstractHookProvider {
 	public function get_composition_theme( string $theme_dir = '' ): ?array {
 		$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
 		if ( empty( $cached_data ) ) {
-			$this->maybe_update_composition_plugins_and_themes_cache();
+			$this->refresh_composition_db_cache();
 			$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
 		}
 
@@ -212,12 +218,85 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
+	 * Get the contents of the site's composer.json file.
+	 *
+	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
+	 * @return false|array
+	 */
+	public function get_composer_json( bool $debug = false ) {
+		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		if ( ! $composerJsonFile->exists() ) {
+			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+		try {
+			$composerJsonCurrentContents = $composerJsonFile->read();
+		} catch ( \RuntimeException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
+				[
+					'message'     => $e->getMessage(),
+					'exception'   => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		} catch ( ParsingException $e ) {
+			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
+				[
+					'message'     => $e->getMessage(),
+					'exception'   => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		return $composerJsonCurrentContents;
+	}
+
+	/**
+	 * Write the contents of the site's composer.json file.
+	 *
+	 * @param array $contents The entire composer.json contents to write.
+	 * @param int   $jsonOptions json_encode options (defaults to JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+	 * @param bool  $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
+	 * @return bool
+	 */
+	public function write_composer_json( array $contents, int $jsonOptions = 448, bool $debug = false ): bool {
+		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		try {
+			$composerJsonFile->write( $contents, $jsonOptions );
+		} catch ( \Exception $e ) {
+			$this->logger->error( 'Failed to write the site\'s composer.json file: {message}',
+				[
+					'message'     => $e->getMessage(),
+					'exception'   => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Check with LT Records if the current site composition is valid, should be updated, and update it if LT Records provides updated contents.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param bool $skip_write Whether to skip writing the updated composition contents to composer.json.
-	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $debug      Whether to log detailed exceptions (like stack traces and stuff).
 	 *
 	 * @return bool
 	 */
@@ -236,33 +315,9 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		// Read the current contents of the site's composer.json (the composition).
-		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
-		if ( ! $composerJsonFile->exists() ) {
-			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
+		if ( ! $composerJsonCurrentContents = $this->get_composer_json( $debug ) ) {
+			$this->logger->warning( 'Could not read the site\'s composer.json file contents.',
 				[
-					'logCategory' => 'composition',
-				]
-			);
-
-			return false;
-		}
-		try {
-			$composerJsonCurrentContents = $composerJsonFile->read();
-		} catch ( \RuntimeException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $debug ? $e : null,
-					'logCategory' => 'composition',
-				]
-			);
-
-			return false;
-		} catch ( ParsingException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $debug ? $e : null,
 					'logCategory' => 'composition',
 				]
 			);
@@ -287,9 +342,9 @@ class CompositionManager extends AbstractHookProvider {
 		if ( is_wp_error( $response ) ) {
 			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
 				[
-					'code'    => $response->get_error_code(),
-					'message' => $response->get_error_message(),
-					'data'    => $response->get_error_data(),
+					'code'        => $response->get_error_code(),
+					'message'     => $response->get_error_message(),
+					'data'        => $response->get_error_data(),
 					'logCategory' => 'composition',
 				]
 			);
@@ -344,10 +399,10 @@ class CompositionManager extends AbstractHookProvider {
 		// Most of the time it is the current time() and would lead to update without the need to.
 		$tempComposerJsonCurrentContents = $composerJsonCurrentContents;
 		unset( $tempComposerJsonCurrentContents['time'] );
-		$currentContent = JsonFile::encode( $tempComposerJsonCurrentContents, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
+		$currentContent           = JsonFile::encode( $tempComposerJsonCurrentContents, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
 		$tempReceivedComposerJson = $receivedComposerJson;
 		unset( $tempReceivedComposerJson['time'] );
-		$newContent     = JsonFile::encode( $tempReceivedComposerJson, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
+		$newContent = JsonFile::encode( $tempReceivedComposerJson, $jsonOptions ) . ( $jsonOptions & JsonFile::JSON_PRETTY_PRINT ? "\n" : '' );
 		if ( $currentContent === $newContent ) {
 			$this->logger->info( 'The site\'s composition (composer.json file) doesn\'t need updating.',
 				[
@@ -360,13 +415,9 @@ class CompositionManager extends AbstractHookProvider {
 
 		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
 		if ( ! $skip_write ) {
-			try {
-				$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
-			} catch ( \Exception $e ) {
-				$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
+			if ( ! $this->write_composer_json( $receivedComposerJson, $jsonOptions, $debug ) ) {
+				$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents.',
 					[
-						'message'   => $e->getMessage(),
-						'exception' => $debug ? $e : null,
 						'logCategory' => 'composition',
 					]
 				);
@@ -432,33 +483,9 @@ class CompositionManager extends AbstractHookProvider {
 		}
 
 		// Read the current contents of the site's composer.json (the composition).
-		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
-		if ( ! $composerJsonFile->exists() ) {
-			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
+		if ( ! $composerJsonCurrentContents = $this->get_composer_json( $debug ) ) {
+			$this->logger->warning( 'Could not read the site\'s composer.json file contents.',
 				[
-					'logCategory' => 'composition',
-				]
-			);
-
-			return false;
-		}
-		try {
-			$composerJsonCurrentContents = $composerJsonFile->read();
-		} catch ( \RuntimeException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be read: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $debug ? $e : null,
-					'logCategory' => 'composition',
-				]
-			);
-
-			return false;
-		} catch ( ParsingException $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be parsed: {message}',
-				[
-					'message'   => $e->getMessage(),
-					'exception' => $debug ? $e : null,
 					'logCategory' => 'composition',
 				]
 			);
@@ -493,9 +520,9 @@ class CompositionManager extends AbstractHookProvider {
 		if ( is_wp_error( $response ) ) {
 			$this->logger->error( 'The empty composition creation by LT Records failed with code "{code}": {message}',
 				[
-					'code'    => $response->get_error_code(),
-					'message' => $response->get_error_message(),
-					'data'    => $response->get_error_data(),
+					'code'        => $response->get_error_code(),
+					'message'     => $response->get_error_message(),
+					'data'        => $response->get_error_data(),
 					'logCategory' => 'composition',
 				]
 			);
@@ -522,15 +549,9 @@ class CompositionManager extends AbstractHookProvider {
 		$receivedComposerJson = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
-
-		// Now we need to prepare the new contents and write them the same way Composer does it.
-		try {
-			$composerJsonFile->write( $receivedComposerJson, $jsonOptions );
-		} catch ( \Exception $e ) {
-			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents: {message}',
+		if ( ! $this->write_composer_json( $receivedComposerJson, $jsonOptions, $debug ) ) {
+			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents.',
 				[
-					'message'   => $e->getMessage(),
-					'exception' => $debug ? $e : null,
 					'logCategory' => 'composition',
 				]
 			);
@@ -661,7 +682,7 @@ class CompositionManager extends AbstractHookProvider {
 					}
 
 					// If we find a child theme, we need to make sure that we have the parent available also.
-					if ( $theme_data['stylesheet'] !== $theme_data['template'] && isset( $themes[ $theme_data['template'] ] ) ) {
+					if ( $theme_data['child-theme'] && isset( $themes[ $theme_data['template'] ] ) ) {
 						$theme_to_activate = $theme_data;
 
 						break;
@@ -673,13 +694,13 @@ class CompositionManager extends AbstractHookProvider {
 					if ( \is_wp_error( $requirements ) ) {
 						$this->logger->error( '[COMPOSITION] Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
 							[
-								'code'    => $requirements->get_error_code(),
-								'message' => $requirements->get_error_message(),
+								'code'                  => $requirements->get_error_code(),
+								'message'               => $requirements->get_error_message(),
 								'theme_name'            => $theme_to_activate['name'],
 								'theme_dir'             => $theme_to_activate['stylesheet'],
 								'theme_package'         => $theme_to_activate['package-name'],
 								'theme_package_version' => $theme_to_activate['version'],
-								'data'    => $requirements->get_error_data(),
+								'data'                  => $requirements->get_error_data(),
 							]
 						);
 
@@ -698,11 +719,11 @@ class CompositionManager extends AbstractHookProvider {
 						}
 
 						// Exclude child-themes.
-						if ( $theme_data['stylesheet'] === $theme_data['template'] ) {
-							$theme_to_activate = $theme_data;
-
-							break;
+						if ( $theme_data['child-theme'] ) {
+							continue;
 						}
+
+						$theme_to_activate = $theme_data;
 					}
 
 					if ( ! empty( $theme_to_activate ) ) {
@@ -745,13 +766,16 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Check the `composer.lock` file for modifications and update the data we cache about the included plugins and themes.
+	 * Check the `composer.lock` file for modifications and update the data we cache about it (e.g. included plugins and themes).
 	 *
 	 * @since 0.1.0
 	 *
+	 * @param bool $force Force the cache update regardless of efficiency checks.
+	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
 	 * @return bool
 	 */
-	protected function maybe_update_composition_plugins_and_themes_cache(): bool {
+	public function refresh_composition_db_cache( bool $force = false, bool $debug = false ): bool {
 		// Read the current contents of the site's composer.lock.
 		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
@@ -768,8 +792,8 @@ class CompositionManager extends AbstractHookProvider {
 		} catch ( \RuntimeException $e ) {
 			$this->logger->error( 'The site\'s composer.lock file could not be read: {message}',
 				[
-					'message'   => $e->getMessage(),
-					'exception' => $e,
+					'message'     => $e->getMessage(),
+					'exception'   => $debug ? $e : null,
 					'logCategory' => 'composition',
 				]
 			);
@@ -778,8 +802,8 @@ class CompositionManager extends AbstractHookProvider {
 		} catch ( ParsingException $e ) {
 			$this->logger->error( 'The site\'s composer.lock file could not be parsed: {message}',
 				[
-					'message'   => $e->getMessage(),
-					'exception' => $e,
+					'message'     => $e->getMessage(),
+					'exception'   => $debug ? $e : null,
 					'logCategory' => 'composition',
 				]
 			);
@@ -809,7 +833,13 @@ class CompositionManager extends AbstractHookProvider {
 
 		// Check if the "content-hash" is different than what we have.
 		// If they are the same, we don't need to update anything.
-		if ( get_option( self::COMPOSER_LOCK_HASH_OPTION_NAME ) === $composerLockJsonCurrentContents['content-hash'] ) {
+		if ( ! $force && get_option( self::COMPOSER_LOCK_HASH_OPTION_NAME ) === $composerLockJsonCurrentContents['content-hash'] ) {
+			$this->logger->info( 'The site\'s composer.lock file hasn\'t changed. Skipping the cache update.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+
 			return true;
 		}
 
@@ -840,8 +870,10 @@ class CompositionManager extends AbstractHookProvider {
 		$removed_plugins = array_diff_key( $old_plugins, $plugins );
 		$added_plugins   = array_diff_key( $plugins, $old_plugins );
 		$updated_plugins = array_intersect_key( $plugins, $old_plugins );
+		$same_plugins    = [];
 		foreach ( $updated_plugins as $key => $plugin_data ) {
 			if ( \version_compare( $plugin_data['version'], $old_plugins[ $key ]['version'], '=' ) ) {
+				$same_plugins[ $key ] = $plugin_data;
 				unset ( $updated_plugins[ $key ] );
 			}
 		}
@@ -879,6 +911,17 @@ class CompositionManager extends AbstractHookProvider {
 				]
 			);
 		}
+		if ( ! empty( $same_plugins ) ) {
+			$message = 'The following PLUGINS remained the same, according to composer.lock:' . PHP_EOL;
+			foreach ( $same_plugins as $plugin_file => $plugin_data ) {
+				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - version v' . $plugins[ $plugin_file ]['version'] . PHP_EOL;
+			}
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
+		}
 
 		/**
 		 * Log what has actually happened with themes
@@ -886,8 +929,10 @@ class CompositionManager extends AbstractHookProvider {
 		$removed_themes = array_diff_key( $old_themes, $themes );
 		$added_themes   = array_diff_key( $themes, $old_themes );
 		$updated_themes = array_intersect_key( $themes, $old_themes );
-		foreach ( $updated_themes as $key => $plugin_data ) {
-			if ( \version_compare( $plugin_data['version'], $old_themes[ $key ]['version'], '=' ) ) {
+		$same_themes    = [];
+		foreach ( $updated_themes as $key => $theme_data ) {
+			if ( \version_compare( $theme_data['version'], $old_themes[ $key ]['version'], '=' ) ) {
+				$same_themes[ $key ] = $theme_data;
 				unset ( $updated_themes[ $key ] );
 			}
 		}
@@ -925,6 +970,17 @@ class CompositionManager extends AbstractHookProvider {
 				]
 			);
 		}
+		if ( ! empty( $same_themes ) ) {
+			$message = 'The following THEMES have remained the same, according to composer.lock:' . PHP_EOL;
+			foreach ( $updated_themes as $stylesheet => $theme_data ) {
+				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - version v' . $themes[ $stylesheet ]['version'] . PHP_EOL;
+			}
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
+		}
 
 		// Save the plugins and themes data.
 		update_option( self::COMPOSITION_PLUGINS_OPTION_NAME, $plugins, true );
@@ -940,6 +996,38 @@ class CompositionManager extends AbstractHookProvider {
 		 * @param array $themes  The current composition themes data.
 		 */
 		do_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
+
+		return true;
+	}
+
+	/**
+	 * Clear the data we cache about it (e.g. included plugins and themes).
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 *
+	 * @return bool
+	 */
+	public function clear_composition_db_cache( bool $debug = false ): bool {
+
+		// Clear the cache
+		delete_option( self::COMPOSITION_PLUGINS_OPTION_NAME );
+		delete_option( self::COMPOSITION_THEMES_OPTION_NAME );
+		delete_option( self::COMPOSER_LOCK_HASH_OPTION_NAME );
+
+		$this->logger->info( 'The site\'s composition cache has been CLEARED.',
+			[
+				'logCategory' => 'composition',
+			]
+		);
+
+		/**
+		 * After the composition's plugins and themes list has been cleared.
+		 *
+		 * @since 0.1.0
+		 */
+		do_action( 'pixelgradelt_conductor/cleared_composition_plugins_and_themes_cache' );
 
 		return true;
 	}
@@ -1082,7 +1170,7 @@ class CompositionManager extends AbstractHookProvider {
 			$stylesheet => [
 				'name'         => $theme_data['Name'] ?? $package['name'],
 				'stylesheet'   => $stylesheet,
-				'template'     => $theme_data['Template'], // If the template is different than stylesheet, we have a child-theme.
+				'template'     => $theme_data['Template'],
 				'package-name' => $package['name'],
 				'version'      => $package['version'],
 				'description'  => $package['description'] ?? $theme_data['Description'],
@@ -1097,6 +1185,8 @@ class CompositionManager extends AbstractHookProvider {
 					                  ]
 					                  :
 					                  [] ),
+				// If the template is different than stylesheet, we have a child-theme.
+				'child-theme'  => $stylesheet !== $theme_data['Template'],
 			],
 		];
 	}
