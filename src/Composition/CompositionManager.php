@@ -11,6 +11,7 @@ declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Composition;
 
+use Automattic\Jetpack\Constants;
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Composer\Json\JsonFile;
 use PixelgradeLT\Conductor\Queue\QueueInterface;
@@ -19,6 +20,7 @@ use Seld\JsonLint\ParsingException;
 use function PixelgradeLT\Conductor\is_debug_mode;
 use function PixelgradeLT\Conductor\is_dev_url;
 use WP_Http as HTTP;
+use const PixelgradeLT\Conductor\STORAGE_DIR;
 
 /**
  * Class to manage the site composition.
@@ -263,6 +265,15 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
+	 * Get the absolute path to the site's composer.json file.
+	 *
+	 * @return string
+	 */
+	public function get_composer_json_path(): string {
+		return \path_join( LT_ROOT_DIR, 'composer.json' );
+	}
+
+	/**
 	 * Write the contents of the site's composer.json file.
 	 *
 	 * @param array $contents    The entire composer.json contents to write.
@@ -272,7 +283,7 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return bool
 	 */
 	public function write_composer_json( array $contents, int $jsonOptions = 448, bool $debug = false ): bool {
-		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		$composerJsonFile = new JsonFile( $this->get_composer_json_path() );
 		try {
 			$composerJsonFile->write( $contents, $jsonOptions );
 		} catch ( \Exception $e ) {
@@ -280,6 +291,112 @@ class CompositionManager extends AbstractHookProvider {
 				[
 					'message'     => $e->getMessage(),
 					'exception'   => $debug ? $e : null,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get the absolute path to the site's composer.json backup file.
+	 *
+	 * @return string
+	 */
+	public function get_composer_json_backup_path(): string {
+		return \path_join( STORAGE_DIR, 'backup/composer.json.bak' );
+	}
+
+	/**
+	 * Backup the contents of the site's composer.json file.
+	 *
+	 * @return bool
+	 */
+	public function backup_composer_json(): bool {
+		$backup_file = $this->get_composer_json_backup_path();
+
+		// First, make sure that the backup file exists since copy() doesn't do any recursive directory creation, etc.
+		if ( ! file_exists( $backup_file ) ) {
+			if ( ! wp_mkdir_p( \dirname( $backup_file ) ) ) {
+				$this->logger->error( 'Failed to BACKUP the site\'s "composer.json" since we could not create the directory structure of the backup file ("{backupFile}").',
+					[
+						'backupFile' => $backup_file,
+						'logCategory' => 'composition',
+					]
+				);
+
+				return false;
+			}
+
+			$temphandle = @fopen( $backup_file, 'w+' ); // @codingStandardsIgnoreLine.
+			@fclose( $temphandle ); // @codingStandardsIgnoreLine.
+
+			if ( Constants::is_defined( 'FS_CHMOD_FILE' ) ) {
+				@chmod( $backup_file, FS_CHMOD_FILE ); // @codingStandardsIgnoreLine.
+			}
+		}
+
+		if ( ! copy( $this->get_composer_json_path(), $backup_file ) ) {
+			$this->logger->error( 'Failed to BACKUP the site\'s "composer.json" to the backup file "{backupFile}" (could not copy).',
+				[
+					'backupFile' => $backup_file,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Revert the contents of the site's composer.json file from the backup file.
+	 *
+	 * @param bool $ignore_missing Whether to ignore the fact that the site's composer.json is missing and create it from the backup.
+	 *
+	 * @return bool
+	 */
+	public function revert_composer_json( bool $ignore_missing = false ): bool {
+		$composer_file = $this->get_composer_json_path();
+		if ( ! file_exists( $composer_file ) ) {
+			if ( ! $ignore_missing ) {
+				$this->logger->error( 'Failed to REVERT the site\'s composer.json file from the backup file since the site\'s composer.json file is MISSING.',
+					[
+						'logCategory' => 'composition',
+					]
+				);
+
+				return false;
+			}
+
+			// Create the site's composer.json file.
+			$temphandle = @fopen( $composer_file, 'w+' ); // @codingStandardsIgnoreLine.
+			@fclose( $temphandle ); // @codingStandardsIgnoreLine.
+
+			if ( Constants::is_defined( 'FS_CHMOD_FILE' ) ) {
+				@chmod( $composer_file, FS_CHMOD_FILE ); // @codingStandardsIgnoreLine.
+			}
+		}
+
+		$backup_file = $this->get_composer_json_backup_path();
+		if ( ! file_exists( $backup_file ) ) {
+			$this->logger->error( 'Could not REVERT the site\'s composer.json file since the backup file could not be found ("{backupFile}").',
+				[
+					'backupFile' => $backup_file,
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		if ( ! copy( $backup_file, $this->get_composer_json_path() ) ) {
+			$this->logger->error( 'Failed to REVERT the site\'s composer.json file from the backup file (could not copy).',
+				[
 					'logCategory' => 'composition',
 				]
 			);
@@ -415,6 +532,9 @@ class CompositionManager extends AbstractHookProvider {
 
 		// Now we need to prepare the new contents and write them (if needed) the same way Composer does it.
 		if ( ! $skip_write ) {
+			// Better safe than sorry.
+			$this->backup_composer_json();
+
 			if ( ! $this->write_composer_json( $receivedComposerJson, $jsonOptions, $debug ) ) {
 				$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents.',
 					[

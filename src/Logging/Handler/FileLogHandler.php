@@ -60,7 +60,7 @@ class FileLogHandler extends LogHandler {
 			$log_size_limit = 5 * 1024 * 1024;
 		}
 
-		/** @noinspection PhpFieldAssignmentTypeMismatchInspection */
+		/** @noinspection \PhpFieldAssignmentTypeMismatchInspection */
 		$this->log_size_limit = apply_filters( 'pixelgradelt_conductor/log_file_size_limit', $log_size_limit );
 
 		add_action( 'plugins_loaded', array( $this, 'write_cached_logs' ) );
