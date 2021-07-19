@@ -1,18 +1,15 @@
 # PixelgradeLT Conductor Documentation
 
-Define and manage PixelgradeLT parts and packages (plugins and themes) to be used on customers' websites. Also, provide a Composer repository for the defined WordPress plugins, themes and parts.
+This is a WordPress plugin intended to be part of every LT WordPress site. Its job is to take care of updating the site composition (composer.json) and ensuring its effects (like activating provided plugins).
 
-## Why a WordPress Installation?
-
-Packages are exposed via a `packages.json` file for inclusion as a Composer repository in a project's `composer.json` or even your own `satis.json`.
+This should be used as a must-use plugin, but that is up-for-debate.
 
 ## Table of Contents
 
 1. [Installation](installation.md)
 1. Managing
-	1. [Settings](settings.md)
-	1. [Packages](packages.md)
-	1. [Security](security.md)
+    1. [Settings](settings.md)
+    2. [CLI](cli.md)
 1. [Using Composer](composer.md)
 1. [Logging](logging.md)
 1. [Integrations](integrations.md)

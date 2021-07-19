@@ -4,7 +4,7 @@ Custom WordPress plugin to hold the CONDUCTOR-entity logic for Pixelgrade LT (cl
 
 ## About
 
-Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be a MU plugin.
+Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be used as a MU plugin.
 
 ## Development
 
@@ -49,6 +49,10 @@ composer run tests-integration
 ```
 
 **Important:** Before you can run the tests, you need to create a `.env` file in `tests/phpunit/` with the necessary data. You can copy the already existing `.env.example` file. Further instructions are in the `.env.example` file.
+
+## Documentation
+
+For installation notes, information about usage, and more, see the [documentation](docs/index.md).
 
 ## Credits
 

@@ -44,6 +44,10 @@ use function PixelgradeLT\Conductor\plugin;
  *     $ wp lt composition clear-cache
  *     Success: The site's composition DB cache has been CLEARED!
  *
+ *     # Active the plugins and/or theme installed by the composition.
+ *     $ wp lt composition activate
+ *     Success: The activation was successful!
+ *
  * @since   0.1.0
  * @package PixelgradeLT
  */
