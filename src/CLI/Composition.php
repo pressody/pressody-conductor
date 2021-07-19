@@ -405,9 +405,9 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.1.0
 	 */
 	public function check( $args, $assoc_args ) {
-		WP_CLI::log( '------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to check the site\'s composer.json..' . "%n" ) );
-		WP_CLI::log( '------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( '' );
 
 		try {
@@ -422,13 +422,13 @@ class Composition extends \WP_CLI_Command {
 		$result = $compositionManager->check_update( true, Utils\get_flag_value( $assoc_args, 'verbose', false ) );
 
 		WP_CLI::log( '' );
-		WP_CLI::log( '------------------------------------------' );
+		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition (composer.json file) is OK!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'The site\'s composition (composer.json file) is NOT OK! See above for further details.' . "%n" ) );
 		}
-		WP_CLI::log( '------------------------------------------' );
+		WP_CLI::log( '---' );
 	}
 
 	/**
@@ -452,9 +452,9 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.1.0
 	 */
 	public function update( $args, $assoc_args ) {
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to check and possibly update the site\'s composer.json..' . "%n" ) );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( '' );
 
 		try {
@@ -467,9 +467,9 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		if ( Utils\get_flag_value( $assoc_args, 'force', false ) ) {
-			WP_CLI::log( '--------------------------------------------------------------' );
+			WP_CLI::log( '---' );
 			WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting the site\'s composer.json reinitialisation..' . "%n" ) );
-			WP_CLI::log( '--------------------------------------------------------------' );
+			WP_CLI::log( '---' );
 			WP_CLI::log( '' );
 
 			// We will first reinitialise the composer.json contents since we we've been instructed to do so.
@@ -482,22 +482,22 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			WP_CLI::log( '' );
-			WP_CLI::log( '--------------------------------------------------------------' );
+			WP_CLI::log( '---' );
 			WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to attempt the update of the site\'s composer.json.' . "%n" ) );
-			WP_CLI::log( '--------------------------------------------------------------' );
+			WP_CLI::log( '---' );
 			WP_CLI::log( '' );
 		}
 
 		$result = $compositionManager->check_update( false, Utils\get_flag_value( $assoc_args, 'verbose', false ) );
 
 		WP_CLI::log( '' );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition (composer.json file) is now UP-TO-DATE!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'The site\'s composition (composer.json file) is NOT OK! See above for further details.' . "%n" ) );
 		}
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 	}
 
 	/**
@@ -521,9 +521,9 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.1.0
 	 */
 	public function update_cache( $args, $assoc_args ) {
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to update the composition\'s DB cache.' . "%n" ) );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( '' );
 
 		try {
@@ -538,13 +538,13 @@ class Composition extends \WP_CLI_Command {
 		$result = $compositionManager->refresh_composition_db_cache( Utils\get_flag_value( $assoc_args, 'force', false ), Utils\get_flag_value( $assoc_args, 'verbose', false ) );
 
 		WP_CLI::log( '' );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition DB cache is now UP-TO-DATE!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t update site\'s composition DB cache! See above for further details.' . "%n" ) );
 		}
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 	}
 
 	/**
@@ -565,9 +565,9 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.1.0
 	 */
 	public function clear_cache( $args, $assoc_args ) {
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to clear the composition\'s DB cache.' . "%n" ) );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( '' );
 
 		try {
@@ -582,13 +582,13 @@ class Composition extends \WP_CLI_Command {
 		$result = $compositionManager->clear_composition_db_cache( Utils\get_flag_value( $assoc_args, 'verbose', false ) );
 
 		WP_CLI::log( '' );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition DB cache has been CLEARED!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t clear site\'s composition DB cache! See above for further details.' . "%n" ) );
 		}
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 	}
 
 	/**
@@ -620,9 +620,9 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.8.0
 	 */
 	public function activate( $args, $assoc_args ) {
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to activate plugins/themes installed via the composition..' . "%n" ) );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		WP_CLI::log( '' );
 
 		try {
@@ -644,12 +644,12 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		WP_CLI::log( '' );
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The activation was successful!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'There were errors during activation! See above for further details.' . "%n" ) );
 		}
-		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '---' );
 	}
 }
