@@ -1,84 +1,45 @@
-# Using Composer with PixelgradeLT Conductor
+# The Composition
 
-Once PixelgradeLT Conductor is installed and configured you can include the PixelgradeLT Conductor repository in the list of repositories in your `composer.json` or `satis.json`, then require the packages using `pixelgradelt_conductor` (or your custom setting) as the vendor:
+**The site's composition is at the core of the entire LT Conductor logic** (for what is worth, this holds true for the entire LT ecosystem). While other entities like **LT Records** and **LT Retailer** work to construct and manage the life-cycle of a composition, as _an abstract entity_, detached from an actual WordPress site, **LT Conductor gets to actually make the music play!**
 
-```json
-{
-	"repositories": [
-		{
-			"type": "composer",
-			"url": "https://retailer.pixelgradelt.com/ltpackagist/"
-		}
-	],
-	"require": {
-		"composer/installers": "^1.0",
-		"pixelgradelt_conductor/atomic-blocks": "*",
-		"pixelgradelt_conductor/genesis": "*",
-		"pixelgradelt_conductor/gravityforms": "*"
-	}
-}
-```
+LT Conductor will **update the site's composition** (the `composer.json` file), **install/remove packages** (WordPress plugins and themes) according to it (by running the Composer logic), and **activate the installed plugins and themes.**
 
-_The `pixelgradelt_conductor` vendor name can be changed on the [Settings page](settings.md)._
+## Composition Data
 
-## Installing Packages
+The composition is a standard Composer `project` with some extra information to **uniquely identify** the source composition, its user, etc. This information resides in the `extra` entry of the `composer.json` data.
 
-When you install a package from a PixelgradeLT Conductor repository for the first time, Composer will notify you that authentication is required. Use your API Key for the username and `pixelgradelt_conductor` as the password. Composer will then ask if you want to store the credentials, which should be fine.
+The unique information related to identifying the composition throughout the LT ecosystem is located in `extra > lt-composition`. The data is **encrypted** (by LT Retailer) since it's for our internal use only.
 
-```sh
-$ ls -1
-composer.json
+The `extra > lt-required-packages` is information about **the source of all the LT Parts** that are part of the site's composition. This way we can investigate how the current composition came to be (i.e. what LT Solutions "contributed" each LT Part).
 
-$ composer install
-Loading composer repositories with package information
+The `extra > lt-version` is **the composition's LT version** to help us _migrate and upgrade compositions_ relying on older specs. This is all done remotely by LT Records and the rest of the LT ecosystem.
 
-    Authentication required (retailer.pixelgradelt.com):
-      Username: aUEZYqq6pXlMjdg8swe0rQgMCZAPJNaR
-      Password:
-Do you want to store credentials for local.test in /Users/vladolaru/.composer/auth.json ? [Yn] y
-Updating dependencies (including require-dev)
-Package operations: 4 installs, 0 updates, 0 removals
-  - Installing composer/installers (v1.5.0):
-  - Installing pixelgradelt_conductor/genesis (2.6.1):
-  - Installing pixelgradelt_conductor/gravityforms (2.3.2):
-  - Installing pixelgradelt_conductor/atomic-blocks (1.2.1):
-Writing lock file
-Generating autoload files
+The `extra > lt-fingerprint` is a hash of the entire composition's data to allow us to check for **any manual or outside tampering with the composition.** Since we don't allow manual composition editing (by editing the `composer.json` file), we will **reject from update any compositions that fail the fingerprint test.** One solution to this situation is the reinitialization of the composition by running the following CLI command: `wp lt composition update --force`
 
-$ ls -1
-composer.json
-composer.lock
-vendor
-wp-content
+## Composition Update
 
-$ ls -1 wp-content/plugins
-gravityforms
-```
+To determine if the current composition is need of an update, **LT Conductor "pings" LT Records** with the current composition (the `composer.json` contents). If it receives back a new composition, it will replace the current one (while backing it up, just in case).
 
-## Configuring Authentication
+Once the `composer.json` file has been update, the Composer logic is run to **install/update/remove the packages** and update the actual WordPress plugins and themes that are present in the site. This **will not interfere with manually installed plugins or themes.** Those will be left as they were.
 
-It's also possible to configure Composer to use your API Key by running the `config` command:
+After the plugins and themes files have been updated, **all the plugins part of the composition will be activated** (if they were not already active), and **a theme will be selected for activation** if one of the WordPress core themes are active.
 
-```sh
-$ composer config http-basic.retailer.pixelgradelt.com \
-   aUEZYqq6pXlMjdg8swe0rQgMCZAPJNaR pixelgradelt_conductor
-```
+If at any point during the composition update **an unrecoverable error is encountered** (like failure to install a required package, or active a plugin due to a fatal PHP error), **the site's composition is reverted to its previous state.**
 
-After running that command, you should end up with an `auth.json` in your project alongside the `composer.json` that looks like this:
+## Composition Status and Manual-Management
 
-```json
-{
-    "http-basic": {
-        "retailer.pixelgradelt.com": {
-            "username": "aUEZYqq6pXlMjdg8swe0rQgMCZAPJNaR",
-            "password": "pixelgradelt_conductor"
-        }
-    }
-}
-```
+Using the WP-CLI one can examine, investigate, and manage the site's composition. See [this page](cli.md) for more details.
 
-The [Composer documentation explains the benefit](https://getcomposer.org/doc/articles/http-basic-authentication.md) of using a local `auth.json`:
- 
-> The main advantage of the `auth.json` file is that it can be gitignored so that every developer in your team can place their own credentials in there, which makes revocation of credentials much easier than if you all share the same.
+One can't edit a composition to _permanently_ include or remove packages, but it can force it to update, active plugins and theme, besides the tools WP-CLI provides for general WordPress management.
+
+## WordPress Dashboard Behavior
+
+While LT Conductor does most of its work behind the scenes (either WP-CLI or WP-Cron), there are some **effects imposed on the WordPress dashboard.** All of these are in line with keeping the logic consistent and **avoid splitting responsibilities with the user** while promising we take them upon ourselves.
+
+To achieve this clarity of accountability, **any WordPress plugin or WordPress theme managed through the composition will not be manageable through the regular WordPress interface** (the `Plugins` or `Themes` pages). While the PixelgradeLT crew will have WP users with special access (for debugging and support purposes), other users (including site administrators) will not be able to interact directly with plugins and themes provided by PixelgradeLT (nor with the WordPress version). 
+
+Users can install other (possibly vetted) plugins and themes, but they can't change the behavior of the LT composition through their WordPress dashboard, **only remotely, from the place they purchase (even if free) and manage the LT Solutions** that make up their LT Composition. Some more details about the entities involved here can be found via [LT Records](https://github.com/pixelgradelt/pixelgradelt-records#lt-packages) and [LT Retailer](https://github.com/pixelgradelt/pixelgradelt-retailer#lt-solutions).
+
+Also, we don't allow access to the `Tools → Site Health` section since we handle all the server, performance, configuration details for our users. PixelgradeLT special-access users will be able to access it for debugging and support purposes.
 
 [Back to Index](index.md)
