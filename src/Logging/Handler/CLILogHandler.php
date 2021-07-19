@@ -4,12 +4,12 @@
  *
  * Code borrowed and modified from WooCommerce.
  *
- * @package PixelgradeLT
+ * @since   0.1.0
  * @license GPL-2.0-or-later
- * @since 0.1.0
+ * @package PixelgradeLT
  */
 
-declare ( strict_types = 1 );
+declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Logging\Handler;
 
@@ -27,14 +27,14 @@ class CLILogHandler extends LogHandler {
 	/**
 	 * Handle a log entry.
 	 *
-	 * @param int       $timestamp Log timestamp.
-	 * @param string    $level     emergency|alert|critical|error|warning|notice|info|debug.
-	 * @param string    $message   Log message.
-	 * @param array     $context   {
-	 *      Additional information for log handlers.
+	 * @param int    $timestamp Log timestamp.
+	 * @param string $level     emergency|alert|critical|error|warning|notice|info|debug.
+	 * @param string $message   Log message.
+	 * @param array  $context   {
+	 *                          Additional information for log handlers.
 	 *
-	 *     @type string $source    Optional. Determines log file to write to. Default 'log'.
-	 *     @type bool   $_legacy   Optional. Default false. True to use outdated log format
+	 * @type string  $source    Optional. Determines log file to write to. Default 'log'.
+	 * @type bool    $_legacy   Optional. Default false. True to use outdated log format
 	 *         originally used in deprecated WC_Logger::add calls.
 	 * }
 	 *
@@ -63,7 +63,8 @@ class CLILogHandler extends LogHandler {
 				break;
 		}
 
-		return true;
+		// We want to let other log handlers do their things, since this logger is not actually logging, but displaying.
+		return false;
 	}
 
 	/**
@@ -89,8 +90,8 @@ class CLILogHandler extends LogHandler {
 		$entry = "{$message}";
 
 		// Replace any context data provided in the message.
-		$search  = [];
-		$replace = [];
+		$search       = [];
+		$replace      = [];
 		$temp_context = $context;
 		foreach ( $temp_context as $key => $value ) {
 			$placeholder = '{' . $key . '}';
@@ -128,12 +129,13 @@ class CLILogHandler extends LogHandler {
 	 * @since 0.1.0
 	 *
 	 * @param Exception $e Exception.
+	 *
 	 * @return string
 	 */
 	protected function format_exception( Exception $e ): string {
 		// Since the trace may contain in a step's args circular references, we need to replace such references with a string.
 		// This is to avoid infinite recursion when attempting to json_encode().
-		$trace = JSONCleaner::clean( $e->getTrace(), 6 );
+		$trace             = JSONCleaner::clean( $e->getTrace(), 6 );
 		$encoded_exception = print_r(
 			[
 				'message' => $e->getMessage(),

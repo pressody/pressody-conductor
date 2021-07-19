@@ -61,7 +61,9 @@ class ServiceProvider implements ServiceProviderInterface {
 			return new Logger(
 				LogLevel::DEBUG,
 				[
+					// Use both loggers to display in the CLI and log into the log files.
 					$container['logs.handlers.cli'],
+					$container['logs.handlers.file'],
 				]
 			);
 		};

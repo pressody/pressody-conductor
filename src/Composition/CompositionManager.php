@@ -265,9 +265,9 @@ class CompositionManager extends AbstractHookProvider {
 	/**
 	 * Write the contents of the site's composer.json file.
 	 *
-	 * @param array $contents The entire composer.json contents to write.
+	 * @param array $contents    The entire composer.json contents to write.
 	 * @param int   $jsonOptions json_encode options (defaults to JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-	 * @param bool  $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool  $debug       Whether to log detailed exceptions (like stack traces and stuff).
 	 *
 	 * @return bool
 	 */
@@ -604,11 +604,21 @@ class CompositionManager extends AbstractHookProvider {
 		}
 	}
 
-	public function handle_composition_plugins_activation() {
-		$plugins = $this->get_composition_plugin();
+	/**
+	 * Activate all plugins installed via the composition.
+	 *
+	 * Of course, must-use or drop-in plugins don't get activated.
+	 *
+	 * @return bool True if there were no errors on activation. False if some plugins could not be activated.
+	 */
+	public function handle_composition_plugins_activation(): bool {
+		$plugins        = $this->get_composition_plugin();
+		$errors         = [];
+		$already_active = [];
 		if ( ! empty( $plugins ) ) {
 			foreach ( $plugins as $plugin_file => $plugin_data ) {
 				if ( \is_plugin_active( $plugin_file ) ) {
+					$already_active[ $plugin_file ] = $plugin_data;
 					continue;
 				}
 
@@ -618,45 +628,87 @@ class CompositionManager extends AbstractHookProvider {
 						// We will silently deactivate it to prevent the user notice regarding plugin not found.
 						\deactivate_plugins( $plugin_file, true );
 
-						$this->logger->warning( '[COMPOSITION] Encountered MISSING composition PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}". Silently deactivated it.',
+						$this->logger->warning( 'Encountered MISSING composition PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}". Silently deactivated it.',
 							[
 								'plugin_name'            => $plugin_data['name'],
 								'plugin_file'            => $plugin_data['plugin-file'],
 								'plugin_package'         => $plugin_data['package-name'],
 								'plugin_package_version' => $plugin_data['version'],
+								'logCategory'            => 'composition',
 							]
 						);
 
 						continue;
 					}
 
-					$this->logger->error( '[COMPOSITION] The composition\'s PLUGIN ACTIVATION failed with "{code}": {message}',
+					$errors[ $plugin_file ] = $result;
+					$this->logger->error( 'The composition\'s PLUGIN ACTIVATION failed with "{code}": {message}',
 						[
-							'code'    => $result->get_error_code(),
-							'message' => $result->get_error_message(),
-							'data'    => $result->get_error_data(),
+							'code'        => $result->get_error_code(),
+							'message'     => $result->get_error_message(),
+							'data'        => $result->get_error_data(),
+							'logCategory' => 'composition',
 						]
 					);
 
 					continue;
 				}
 
-				$this->logger->info( '[COMPOSITION] The composition\'s PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}", was automatically ACTIVATED.',
+				$this->logger->info( 'The composition\'s PLUGIN "{plugin_name}" ({plugin_file}), corresponding to package "{plugin_package} v{plugin_package_version}", was automatically ACTIVATED.',
 					[
 						'plugin_name'            => $plugin_data['name'],
 						'plugin_file'            => $plugin_data['plugin-file'],
 						'plugin_package'         => $plugin_data['package-name'],
 						'plugin_package_version' => $plugin_data['version'],
+						'logCategory'            => 'composition',
 					]
 				);
 			}
 		}
 
+		if ( ! empty( $already_active ) && ! empty( $plugins ) && count( $already_active ) === count( $plugins ) ) {
+			$this->logger->info( 'No plugin needed to be activated.',
+				[
+					'logCategory' => 'composition',
+				]
+			);
+		}
+
+		if ( ! empty( $already_active ) ) {
+			$message = 'The following composition PLUGINS were already active:' . PHP_EOL;
+			foreach ( $already_active as $plugin_file => $plugin_data ) {
+				$message .= '    - ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . PHP_EOL;
+			}
+			$this->logger->info( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
+		}
+
 		// Since there might be removed plugin packages we instruct WordPress to validate the active plugins (it will silently deactivate missing plugins).
-		validate_active_plugins();
+		$invalid_plugins = validate_active_plugins();
+		if ( ! empty( $invalid_plugins ) ) {
+			$message = 'The following active PLUGINS were found INVALID and deactivated:' . PHP_EOL;
+			foreach ( $invalid_plugins as $plugin_file => $error ) {
+				$message .= '    - "' . $plugin_file . '" due to: ' . $error->get_error_message() . PHP_EOL;
+			}
+			$message .= 'This might not be a reason to worry about since composition plugins that get removed from the composition will "suddenly disappear" and be identified as INVALID (missing).' . PHP_EOL;
+
+			$this->logger->warning( $message,
+				[
+					'logCategory' => 'composition',
+				]
+			);
+		}
+
+		return empty( $errors );
 	}
 
-	public function handle_composition_themes_activation() {
+	/**
+	 * @return bool True if there were no
+	 */
+	public function handle_composition_themes_activation(): bool {
 		// For themes, the logic is somewhat more convoluted since we can only have a single theme active at any one time.
 		// Also, the user might bring his or hers own themes (or child-themes).
 		// So, we will only force activate if one of the core themes is active.
@@ -673,8 +725,8 @@ class CompositionManager extends AbstractHookProvider {
 			     || preg_match( '/^twenty/i', $current_theme->get_stylesheet() )
 			     || 'the wordpress team' === trim( strtolower( $current_theme->get( 'Author' ) ) ) ) {
 
-				// Search for a child theme to activate.
 				$theme_to_activate = false;
+				// Search for a child theme to activate.
 				foreach ( $themes as $theme_dir => $theme_data ) {
 					// Better safe than sorry.
 					if ( $theme_dir === $current_theme->get_stylesheet() ) {
@@ -689,10 +741,10 @@ class CompositionManager extends AbstractHookProvider {
 					}
 				}
 
-				if ( ! empty( $theme_to_activate ) ) {
+				if ( $theme_to_activate ) {
 					$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
 					if ( \is_wp_error( $requirements ) ) {
-						$this->logger->error( '[COMPOSITION] Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+						$this->logger->error( 'Found CHILD-THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
 							[
 								'code'                  => $requirements->get_error_code(),
 								'message'               => $requirements->get_error_message(),
@@ -701,6 +753,7 @@ class CompositionManager extends AbstractHookProvider {
 								'theme_package'         => $theme_to_activate['package-name'],
 								'theme_package_version' => $theme_to_activate['version'],
 								'data'                  => $requirements->get_error_data(),
+								'logCategory'           => 'composition',
 							]
 						);
 
@@ -710,7 +763,7 @@ class CompositionManager extends AbstractHookProvider {
 					}
 				}
 
-				if ( empty( $theme_to_activate ) ) {
+				if ( ! $theme_to_activate ) {
 					// Search for a regular/parent theme to activate.
 					foreach ( $themes as $theme_dir => $theme_data ) {
 						// Better safe than sorry.
@@ -726,10 +779,10 @@ class CompositionManager extends AbstractHookProvider {
 						$theme_to_activate = $theme_data;
 					}
 
-					if ( ! empty( $theme_to_activate ) ) {
+					if ( $theme_to_activate ) {
 						$requirements = \validate_theme_requirements( $theme_to_activate['stylesheet'] );
 						if ( \is_wp_error( $requirements ) ) {
-							$this->logger->error( '[COMPOSITION] Found THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
+							$this->logger->error( 'Found THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", in the composition but we couldn\'t activate it due to "{code}": {message}',
 								[
 									'code'                  => $requirements->get_error_code(),
 									'message'               => $requirements->get_error_message(),
@@ -738,6 +791,7 @@ class CompositionManager extends AbstractHookProvider {
 									'theme_package'         => $theme_to_activate['package-name'],
 									'theme_package_version' => $theme_to_activate['version'],
 									'data'                  => $requirements->get_error_data(),
+									'logCategory'           => 'composition',
 								]
 							);
 
@@ -748,21 +802,88 @@ class CompositionManager extends AbstractHookProvider {
 					}
 				}
 
-				if ( ! empty( $theme_to_activate ) ) {
-					$this->logger->info( '[COMPOSITION] The composition\'s THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", was automatically ACTIVATED.',
+				if ( $theme_to_activate ) {
+					$this->logger->info( 'The composition\'s THEME "{theme_name}" ({theme_dir}), corresponding to package "{theme_package} v{theme_package_version}", was automatically ACTIVATED.',
 						[
 							'theme_name'            => $theme_to_activate['name'],
 							'theme_dir'             => $theme_to_activate['stylesheet'],
 							'theme_package'         => $theme_to_activate['package-name'],
 							'theme_package_version' => $theme_to_activate['version'],
+							'logCategory'           => 'composition',
 						]
 					);
 				}
 			}
 		}
 
+		// Get the currently active theme.
+		$current_theme = \wp_get_theme();
+
+		// There was no reason to active since the current theme is OK.
+		if ( ! isset( $theme_to_activate ) ) {
+			$this->logger->info( 'No need to change the active theme since the current active theme "{theme_name}" ({theme_dir}) is not a core theme.',
+				[
+					'theme_name'  => $current_theme->get( 'Name' ),
+					'theme_dir'   => $current_theme->get_stylesheet(),
+					'logCategory' => 'composition',
+				]
+			);
+
+			return true;
+		}
+
 		// Since there might be removed theme packages we instruct WordPress to validate the current theme (it will silently fallback to the default theme).
-		validate_current_theme();
+		/** Do the checks done by @see \validate_current_theme() */
+		if ( ! file_exists( get_template_directory() . '/index.php' ) ) {
+			// Invalid.
+			$this->logger->warning( 'The current active theme "{theme_name}" ({theme_dir}) was found INVALID because it{parent} is missing the "index.php" file.',
+				[
+					'theme_name'  => $current_theme->get( 'Name' ),
+					'theme_dir'   => $current_theme->get_stylesheet(),
+					'parent'      => is_child_theme() ? '\'s PARENT THEME' : '',
+					'logCategory' => 'composition',
+				]
+			);
+		} elseif ( ! file_exists( get_template_directory() . '/style.css' ) ) {
+			// Invalid.
+			$this->logger->warning( 'The current active theme "{theme_name}" ({theme_dir}) was found INVALID because it{parent} is missing the "style.css" file.',
+				[
+					'theme_name'  => $current_theme->get( 'Name' ),
+					'theme_dir'   => $current_theme->get_stylesheet(),
+					'parent'      => is_child_theme() ? '\'s PARENT THEME' : '',
+					'logCategory' => 'composition',
+				]
+			);
+		} elseif ( is_child_theme() && ! file_exists( get_stylesheet_directory() . '/style.css' ) ) {
+			// Invalid.
+			$this->logger->warning( 'The current active child-theme "{theme_name}" ({theme_dir}) was found INVALID because it\'s missing the "style.css" file.',
+				[
+					'theme_name'  => $current_theme->get( 'Name' ),
+					'theme_dir'   => $current_theme->get_stylesheet(),
+					'logCategory' => 'composition',
+				]
+			);
+		} else {
+			// Valid.
+		}
+		// Run the core validation to fallback on a core theme.
+		if ( ! validate_current_theme() ) {
+			$this->logger->info( 'Since the current active theme "{theme_name}" ({theme_dir}) was found INVALID, silently fallback to the core default theme.',
+				[
+					'theme_name'  => $current_theme->get( 'Name' ),
+					'theme_dir'   => $current_theme->get_stylesheet(),
+					'logCategory' => 'composition',
+				]
+			);
+
+			return false;
+		}
+
+		if ( ! $theme_to_activate ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -842,6 +963,11 @@ class CompositionManager extends AbstractHookProvider {
 
 			return true;
 		}
+
+		// First, clear the WordPress plugins and themes cache
+		// since WordPress can't know when Composer installs or updates a plugin or theme.
+		\wp_clean_plugins_cache();
+		\wp_clean_themes_cache();
 
 		// Get the old plugins  and themes installed by Composer.
 		$old_plugins = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
@@ -972,7 +1098,7 @@ class CompositionManager extends AbstractHookProvider {
 		}
 		if ( ! empty( $same_themes ) ) {
 			$message = 'The following THEMES have remained the same, according to composer.lock:' . PHP_EOL;
-			foreach ( $updated_themes as $stylesheet => $theme_data ) {
+			foreach ( $same_themes as $stylesheet => $theme_data ) {
 				$message .= '    - ' . $theme_data['name'] . ' (' . $stylesheet . ') - version v' . $themes[ $stylesheet ]['version'] . PHP_EOL;
 			}
 			$this->logger->info( $message,
@@ -1152,9 +1278,10 @@ class CompositionManager extends AbstractHookProvider {
 		$theme_data = $this->get_theme_data( $theme_folder );
 		// This means we couldn't find the theme.
 		if ( ! $theme_data ) {
-			$this->logger->warning( 'Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data.',
+			$this->logger->warning( 'Encountered WP theme "{packageName}" in composer.lock for which we couldn\'t extract the theme data ({theme_dir}).',
 				[
 					'packageName' => $package['name'],
+					'theme_dir'   => $theme_folder,
 					'logCategory' => 'composition',
 				]
 			);

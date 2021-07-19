@@ -176,7 +176,7 @@ class Composition extends \WP_CLI_Command {
 						'timestamp' => strtotime( $composerJson['time'] ),
 					];
 				}
-				$fields = array_intersect( [
+				$fields     = array_intersect( [
 					'humanReadable',
 					'dateTime',
 					'dateTimeC',
@@ -207,12 +207,12 @@ class Composition extends \WP_CLI_Command {
 					'ltVersion' => $composerJson['extra']['lt-version'],
 				];
 				if ( $verbose ) {
-					$parser = new VersionParser();
+					$parser        = new VersionParser();
 					$ltVersionData += [
 						'ltVersionNormalized' => $parser->normalize( $composerJson['extra']['lt-version'] ),
 					];
 				}
-				$fields = array_intersect( [ 'ltVersion', 'ltVersionNormalized', ], array_keys( $ltVersionData ) );
+				$fields     = array_intersect( [ 'ltVersion', 'ltVersionNormalized', ], array_keys( $ltVersionData ) );
 				$assoc_args = compact( 'format', 'fields' );
 				$formatter  = new Formatter( $assoc_args );
 				$formatter->display_item( $ltVersionData );
@@ -233,7 +233,7 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
-			$fields = [ 'name', 'version', 'requiredBy', ];
+			$fields                 = [ 'name', 'version', 'requiredBy', ];
 			Utils\format_items( $format, $ltRequiredPackagesData, $fields );
 
 			return;
@@ -380,7 +380,7 @@ class Composition extends \WP_CLI_Command {
 		WP_CLI::log( '  These are most likely LT Parts.' );
 		WP_CLI::log( '' );
 		$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
-		$fields = [ 'name', 'version', 'requiredBy', ];
+		$fields                 = [ 'name', 'version', 'requiredBy', ];
 		Utils\format_items( $format, $ltRequiredPackagesData, $fields );
 	}
 
@@ -449,7 +449,7 @@ class Composition extends \WP_CLI_Command {
 	 */
 	public function update( $args, $assoc_args ) {
 		WP_CLI::log( '--------------------------------------------------------------' );
-		WP_CLI::log( WP_CLI::colorize( "%B" .  'Starting to check and possibly update the site\'s composer.json..' . "%n" ) );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to check and possibly update the site\'s composer.json..' . "%n" ) );
 		WP_CLI::log( '--------------------------------------------------------------' );
 		WP_CLI::log( '' );
 
@@ -518,7 +518,7 @@ class Composition extends \WP_CLI_Command {
 	 */
 	public function update_cache( $args, $assoc_args ) {
 		WP_CLI::log( '--------------------------------------------------------------' );
-		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to update the composition\'s DB cache.' . "%n") );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to update the composition\'s DB cache.' . "%n" ) );
 		WP_CLI::log( '--------------------------------------------------------------' );
 		WP_CLI::log( '' );
 
@@ -538,7 +538,7 @@ class Composition extends \WP_CLI_Command {
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition DB cache is now UP-TO-DATE!' );
 		} else {
-			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t update site\'s composition DB cache! See above for further details.' . "%n") );
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t update site\'s composition DB cache! See above for further details.' . "%n" ) );
 		}
 		WP_CLI::log( '--------------------------------------------------------------' );
 	}
@@ -583,6 +583,68 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::success( 'The site\'s composition DB cache has been CLEARED!' );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t clear site\'s composition DB cache! See above for further details.' . "%n" ) );
+		}
+		WP_CLI::log( '--------------------------------------------------------------' );
+	}
+
+	/**
+	 * Activates the composition installed plugins and/or theme.
+	 *
+	 * It relies on the DB cache, so it might be useful to refresh the cache before running it with `wp lt composition update-cache`.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--plugins]
+	 * : Activate only the composition's plugins.
+	 *
+	 * [--theme]
+	 * : Activate only the composition's theme.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition activate
+	 *      - This will activate all plugins and theme installed by the composition.
+	 *
+	 *  2. wp lt composition activate --plugins
+	 *      - This will activate all plugins installed by the composition.
+	 *
+	 *  3. wp lt composition activate --theme
+	 *      - This will activate a theme installed by the composition. If a child theme is found it will be activated over it\'s parent theme.
+	 *
+	 * @subcommand activate
+	 *
+	 * @since      0.8.0
+	 */
+	public function activate( $args, $assoc_args ) {
+		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to activate plugins/themes installed via the composition..' . "%n" ) );
+		WP_CLI::log( '--------------------------------------------------------------' );
+		WP_CLI::log( '' );
+
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+
+			return;
+		}
+
+		$result = true;
+		if ( Utils\get_flag_value( $assoc_args, 'plugins', false ) || ! Utils\get_flag_value( $assoc_args, 'theme', false ) ) {
+			$result = $result && $compositionManager->handle_composition_plugins_activation();
+		}
+
+		if ( Utils\get_flag_value( $assoc_args, 'theme', false ) || ! Utils\get_flag_value( $assoc_args, 'plugins', false ) ) {
+			$result = $result && $compositionManager->handle_composition_themes_activation();
+		}
+
+		WP_CLI::log( '' );
+		WP_CLI::log( '--------------------------------------------------------------' );
+		if ( $result ) {
+			WP_CLI::success( 'The activation was successful!' );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'There were errors during activation! See above for further details.' . "%n" ) );
 		}
 		WP_CLI::log( '--------------------------------------------------------------' );
 	}
