@@ -50,6 +50,7 @@
 		"pimple/pimple": "^3.2",
 		"psr/container": "^1.0",
 		"psr/log": "^1.0",
+	  	"rmccue/requests": "^1.8",
 		"vlucas/phpdotenv": "^5.3",
 		"woocommerce/action-scheduler": "^3.2"
 	},

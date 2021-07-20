@@ -1,6 +1,6 @@
 <?php
 /**
- * Composer Client Custom Token Authentication provider.
+ * Composer wrapper Custom Token Authentication provider.
  *
  * @package PixelgradeLT
  * @license GPL-2.0-or-later
@@ -9,12 +9,12 @@
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Client;
+namespace PixelgradeLT\Conductor\Composer;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 
 /**
- * Composer Client Custom Token Authentication provider class.
+ * Composer wrapper Custom Token Authentication provider class.
  *
  * @since 0.1.0
  */
@@ -23,7 +23,7 @@ class CustomTokenAuthentication extends AbstractHookProvider {
 	 * Register hooks.
 	 */
 	public function register_hooks() {
-		add_filter( 'pixelgradelt_conductor/composer_client_config', [ $this, 'filter_config' ], 5 );
+		add_filter( 'pixelgradelt_conductor/composer_wrapper_config', [ $this, 'filter_config' ], 5 );
 	}
 
 	/**

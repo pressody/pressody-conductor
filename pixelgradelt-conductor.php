@@ -55,6 +55,13 @@ if ( ! function_exists( __NAMESPACE__ . '\autoloader_classmap' ) ) {
 // Autoload mapped classes.
 spl_autoload_register( __NAMESPACE__ . '\autoloader_classmap' );
 
+/**
+ * Plugin's vendor directory absolute path.
+ *
+ * @var string
+ */
+const VENDOR_DIR = __DIR__ . '/vendor';
+
 // Read environment variables from the $_ENV array also.
 \Env\Env::$options |= \Env\Env::USE_ENV_ARRAY;
 

@@ -12,13 +12,10 @@ declare ( strict_types=1 );
 namespace PixelgradeLT\Conductor;
 
 use Cedaro\WP\Plugin\Provider\I18n;
-use Env\Env;
 use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
-use Pimple\ServiceIterator;
 use Pimple\ServiceProviderInterface;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
-use PixelgradeLT\Conductor\Exception\PixelgradeltConductorException;
 use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
 use PixelgradeLT\Conductor\Logging\Logger;
@@ -39,16 +36,6 @@ class ServiceProvider implements ServiceProviderInterface {
 	 * @param PimpleContainer $container Container instance.
 	 */
 	public function register( PimpleContainer $container ) {
-
-		$container['client.composer'] = function () {
-			return new Client\ComposerClient(
-				COMPOSER_DIR
-			);
-		};
-
-		$container['client.composer.custom_token_auth'] = function () {
-			return new Client\CustomTokenAuthentication();
-		};
 
 		$container['cli.composition.manager'] = function ( $container ) {
 			return new CompositionManager(
@@ -183,6 +170,17 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['screen.settings'] = function () {
 			return new Screen\Settings();
+		};
+
+		$container['wrapper.composer'] = function ( $container ) {
+			return new Composer\ComposerWrapper(
+				COMPOSER_DIR,
+				$container['cli.logger']
+			);
+		};
+
+		$container['composer.custom_token_auth'] = function () {
+			return new Composer\CustomTokenAuthentication();
 		};
 	}
 }
