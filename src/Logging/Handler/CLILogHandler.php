@@ -63,7 +63,7 @@ class CLILogHandler extends LogHandler {
 				break;
 		}
 
-		// We want to let other log handlers do their things, since this logger is not actually logging, but displaying.
+		// We want to let other log handlers do their thing, since this logger is not actually logging, but displaying.
 		return false;
 	}
 

@@ -60,7 +60,7 @@ class ComposerPackageManagerEventSubscriber implements EventSubscriberInterface 
 	 */
 	public static function pre_install( PackageEvent $event ) {
 		$operation_message = $event->getOperation()->__toString();
-		self::$io->info( ' - ' . $operation_message );
+		$event->getIO()->info( ' - ' . $operation_message );
 	}
 
 	/**

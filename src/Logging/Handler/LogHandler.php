@@ -51,7 +51,7 @@ abstract class LogHandler implements LogHandlerInterface {
 		$level_string = strtoupper( $level );
 		$category     = '';
 		// If we have been provided with a log entry category, include it.
-		if ( ! empty( trim( $context['logCategory'] ) ) ) {
+		if ( isset( $context['logCategory'] ) && ! empty( trim( $context['logCategory'] ) ) ) {
 			$category = '[' . strtoupper( trim( $context['logCategory'] ) ) . '] ';
 		}
 

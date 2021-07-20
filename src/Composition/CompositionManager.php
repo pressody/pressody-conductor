@@ -14,6 +14,7 @@ namespace PixelgradeLT\Conductor\Composition;
 use Automattic\Jetpack\Constants;
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Composer\Json\JsonFile;
+use PixelgradeLT\Conductor\Composer\ComposerWrapperInterface;
 use PixelgradeLT\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 use Seld\JsonLint\ParsingException;
@@ -102,19 +103,31 @@ class CompositionManager extends AbstractHookProvider {
 	protected LoggerInterface $logger;
 
 	/**
+	 * Composer Wrapper.
+	 *
+	 * @since 0.8.0
+	 *
+	 * @var ComposerWrapperInterface
+	 */
+	protected ComposerWrapperInterface $composerWrapper;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param QueueInterface  $queue  Queue.
-	 * @param LoggerInterface $logger Logger.
+	 * @param QueueInterface   $queue  Queue.
+	 * @param LoggerInterface  $logger Logger.
+	 * @param ComposerWrapperInterface $composerWrapper
 	 */
 	public function __construct(
 		QueueInterface $queue,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		ComposerWrapperInterface $composerWrapper
 	) {
 		$this->queue  = $queue;
 		$this->logger = $logger;
+		$this->composerWrapper = $composerWrapper;
 	}
 
 	/**
@@ -127,6 +140,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
 		// add_action( 'admin_init', [ $this, 'check_update' ] );
+		add_action( 'admin_init', [ $this, 'run_install' ] );
 		add_action( 'pixelgradelt_conductor/hourly', [ $this, 'refresh_composition_db_cache' ] );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
@@ -138,6 +152,14 @@ class CompositionManager extends AbstractHookProvider {
 			$this,
 			'handle_composition_themes_activation',
 		], 30 );
+	}
+
+	public function run_install() {
+		$this->composerWrapper->install( $this->get_composer_json_path(),
+			[
+			'revert-file-path' => $this->get_composer_json_backup_path(),
+			]
+		);
 	}
 
 	/**

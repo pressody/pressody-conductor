@@ -45,7 +45,6 @@ class Plugin extends BasePlugin implements Composable {
 			->register_hooks( $container->get( 'hooks.maintenance' ) )
 			->register_hooks( $container->get( 'hooks.rewrite_rules' ) )
 			->register_hooks( $container->get( 'hooks.request_handler' ) )
-			->register_hooks( $container->get( 'client.composer.custom_token_auth' ) )
 			->register_hooks( $container->get( 'composition.manager' ) )
 			->register_hooks( $container->get( 'logs.manager' ) );
 
@@ -78,10 +77,6 @@ class Plugin extends BasePlugin implements Composable {
 
 		if ( ! defined( 'PixelgradeLT\Conductor\LOG_DIR' ) ) {
 			define( 'PixelgradeLT\Conductor\LOG_DIR', \path_join( STORAGE_DIR, 'logs/conductor/' ) );
-		}
-
-		if ( ! defined( 'PixelgradeLT\Conductor\COMPOSER_DIR' ) ) {
-			define( 'PixelgradeLT\Conductor\COMPOSER_DIR', \path_join( STORAGE_DIR, 'composer/' ) );
 		}
 
 		return $this;

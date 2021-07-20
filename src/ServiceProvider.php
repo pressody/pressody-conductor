@@ -40,25 +40,34 @@ class ServiceProvider implements ServiceProviderInterface {
 		$container['cli.composition.manager'] = function ( $container ) {
 			return new CompositionManager(
 				$container['queue.action'],
-				$container['cli.logger']
+				$container['cli.logger'],
+				$container['composer.wrapper']
 			);
 		};
 
 		$container['cli.logger'] = function ( $container ) {
 			return new Logger(
-				LogLevel::DEBUG,
+				LogLevel::INFO,
 				[
 					// Use both loggers to display in the CLI and log into the log files.
+					// The CLI handler is a pass-through handler.
 					$container['logs.handlers.cli'],
 					$container['logs.handlers.file'],
 				]
 			);
 		};
 
+		$container['composer.wrapper'] = function ( $container ) {
+			return new Composer\ComposerWrapper(
+				$container['cli.logger']
+			);
+		};
+
 		$container['composition.manager'] = function ( $container ) {
 			return new CompositionManager(
 				$container['queue.action'],
-				$container['logs.logger']
+				$container['logs.logger'],
+				$container['composer.wrapper']
 			);
 		};
 
@@ -170,17 +179,6 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['screen.settings'] = function () {
 			return new Screen\Settings();
-		};
-
-		$container['wrapper.composer'] = function ( $container ) {
-			return new Composer\ComposerWrapper(
-				COMPOSER_DIR,
-				$container['cli.logger']
-			);
-		};
-
-		$container['composer.custom_token_auth'] = function () {
-			return new Composer\CustomTokenAuthentication();
 		};
 	}
 }
