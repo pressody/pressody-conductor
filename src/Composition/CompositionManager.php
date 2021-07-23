@@ -140,7 +140,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
 		// add_action( 'admin_init', [ $this, 'check_update' ] );
-		add_action( 'admin_init', [ $this, 'run_install' ] );
+		//add_action( 'admin_init', [ $this, 'handle_composition_plugins_activation' ] );
 		add_action( 'pixelgradelt_conductor/hourly', [ $this, 'refresh_composition_db_cache' ] );
 
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
@@ -152,14 +152,6 @@ class CompositionManager extends AbstractHookProvider {
 			$this,
 			'handle_composition_themes_activation',
 		], 30 );
-	}
-
-	public function run_install() {
-		$this->composerWrapper->install( $this->get_composer_json_path(),
-			[
-			'revert-file-path' => $this->get_composer_json_backup_path(),
-			]
-		);
 	}
 
 	/**
@@ -176,10 +168,10 @@ class CompositionManager extends AbstractHookProvider {
 	 *               with each key being the plugin file path.
 	 */
 	public function get_composition_plugin( string $plugin_file = '' ): ?array {
-		$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
-		if ( empty( $cached_data ) ) {
+		$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, false );
+		if ( false === $cached_data ) {
 			$this->refresh_composition_db_cache();
-			$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME, [] );
+			$cached_data = get_option( self::COMPOSITION_PLUGINS_OPTION_NAME );
 		}
 
 		if ( empty( $cached_data ) ) {
@@ -216,10 +208,10 @@ class CompositionManager extends AbstractHookProvider {
 	 *               with each key being the theme directory name (stylesheet).
 	 */
 	public function get_composition_theme( string $theme_dir = '' ): ?array {
-		$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
-		if ( empty( $cached_data ) ) {
+		$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, false );
+		if ( false === $cached_data ) {
 			$this->refresh_composition_db_cache();
-			$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME, [] );
+			$cached_data = get_option( self::COMPOSITION_THEMES_OPTION_NAME );
 		}
 
 		if ( empty( $cached_data ) ) {
@@ -335,9 +327,9 @@ class CompositionManager extends AbstractHookProvider {
 	/**
 	 * Backup the contents of the site's composer.json file.
 	 *
-	 * @return bool
+	 * @return false|string False on failure. The absolute path to the backup file on success.
 	 */
-	public function backup_composer_json(): bool {
+	public function backup_composer_json() {
 		$backup_file = $this->get_composer_json_backup_path();
 
 		// First, make sure that the backup file exists since copy() doesn't do any recursive directory creation, etc.
@@ -372,7 +364,7 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		return true;
+		return $backup_file;
 	}
 
 	/**
@@ -721,6 +713,72 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
+	 * Installs all the packages currently in the composition (composer.lock).
+	 *
+	 * Uses a Composer wrapper to run the same logic as the CLI command `composer install`,
+	 * meaning no changes are made to the composer.lock file even if there are changes in composer.json.
+	 *
+	 * @since 0.8.0
+	 *
+	 * @param string $composer_json_path Optional. Absolute path to the composer.json path to use.
+	 * @param array  $args               Optional. Install arguments.
+	 *
+	 * @return bool True on success. False on failure.
+	 */
+	public function composer_install( string $composer_json_path = '', array $args = [] ): bool {
+		$args = \wp_parse_args( $args, [
+			'update'              => false,
+			'revert'              => false,
+			'revert-file-path'    => '',
+			'dry-run'             => false,
+			'dev-mode'            => false,
+			'dump-autoloader'     => true,
+			'optimize-autoloader' => true,
+			'verbose'             => false,
+			'output-progress'     => false,
+			'debug'               => false,
+		] );
+
+		if ( empty( $composer_json_path ) ) {
+			$composer_json_path = $this->get_composer_json_path();
+
+			if ( $args['revert'] && empty( $args['revert-file-path'] ) ) {
+				$args['revert-file-path'] = $this->get_composer_json_backup_path();
+			}
+
+			// Do not allow for non-existent backup files.
+			if ( ! empty( $args['revert-file-path'] ) && ! file_exists( $args['revert-file-path'] ) ) {
+				$args['revert'] = false;
+				$args['revert-file-path'] = false;
+			}
+		}
+
+		return $this->composerWrapper->install( $composer_json_path, $args);
+	}
+
+	/**
+	 * Updates all the packages currently in the composition (composer.json).
+	 *
+	 * Uses a Composer wrapper to run the same logic as the CLI command `composer install`,
+	 * meaning existing packages get updated, removed packages get removed, and missing packages get installed.
+	 *
+	 * What is different from `composer update` is that, in case of error, we can revert the composer.json to a backed up version.
+	 *
+	 * @since 0.8.0
+	 *
+	 * @param string $composer_json_path Optional. Absolute path to the composer.json path to use.
+	 * @param array  $args               Optional. Update arguments.
+	 *
+	 * @return bool True on success. False on failure.
+	 */
+	public function composer_update( string $composer_json_path = '', array $args = [] ): bool {
+		// Force to be in update mode.
+		$args['update'] = true;
+
+		return $this->composer_install( $composer_json_path, $args );
+	}
+
+	/**
 	 * Maybe schedule the recurring actions/events, if it is not already scheduled.
 	 *
 	 * @since 0.1.0
@@ -736,7 +794,7 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Schedule the async event to attempt to active all the plugins and themes registered in the composition.
+	 * Schedule the async event to attempt to activate all the plugins and themes registered in the composition.
 	 *
 	 * @since 0.1.0
 	 */
@@ -765,7 +823,7 @@ class CompositionManager extends AbstractHookProvider {
 				}
 
 				$result = \activate_plugin( $plugin_file );
-				if ( \is_wp_error( $result ) ) {
+				if ( $result instanceof \WP_Error ) {
 					if ( 'plugin_not_found' === $result->get_error_code() ) {
 						// We will silently deactivate it to prevent the user notice regarding plugin not found.
 						\deactivate_plugins( $plugin_file, true );
@@ -1035,10 +1093,11 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @param bool $force Force the cache update regardless of efficiency checks.
 	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $silent Whether to trigger actions or not.
 	 *
 	 * @return bool
 	 */
-	public function refresh_composition_db_cache( bool $force = false, bool $debug = false ): bool {
+	public function refresh_composition_db_cache( bool $force = false, bool $debug = false, bool $silent = false ): bool {
 		// Read the current contents of the site's composer.lock.
 		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
@@ -1255,15 +1314,17 @@ class CompositionManager extends AbstractHookProvider {
 		update_option( self::COMPOSITION_THEMES_OPTION_NAME, $themes, true );
 		update_option( self::COMPOSER_LOCK_HASH_OPTION_NAME, $composerLockJsonCurrentContents['content-hash'], true );
 
-		/**
-		 * After the composition's plugins and themes list has been updated.
-		 *
-		 * @since 0.1.0
-		 *
-		 * @param array $plugins The current composition plugins data.
-		 * @param array $themes  The current composition themes data.
-		 */
-		do_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
+		if ( ! $silent ) {
+			/**
+			 * After the composition's plugins and themes list has been updated.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array $plugins The current composition plugins data.
+			 * @param array $themes  The current composition themes data.
+			 */
+			do_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
+		}
 
 		return true;
 	}
@@ -1274,10 +1335,11 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 *
 	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $silent Whether to trigger actions or not.
 	 *
 	 * @return bool
 	 */
-	public function clear_composition_db_cache( bool $debug = false ): bool {
+	public function clear_composition_db_cache( bool $debug = false, bool $silent = false ): bool {
 
 		// Clear the cache
 		delete_option( self::COMPOSITION_PLUGINS_OPTION_NAME );
@@ -1290,12 +1352,14 @@ class CompositionManager extends AbstractHookProvider {
 			]
 		);
 
-		/**
-		 * After the composition's plugins and themes list has been cleared.
-		 *
-		 * @since 0.1.0
-		 */
-		do_action( 'pixelgradelt_conductor/cleared_composition_plugins_and_themes_cache' );
+		if ( ! $silent ) {
+			/**
+			 * After the composition's plugins and themes list has been cleared.
+			 *
+			 * @since 0.1.0
+			 */
+			do_action( 'pixelgradelt_conductor/cleared_composition_plugins_and_themes_cache' );
+		}
 
 		return true;
 	}

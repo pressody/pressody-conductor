@@ -20,7 +20,7 @@ use function PixelgradeLT\Conductor\doing_it_wrong;
  *
  * @since 0.1.0
  */
-final class Logger extends BaseIO {
+class Logger extends BaseIO {
 	/**
 	 * PSR log levels.
 	 *
@@ -128,7 +128,9 @@ final class Logger extends BaseIO {
 		$message   = apply_filters( 'pixelgradelt_conductor/logger_log_message', $message, $level, $context );
 
 		foreach ( $this->handlers as $handler ) {
-			$handler->handle( $timestamp, $level, $message, $context );
+			if ( $handler->handle( $timestamp, $level, $message, $context ) ) {
+				break;
+			}
 		}
 	}
 

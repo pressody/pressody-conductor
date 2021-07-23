@@ -12,7 +12,9 @@ declare ( strict_types=1 );
 namespace PixelgradeLT\Conductor\CLI;
 
 use Composer\Semver\VersionParser;
+use PixelgradeLT\Conductor\Composer\ComposerWrapper;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
+use PixelgradeLT\Conductor\Utils\ArrayHelpers;
 use PixelgradeLT\Conductor\Utils\StringHelpers;
 use PixelgradeLT\Conductor\Utils\TimeHelpers;
 use WP_CLI;
@@ -30,17 +32,21 @@ use function PixelgradeLT\Conductor\plugin;
  *
  *     # Check the current composition.
  *     $ wp lt composition check
- *     Success: The site's composition (composer.json file) is OK!.
+ *     Success: The site's composition (composer.json file) is OK!
  *
- *     # Update the current composition
+ *     # Update the current composition.
  *     $ wp lt composition update
  *     Success: The site's composition (composer.json file) is now UP-TO-DATE!
  *
- *     # Update the composition DB cache
+ *     # Install/update/remove all the packages in the composition (composer.json file).
+ *     $ wp lt composition composer-update
+ *     Success: Successfully updated all the composition's packages!
+ *
+ *     # Update the composition DB cache.
  *     $ wp lt composition update-cache
  *     Success: The site's composition DB cache is now UP-TO-DATE!
  *
- *     # Clear the composition DB cache
+ *     # Clear the composition DB cache.
  *     $ wp lt composition clear-cache
  *     Success: The site's composition DB cache has been CLEARED!
  *
@@ -123,8 +129,6 @@ class Composition extends \WP_CLI_Command {
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
 		$verbose = Utils\get_flag_value( $assoc_args, 'verbose', false );
@@ -133,8 +137,6 @@ class Composition extends \WP_CLI_Command {
 		// Read the current contents of the site's composer.json (the composition).
 		if ( ! $composerJson = $compositionManager->get_composer_json( $verbose ) ) {
 			WP_CLI::error( 'Could not read the site\'s composer.json file contents.' );
-
-			return;
 		}
 
 		$plugins = $compositionManager->get_composition_plugin();
@@ -162,8 +164,6 @@ class Composition extends \WP_CLI_Command {
 		if ( Utils\get_flag_value( $assoc_args, 'last-updated', false ) ) {
 			if ( empty( $composerJson['time'] ) || ! $time = date( 'Y-m-d H:i:s', strtotime( $composerJson['time'] ) ) ) {
 				WP_CLI::error( 'Missing or invalid composer.json "time" entry.' );
-
-				return;
 			}
 
 			$humanReadable = TimeHelpers::time_elapsed_string( $composerJson['time'], $verbose );
@@ -190,19 +190,17 @@ class Composition extends \WP_CLI_Command {
 				$formatter  = new Formatter( $assoc_args );
 				$formatter->display_item( $timeData );
 
-				return;
+				exit( 0 );
 			}
 
 			WP_CLI::log( 'The composition (composer.json file) was last updated ' . WP_CLI::colorize( "%B" . $humanReadable . "%n" ) . ' (' . $time . ')' );
 
-			return;
+			exit( 0 );
 		}
 
 		if ( Utils\get_flag_value( $assoc_args, 'lt-version', false ) ) {
 			if ( empty( $composerJson['extra']['lt-version'] ) ) {
 				WP_CLI::error( 'Missing or invalid composer.json "lt-version" entry.' );
-
-				return;
 			}
 
 			// For the 'table' format we will just display a sentence.
@@ -221,26 +219,24 @@ class Composition extends \WP_CLI_Command {
 				$formatter  = new Formatter( $assoc_args );
 				$formatter->display_item( $ltVersionData );
 
-				return;
+				exit( 0 );
 			}
 
 			WP_CLI::log( 'The composition (composer.json file) is at LT version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['lt-version'] . "%n" ) );
 
-			return;
+			exit( 0 );
 		}
 
 		if ( Utils\get_flag_value( $assoc_args, 'lt-required-packages', false ) ) {
 			if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
 				WP_CLI::error( 'Missing or invalid composer.json "lt-required-packages" entry.' );
-
-				return;
 			}
 
 			$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
 			$fields                 = [ 'name', 'version', 'requiredBy', ];
 			Utils\format_items( $format, $ltRequiredPackagesData, $fields );
 
-			return;
+			exit( 0 );
 		}
 
 		$plugin_search = Utils\get_flag_value( $assoc_args, 'plugin', false );
@@ -313,8 +309,6 @@ class Composition extends \WP_CLI_Command {
 		 */
 		if ( empty( $composerJson['time'] ) || ! $time = date( 'Y-m-d H:i:s', strtotime( $composerJson['time'] ) ) ) {
 			WP_CLI::error( 'Missing or invalid composer.json "time" entry.' );
-
-			return;
 		}
 		WP_CLI::log( 'The composition (composer.json file) was last updated ' . WP_CLI::colorize( "%B" . TimeHelpers::time_elapsed_string( $composerJson['time'], $verbose ) . "%n" ) . ' (' . $time . ')' );
 		WP_CLI::log( '' );
@@ -324,8 +318,6 @@ class Composition extends \WP_CLI_Command {
 		 */
 		if ( empty( $composerJson['extra']['lt-version'] ) ) {
 			WP_CLI::error( 'Missing or invalid composer.json "lt-version" entry.' );
-
-			return;
 		}
 		WP_CLI::log( 'The composition (composer.json file) is at LT version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['lt-version'] . "%n" ) );
 		WP_CLI::log( '' );
@@ -364,8 +356,6 @@ class Composition extends \WP_CLI_Command {
 
 		if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
 			WP_CLI::error( 'Missing or invalid composer.json "lt-required-packages" entry.' );
-
-			return;
 		}
 
 		/**
@@ -376,7 +366,7 @@ class Composition extends \WP_CLI_Command {
 		if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
 			WP_CLI::log( 'No information about the composition\'s required LT-packages.' );
 
-			return;
+			exit( 0 );
 		}
 		WP_CLI::log( '' );
 		WP_CLI::log( WP_CLI::colorize( "%B" . 'The composition\'s REQUIRED LT-PACKAGES' . "%n" ) );
@@ -386,6 +376,8 @@ class Composition extends \WP_CLI_Command {
 		$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
 		$fields                 = [ 'name', 'version', 'requiredBy', ];
 		Utils\format_items( $format, $ltRequiredPackagesData, $fields );
+
+		exit( 0 );
 	}
 
 	/**
@@ -414,8 +406,6 @@ class Composition extends \WP_CLI_Command {
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
 		$result = $compositionManager->check_update( true, Utils\get_flag_value( $assoc_args, 'verbose', false ) );
@@ -424,9 +414,12 @@ class Composition extends \WP_CLI_Command {
 		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition (composer.json file) is OK!' );
+			exit( 0 );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'The site\'s composition (composer.json file) is NOT OK! See above for further details.' . "%n" ) );
 		}
+
+		exit( 1 );
 	}
 
 	/**
@@ -459,8 +452,6 @@ class Composition extends \WP_CLI_Command {
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
 		if ( Utils\get_flag_value( $assoc_args, 'force', false ) ) {
@@ -489,9 +480,250 @@ class Composition extends \WP_CLI_Command {
 		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition (composer.json file) is now UP-TO-DATE!' );
+			exit( 0 );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'The site\'s composition (composer.json file) is NOT OK! See above for further details.' . "%n" ) );
 		}
+
+		exit( 1 );
+	}
+
+	/**
+	 * Backup the current composer.json.
+	 *
+	 * ## OPTIONS
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition backup
+	 *      - Copy composer.json contents to a standard backup location for easy reverting.
+	 *
+	 * @subcommand backup
+	 *
+	 * @since      0.8.0
+	 */
+	public function backup( $args, $assoc_args ) {
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+		}
+
+		$result = $compositionManager->backup_composer_json();
+
+		WP_CLI::log( '' );
+		WP_CLI::log( '---' );
+		if ( false !== $result ) {
+			WP_CLI::success( 'Backed-up the composition to "' . $result . '"' );
+			exit( 0 );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Failed to backup the composition! See above for further details.' . "%n" ) );
+		}
+
+		exit( 1 );
+	}
+
+	/**
+	 * Revert composer.json to the backed-up contents (if the backup exists).
+	 *
+	 * ## OPTIONS
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition revert-backup
+	 *      - Copy composer.json contents to a standard backup location for easy reverting.
+	 *
+	 * @subcommand revert-backup
+	 *
+	 * @since      0.8.0
+	 */
+	public function revert_backup( $args, $assoc_args ) {
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+		}
+
+		$result = $compositionManager->revert_composer_json();
+
+		WP_CLI::log( '' );
+		WP_CLI::log( '---' );
+		if ( false !== $result ) {
+			WP_CLI::success( 'The composer.json file was reverted to it\'s backup.' );
+			exit( 0 );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Failed to revert the composer.json file! See above for further details.' . "%n" ) );
+		}
+
+		exit( 1 );
+	}
+
+	/**
+	 * Installs all the packages in the composition at a specific moment (composer.lock). Useful for recreating/mirroring compositions.
+	 *
+	 * Uses a Composer wrapper to run the same logic as the CLI command `composer install`,
+	 * meaning no changes are made to the composer.lock file even if there are changes in composer.json.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Do not actually make any package changes, only simulate.
+	 *
+	 * [--dev]
+	 * : Install require-dev also.
+	 *
+	 * [--no-autoloader]
+	 * : Skip autoloader generation.
+	 *
+	 * [--verbose]
+	 * : Output more info regarding issues encountered with the composition install.
+	 *
+	 * [--very-verbose]
+	 * : Output detailed information on what the install process is doing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition composer-install
+	 *      - Almost the same as running composer install for the site composition, but better for our use-case.
+	 *
+	 * @subcommand composer-install
+	 * @alias      cinstall
+	 *
+	 * @since      0.8.0
+	 */
+	public function composer_install( $args, $assoc_args ) {
+		WP_CLI::log( '---' );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Start installing packages from composer.lock..' . "%n" ) );
+		WP_CLI::log( '' );
+
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+		}
+
+		$args = [];
+		if ( Utils\get_flag_value( $assoc_args, 'dry-run', false ) ) {
+			$args['dry-run'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'dev', false ) ) {
+			$args['dev-mode'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'no-autoloader', false ) ) {
+			$args['dump-autoloader']     = false;
+			$args['optimize-autoloader'] = false;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'verbose', false ) ) {
+			$args['verbose']         = true;
+			$args['output-progress'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'very-verbose', false ) ) {
+			$args['verbose']         = true;
+			$args['output-progress'] = true;
+			$args['debug']           = true;
+		}
+		$result = $compositionManager->composer_install( '', $args );
+
+		WP_CLI::log( '' );
+		WP_CLI::log( '---' );
+		if ( $result ) {
+			WP_CLI::success( 'Successfully installed all the composition\'s locked packages!' );
+			exit( 0 );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Failed to install the composition\'s locked packages! See above for further details.' . "%n" ) );
+		}
+
+		exit( 1 );
+	}
+
+	/**
+	 * Updates all the packages currently in the composition (composer.json).
+	 *
+	 * Uses a Composer wrapper to run the same logic as the CLI command `composer update`,
+	 * meaning existing packages get updated, removed packages get removed, and missing packages get installed.
+	 *
+	 * What is different from `composer update` is that, in case of error, we can revert the composer.json to a backed up version.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--revert]
+	 * : Revert to the composer.json backup (if present) in case of errors.
+	 *
+	 * [--dry-run]
+	 * : Do not actually make any package changes, only simulate.
+	 *
+	 * [--dev]
+	 * : Install require-dev also.
+	 *
+	 * [--no-autoloader]
+	 * : Skip autoloader generation.
+	 *
+	 * [--verbose]
+	 * : Output more info regarding issues encountered with the composition install.
+	 *
+	 * [--very-verbose]
+	 * : Output detailed information on what the install process is doing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition composer-update
+	 *      - Almost the same as running composer update for the site composition, but better for our use-case.
+	 *
+	 * @subcommand composer-update
+	 * @alias      cupdate
+	 *
+	 * @since      0.8.0
+	 */
+	public function composer_update( $args, $assoc_args ) {
+		WP_CLI::log( '---' );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Start updating packages from composer.json..' . "%n" ) );
+		WP_CLI::log( '' );
+
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+		}
+
+		$args = [];
+		if ( Utils\get_flag_value( $assoc_args, 'revert', false ) ) {
+			$args['revert'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'dry-run', false ) ) {
+			$args['dry-run'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'dev', false ) ) {
+			$args['dev-mode'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'no-autoloader', false ) ) {
+			$args['dump-autoloader']     = false;
+			$args['optimize-autoloader'] = false;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'verbose', false ) ) {
+			$args['verbose']         = true;
+			$args['output-progress'] = true;
+		}
+		if ( Utils\get_flag_value( $assoc_args, 'very-verbose', false ) ) {
+			$args['verbose']         = true;
+			$args['output-progress'] = true;
+			$args['debug']           = true;
+		}
+		$result = $compositionManager->composer_update( '', $args );
+
+		WP_CLI::log( '' );
+		WP_CLI::log( '---' );
+		if ( $result ) {
+			WP_CLI::success( 'Successfully updated all the composition\'s packages!' );
+			exit( 0 );
+		} else {
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Failed to update the composition\'s packages! See above for further details.' . "%n" ) );
+		}
+
+		exit( 1 );
 	}
 
 	/**
@@ -501,6 +733,9 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * [--force]
 	 * : Refresh the cache regardless of checks.
+	 *
+	 * [--silent]
+	 * : Do not trigger action hooks.
 	 *
 	 * [--verbose]
 	 * : Output more info regarding issues encountered with the composition update.
@@ -524,25 +759,33 @@ class Composition extends \WP_CLI_Command {
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
-		$result = $compositionManager->refresh_composition_db_cache( Utils\get_flag_value( $assoc_args, 'force', false ), Utils\get_flag_value( $assoc_args, 'verbose', false ) );
+		$result = $compositionManager->refresh_composition_db_cache(
+			Utils\get_flag_value( $assoc_args, 'force', false ),
+			Utils\get_flag_value( $assoc_args, 'verbose', false ),
+			Utils\get_flag_value( $assoc_args, 'silent', false )
+		);
 
 		WP_CLI::log( '' );
 		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition DB cache is now UP-TO-DATE!' );
+			exit( 0 );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t update site\'s composition DB cache! See above for further details.' . "%n" ) );
 		}
+
+		exit( 1 );
 	}
 
 	/**
 	 * Clears the internal (DB) cache of the composition's plugins and themes (from `composer.lock`).
 	 *
 	 * ## OPTIONS
+	 *
+	 * [--silent]
+	 * : Do not trigger action hooks.
 	 *
 	 * [--verbose]
 	 * : Output more info regarding issues encountered with the composition update.
@@ -566,19 +809,23 @@ class Composition extends \WP_CLI_Command {
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
-		$result = $compositionManager->clear_composition_db_cache( Utils\get_flag_value( $assoc_args, 'verbose', false ) );
+		$result = $compositionManager->clear_composition_db_cache(
+			Utils\get_flag_value( $assoc_args, 'verbose', false ),
+			Utils\get_flag_value( $assoc_args, 'silent', false )
+		);
 
 		WP_CLI::log( '' );
 		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The site\'s composition DB cache has been CLEARED!' );
+			exit( 0 );
 		} else {
 			WP_CLI::log( WP_CLI::colorize( "%R" . 'Couldn\'t clear site\'s composition DB cache! See above for further details.' . "%n" ) );
 		}
+
+		exit( 1 );
 	}
 
 	/**
@@ -610,34 +857,444 @@ class Composition extends \WP_CLI_Command {
 	 * @since      0.8.0
 	 */
 	public function activate( $args, $assoc_args ) {
-		WP_CLI::log( '---' );
-		WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting to activate plugins/themes installed via the composition..' . "%n" ) );
-		WP_CLI::log( '' );
-
 		try {
 			/** @var CompositionManager $compositionManager */
 			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
-
-			return;
 		}
 
+		$options   = [
+			'launch'     => true, // Launch a new process, or reuse the existing.
+			'exit_error' => false, // Exit on error by default.
+			'return'     => 'all', // Capture and return output, or render in realtime.
+			'parse'      => false, // Parse returned output as a particular format.
+		];
+
 		$result = true;
+		/*
+		 * For plugins, spawn new processes by running the WP-CLI `plugin activate` command
+		 * instead of relying on CompositionManager::handle_composition_plugins_activation().
+		 * This way we can reliably catch the occurrence of fatal errors during activation.
+		 * WordPress "promises" a workflow for this (via plugin_sandbox_scrape()),
+		 * but that is only imagined for user-triggered plugin activations via WP-Admin (it uses HTTP redirects to "catch" fatal errors).
+		 */
 		if ( Utils\get_flag_value( $assoc_args, 'plugins', false ) || ! Utils\get_flag_value( $assoc_args, 'theme', false ) ) {
-			$result = $result && $compositionManager->handle_composition_plugins_activation();
+			WP_CLI::log( '---' );
+			WP_CLI::log( WP_CLI::colorize( "%B" . 'Try to activate plugins installed via the composition..' . "%n" ) );
+			WP_CLI::log( '' );
+
+			$plugins = $compositionManager->get_composition_plugin();
+			if ( ! empty( $plugins ) ) {
+				foreach ( $plugins as $plugin_file => $plugin_data ) {
+					if ( \is_plugin_active( $plugin_file ) ) {
+						WP_CLI::log( 'Plugin already activate: ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] );
+						continue;
+					}
+
+					$activation_result = WP_CLI::runcommand( 'plugin activate ' . $plugin_file, $options );
+					if ( is_object( $activation_result ) ) {
+						$activation_result = $this->objectToArrayRecursive( $activation_result );
+					}
+					if ( 0 === $activation_result['return_code'] ) {
+						WP_CLI::log( 'Activated plugin: ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] );
+					} else {
+						$result = false;
+						WP_CLI::warning( 'Failed to activate plugin: ' . $plugin_data['name'] . ' (' . $plugin_file . ') - v' . $plugin_data['version'] . '. Check the logs for more details.' );
+						// We will silently deactivate it just to be sure.
+						\deactivate_plugins( $plugin_file, true );
+					}
+				}
+			}
+
+			$invalid_plugins = \validate_active_plugins();
+			if ( ! empty( $invalid_plugins ) ) {
+				WP_CLI::log( 'The following active PLUGINS were found INVALID and deactivated:' );
+				foreach ( $invalid_plugins as $plugin_file => $error ) {
+					WP_CLI::log( '    - "' . $plugin_file . '" due to: ' . $error->get_error_message() );
+				}
+				WP_CLI::log( 'This might not be a reason to worry about since composition plugins that get removed from the composition will "suddenly disappear" and be identified as INVALID (missing).' );
+			}
 		}
 
 		if ( Utils\get_flag_value( $assoc_args, 'theme', false ) || ! Utils\get_flag_value( $assoc_args, 'plugins', false ) ) {
-			$result = $result && $compositionManager->handle_composition_themes_activation();
+			WP_CLI::log( '---' );
+			WP_CLI::log( WP_CLI::colorize( "%B" . 'Try to activate a theme installed via the composition..' . "%n" ) );
+			WP_CLI::log( '' );
+
+			$theme_activation_result = $compositionManager->handle_composition_themes_activation();
+			$result = $result && $theme_activation_result;
 		}
 
 		WP_CLI::log( '' );
 		WP_CLI::log( '---' );
 		if ( $result ) {
 			WP_CLI::success( 'The activation was successful!' );
+			exit( 0 );
 		} else {
-			WP_CLI::log( WP_CLI::colorize( "%R" . 'There were errors during activation! See above for further details.' . "%n" ) );
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'There were errors during activation!' . "%n" ) );
 		}
+
+		exit( 1 );
+	}
+
+	/**
+	 * Goes through all the steps to update the site's composition: update, composer-update, update-cache, activate.
+	 *
+	 * This is the go-to command for running via a cronjob.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--force]
+	 * : Try to recreate the composition based on LT details stored in the composer.json file (if they are still present).
+	 *
+	 * [--revert]
+	 * : Backup and revert the composer.json in case of errors.
+	 *
+	 * [--whisper]
+	 * : Output minimal info about the progress.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition update-sequence
+	 *      - This will go through all the steps to update the site's composition: update, composer-update, update-cache, activate.
+	 *
+	 * @subcommand update-sequence
+	 *
+	 * @since      0.8.0
+	 */
+	public function update_sequence( $args, $assoc_args ) {
+		$whisper = Utils\get_flag_value( $assoc_args, 'whisper', false );
+
+		if ( ! $whisper ) {
+			WP_CLI::log( '---' );
+			WP_CLI::log( WP_CLI::colorize( "%B" . 'Starting the composition update sequence..' . "%n" ) );
+			WP_CLI::log( '' );
+		}
+
+		$force  = Utils\get_flag_value( $assoc_args, 'force', false );
+		$revert = Utils\get_flag_value( $assoc_args, 'revert', false );
+
+		$options = array(
+			// When reverting, catch output and return it in a structured format.
+			// When not reverting but whispering, each command will return only the return_code (0 for success, anything else is an error).
+			// Otherwise output live to shell.
+			'return'     => $revert ? 'all' : ( $whisper ? 'return_code' : false ),
+			// Launch new processes.
+			'launch'     => true,
+			// Halt entire command execution on error, but only if we weren't instructed to revert on failure.
+			'exit_error' => ! $revert,
+			// No parsing is needed.
+			'parse'      => false,
+		);
+
+		$sequence_length = 4;
+
+		$did_revert = false;
+
+		/**
+		 *  Run 'lt composition update'
+		 */
+		$current_command = 'lt composition update' . ( $force ? ' --force' : '' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '---' );
+		}
+		WP_CLI::log( '1/' . $sequence_length . ' - Running command `' . $current_command . '` ...' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '' );
+		}
+		$result = WP_CLI::runcommand( $current_command, $options );
+		if ( is_object( $result ) ) {
+			$result = $this->objectToArrayRecursive( $result );
+		}
+		if ( $whisper && ( 0 === $result || ( $revert && 0 === $result['return_code'] ) ) ) {
+			WP_CLI::log( '      Finished OK' );
+		} else if ( $revert ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+
+			if ( 0 !== $result['return_code'] ) {
+				// Revert the composition and run the needed steps again.
+				$current_command = 'lt composition revert-backup';
+				if ( ! $whisper ) {
+					WP_CLI::log( '---' );
+				}
+				WP_CLI::log( '1.1/' . $sequence_length . ' - Running command `' . $current_command . '` to revert the composition since we failed to check and update it...' );
+				if ( ! $whisper ) {
+					WP_CLI::log( '' );
+				}
+				$result = WP_CLI::runcommand( $current_command, $options );
+				if ( is_object( $result ) ) {
+					$result = $this->objectToArrayRecursive( $result );
+				}
+				if ( $whisper && 0 === $result['return_code'] ) {
+					WP_CLI::log( '        Finished OK' );
+				} else {
+					// Output the sub-command output.
+					WP_CLI::log( $result['stdout'] );
+					// Output the sub-command errors.
+					WP_CLI::log( $result['stderr'] );
+
+					if ( 0 !== $result['return_code'] ) {
+						// This is hopeless.
+						exit( $result['return_code'] );
+					}
+				}
+			}
+		}
+
+		/**
+		 *  Run 'lt composition composer-update'
+		 */
+		$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '---' );
+		}
+		WP_CLI::log( '2/' . $sequence_length . ' - Running command `' . $current_command . '` ...' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '' );
+		}
+		$result = WP_CLI::runcommand( $current_command, $options );
+		if ( is_object( $result ) ) {
+			$result = $this->objectToArrayRecursive( $result );
+		}
+		if ( $whisper && ( 0 === $result || ( $revert && 0 === $result['return_code'] ) ) ) {
+			WP_CLI::log( '      Finished OK' );
+		} else if ( $revert && 0 !== $result['return_code'] ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+
+			// Composer update failed and probably the composition was reverted to the backup.
+			// Run composer-update again, with the new composer.json contents.
+			$current_command = 'lt composition composer-update';
+			if ( ! $whisper ) {
+				WP_CLI::log( '---' );
+			}
+			WP_CLI::log( '2.1/' . $sequence_length . ' - Running command `' . $current_command . '` again since composer.json was probably reverted...' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '' );
+			}
+			$result = WP_CLI::runcommand( $current_command, $options );
+			if ( is_object( $result ) ) {
+				$result = $this->objectToArrayRecursive( $result );
+			}
+			if ( $whisper && 0 === $result['return_code'] ) {
+				WP_CLI::log( '        Finished OK' );
+			} else if ( 0 !== $result['return_code'] ) {
+				// Output the sub-command errors.
+				WP_CLI::log( $result['stderr'] );
+			} else {
+				// Output the output.
+				WP_CLI::log( $result['stdout'] );
+			}
+			$did_revert = true;
+		} else if ( $revert ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+		}
+
+		/**
+		 *  Run 'lt composition update-cache --force'
+		 */
+		$current_command = 'lt composition update-cache --force --silent';
+		if ( ! $whisper ) {
+			WP_CLI::log( '---' );
+		}
+		WP_CLI::log( '3/' . $sequence_length . ' - Running command `' . $current_command . '` ...' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '' );
+		}
+		$result = WP_CLI::runcommand( $current_command, $options );
+		if ( is_object( $result ) ) {
+			$result = $this->objectToArrayRecursive( $result );
+		}
+		if ( $whisper && ( 0 === $result || ( $revert && 0 === $result['return_code'] ) ) ) {
+			WP_CLI::log( '      Finished OK' );
+		} else if ( $revert ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+
+			if ( 0 !== $result['return_code'] ) {
+				exit( $result['return_code'] );
+			}
+		}
+
+		/**
+		 *  Run 'lt composition activate'
+		 */
+		$current_command = 'lt composition activate';
+		if ( ! $whisper ) {
+			WP_CLI::log( '---' );
+		}
+		WP_CLI::log( '4/' . $sequence_length . ' - Running command `' . $current_command . '` ...' );
+		if ( ! $whisper ) {
+			WP_CLI::log( '' );
+		}
+		$result = WP_CLI::runcommand( $current_command, $options );
+		if ( is_object( $result ) ) {
+			$result = $this->objectToArrayRecursive( $result );
+		}
+		if ( $whisper && ( 0 === $result || ( $revert && 0 === $result['return_code'] ) ) ) {
+			WP_CLI::log( '      Finished OK' );
+		} else if ( $revert && 0 !== $result['return_code'] && ! $did_revert ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+
+			// Failed to activate plugins and theme.
+			// Revert the composition if it was not already reverted and run the needed steps again.
+			$current_command = 'lt composition revert-backup';
+			if ( ! $whisper ) {
+				WP_CLI::log( '---' );
+			}
+			WP_CLI::log( '4.1/' . $sequence_length . ' - Running command `' . $current_command . '` to revert the composition since we failed to activate plugins and theme...' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '' );
+			}
+			$result = WP_CLI::runcommand( $current_command, $options );
+			if ( is_object( $result ) ) {
+				$result = $this->objectToArrayRecursive( $result );
+			}
+			if ( $whisper && 0 === $result['return_code'] ) {
+				WP_CLI::log( '        Finished OK' );
+			} else {
+				// Output the sub-command output.
+				WP_CLI::log( $result['stdout'] );
+				// Output the sub-command errors.
+				WP_CLI::log( $result['stderr'] );
+
+				if ( 0 !== $result['return_code'] ) {
+					exit( $result['return_code'] );
+				}
+			}
+
+			/**
+			 *  Run 'lt composition composer-update'
+			 */
+			$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '---' );
+			}
+			WP_CLI::log( '4.2/' . $sequence_length . ' - Running again command `' . $current_command . '` ...' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '' );
+			}
+			$result = WP_CLI::runcommand( $current_command, $options );
+			if ( is_object( $result ) ) {
+				$result = $this->objectToArrayRecursive( $result );
+			}
+			if ( $whisper && 0 === $result['return_code'] ) {
+				WP_CLI::log( '        Finished OK' );
+			} else {
+				// Output the sub-command output.
+				WP_CLI::log( $result['stdout'] );
+				// Output the sub-command errors.
+				WP_CLI::log( $result['stderr'] );
+
+				if ( 0 !== $result['return_code'] ) {
+					exit( $result['return_code'] );
+				}
+			}
+
+			/**
+			 *  Run 'lt composition update-cache --force'
+			 */
+			$current_command = 'lt composition update-cache --force --silent';
+			if ( ! $whisper ) {
+				WP_CLI::log( '---' );
+			}
+			WP_CLI::log( '4.3/' . $sequence_length . ' - Running again command `' . $current_command . '` ...' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '' );
+			}
+			$result = WP_CLI::runcommand( $current_command, $options );
+			if ( is_object( $result ) ) {
+				$result = $this->objectToArrayRecursive( $result );
+			}
+			if ( $whisper && 0 === $result['return_code'] ) {
+				WP_CLI::log( '        Finished OK' );
+			} else {
+				// Output the sub-command output.
+				WP_CLI::log( $result['stdout'] );
+				// Output the sub-command errors.
+				WP_CLI::log( $result['stderr'] );
+
+				if ( 0 !== $result['return_code'] ) {
+					exit( $result['return_code'] );
+				}
+
+			}
+
+			/**
+			 *  Run 'lt composition activate'
+			 */
+			$current_command = 'lt composition activate';
+			if ( ! $whisper ) {
+				WP_CLI::log( '---' );
+			}
+			WP_CLI::log( '4.4/' . $sequence_length . ' - Running again command `' . $current_command . '` ...' );
+			if ( ! $whisper ) {
+				WP_CLI::log( '' );
+			}
+			$result = WP_CLI::runcommand( $current_command, $options );
+			if ( is_object( $result ) ) {
+				$result = $this->objectToArrayRecursive( $result );
+			}
+			if ( $whisper && 0 === $result['return_code'] ) {
+				WP_CLI::log( '        Finished OK' );
+			} else {
+				// Output the sub-command output.
+				WP_CLI::log( $result['stdout'] );
+				// Output the sub-command errors.
+				WP_CLI::log( $result['stderr'] );
+			}
+		} else if ( $revert ) {
+			// Output the sub-command output.
+			WP_CLI::log( $result['stdout'] );
+			// Output the sub-command errors.
+			WP_CLI::log( $result['stderr'] );
+
+			if ( 0 !== $result['return_code'] ) {
+				exit( $result['return_code'] );
+			}
+		}
+
+		// If we've made it this far, all is good since we have `exist_error` set to true.
+		if ( ! $whisper ) {
+			WP_CLI::log( '' );
+			WP_CLI::log( '---' );
+		}
+		WP_CLI::success( 'The composition update sequence was successful!' );
+	}
+
+	/**
+	 * Recursively cast an object to an associative array.
+	 *
+	 * @since 0.8.0
+	 *
+	 * @param object $object
+	 *
+	 * @return array
+	 */
+	protected function objectToArrayRecursive( object $object ): array {
+		$json = json_encode( $object );
+		if ( json_last_error() !== \JSON_ERROR_NONE ) {
+			$message = esc_html__( 'Unable to encode schema array as JSON', 'pixelgradelt_records' );
+			if ( function_exists( 'json_last_error_msg' ) ) {
+				$message .= ': ' . json_last_error_msg();
+			}
+			WP_CLI::error( $message );
+		}
+
+		return (array) json_decode( $json, true );
 	}
 }

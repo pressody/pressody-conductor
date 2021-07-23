@@ -38,7 +38,7 @@ class CLILogHandler extends LogHandler {
 	 *         originally used in deprecated WC_Logger::add calls.
 	 * }
 	 *
-	 * @return bool False if value was not handled and true if value was handled.
+	 * @return bool False if message was not handled and true if message was handled and it should not be handled further.
 	 */
 	public function handle( int $timestamp, string $level, string $message, array $context ): bool {
 

@@ -81,6 +81,7 @@ class ComposerWrapper implements ComposerWrapperInterface {
 	 *                     Provide `home_dir` to change the default Composer home directory absolute path.
 	 *                     Provide the `config` entry to overwrite any configuration Composer determines by itself.
 	 *                     Provide entry `revert_file_path` as an absolute path to a composer.json backup to revert to in case of errors.
+	 *                     Provide entry `verbose` to make the installer more verbose.
 	 *
 	 * @param string $composer_json_path The absolute path to the composer.json to use.
 	 *
@@ -89,14 +90,14 @@ class ComposerWrapper implements ComposerWrapperInterface {
 	public function install( string $composer_json_path, array $args = [] ): bool {
 		$args = apply_filters( 'pixelgradelt_conductor/composer_wrapper_install_args', $args, $composer_json_path );
 
-		$this->set_composer_auth_env_var();
-
-		// Revert on shutdown if `$revert` is true (set to false on success).
+		// Revert on shutdown if `$args['revert_file_path']` is provided.
 		if ( ! empty( $args['revert-file-path'] ) && file_exists( $args['revert-file-path'] ) ) {
+			// Set to true (set to false on success to prevent revert on shutdown).
 			$revert = true;
 			$this->register_revert_shutdown_function( $composer_json_path, $args['revert-file-path'], $revert );
 		}
 
+		$this->set_composer_auth_env_var();
 		$composer = $this->getComposer( $composer_json_path, $args );
 
 		// Set up the EventSubscriber
@@ -104,7 +105,10 @@ class ComposerWrapper implements ComposerWrapperInterface {
 		$composer->getEventDispatcher()->addSubscriber( $event_subscriber );
 		// Set up the installer
 		$install = Installer::create( $this->io, $composer );
-		$install->setUpdate( true );       // Installer class will only override composer.lock with this flag
+		if ( ! empty( $args['update'] ) ) {
+			// Installer class will only override composer.lock with this flag
+			$install->setUpdate( true );
+		}
 		if ( isset( $args['dry-run'] ) ) {
 			$install->setDryRun( (bool) $args['dry-run'] );
 		}
@@ -124,10 +128,10 @@ class ComposerWrapper implements ComposerWrapperInterface {
 			}
 		}
 		if ( isset( $args['optimize-autoloader'] ) ) {
-			$install->setOptimizeAutoloader( $args['optimize-autoloader'] );
+			$install->setOptimizeAutoloader( (bool) $args['optimize-autoloader'] );
 		}
 		if ( isset( $args['dump-autoloader'] ) ) {
-			$install->setDumpAutoloader( $args['dump-autoloader'] );
+			$install->setDumpAutoloader( (bool) $args['dump-autoloader'] );
 		}
 		if ( isset( $args['prefer-stable'] ) ) {
 			$install->setPreferStable( $args['prefer-stable'] );
@@ -138,8 +142,17 @@ class ComposerWrapper implements ComposerWrapperInterface {
 		if ( isset( $args['ignore-platform-req'] ) ) {
 			$install->setIgnorePlatformRequirements( $args['ignore-platform-req'] );
 		}
-		if ( isset( $args['verbose'] ) ) {
-			$install->setVerbose( $args['verbose'] );
+		if ( ! empty( $args['verbose'] ) ) {
+			$install->setVerbose( (bool) $args['verbose'] );
+			$this->io->setVerbosity( $this->io::VERBOSE );
+		}
+		if ( ! empty( $args['debug'] ) ) {
+			$install->setVerbose( true );
+			$this->io->setVerbosity( $this->io::DEBUG );
+		}
+
+		if ( $args['output-progress'] ) {
+			$composer->getInstallationManager()->setOutputProgress( (bool) $args['output-progress'] );
 		}
 
 		// Try running the installer, but revert composer.json if failed
@@ -152,13 +165,21 @@ class ComposerWrapper implements ComposerWrapperInterface {
 
 		if ( 0 === $res ) {
 			$revert = false;
-			$this->io->info( 'Composer install was successful.' );
+			if ( ! empty( $args['update'] ) ) {
+				$this->io->info( 'Composer update was successful.' );
+			} else {
+				$this->io->info( 'Composer install was successful.' );
+			}
 
 			return true;
 		} else {
 			$res_msg = $res ? " (Composer return code {$res})" : ''; // $res may be null apparently.
-			$this->io->debug( "composer.json content:\n" . file_get_contents( $composer_json_path ), 'packages' );
-			$this->io->error( "Composer install failed{$res_msg}." );
+			$this->io->debug( "composer.json content:\n" . file_get_contents( $composer_json_path ) );
+			if ( ! empty( $args['update'] ) ) {
+				$this->io->error( "Composer update failed{$res_msg}." );
+			} else {
+				$this->io->error( "Composer install failed{$res_msg}." );
+			}
 		}
 
 		return false;

@@ -16,6 +16,7 @@ use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceProviderInterface;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
+use PixelgradeLT\Conductor\Logging\ComposerLogger;
 use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
 use PixelgradeLT\Conductor\Logging\Logger;
@@ -37,37 +38,31 @@ class ServiceProvider implements ServiceProviderInterface {
 	 */
 	public function register( PimpleContainer $container ) {
 
-		$container['cli.composition.manager'] = function ( $container ) {
-			return new CompositionManager(
-				$container['queue.action'],
-				$container['cli.logger'],
-				$container['composer.wrapper']
-			);
-		};
-
-		$container['cli.logger'] = function ( $container ) {
-			return new Logger(
-				LogLevel::INFO,
-				[
-					// Use both loggers to display in the CLI and log into the log files.
-					// The CLI handler is a pass-through handler.
-					$container['logs.handlers.cli'],
-					$container['logs.handlers.file'],
-				]
-			);
-		};
-
 		$container['composer.wrapper'] = function ( $container ) {
 			return new Composer\ComposerWrapper(
-				$container['cli.logger']
+				$container['logger.composer']
+			);
+		};
+
+		$container['cli.composer.wrapper'] = function ( $container ) {
+			return new Composer\ComposerWrapper(
+				$container['logger.composer.cli']
 			);
 		};
 
 		$container['composition.manager'] = function ( $container ) {
 			return new CompositionManager(
 				$container['queue.action'],
-				$container['logs.logger'],
+				$container['logger.main'],
 				$container['composer.wrapper']
+			);
+		};
+
+		$container['cli.composition.manager'] = function ( $container ) {
+			return new CompositionManager(
+				$container['queue.action'],
+				$container['logger.cli'],
+				$container['cli.composer.wrapper']
 			);
 		};
 
@@ -108,7 +103,7 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['hooks.upgrade'] = function ( $container ) {
 			return new Provider\Upgrade(
-				$container['logs.logger']
+				$container['logger.main']
 			);
 		};
 
@@ -122,11 +117,44 @@ class ServiceProvider implements ServiceProviderInterface {
 			return $request;
 		};
 
-		$container['logs.logger'] = function ( $container ) {
+		$container['logger.main'] = function ( $container ) {
 			return new Logger(
 				$container['logs.level'],
 				[
-					$container['logs.handlers.file'],
+					$container['logs.handler.file'],
+				]
+			);
+		};
+
+		$container['logger.cli'] = function ( $container ) {
+			return new Logger(
+				LogLevel::INFO,
+				[
+					// Use both loggers to display in the CLI and log into the log files.
+					// The CLI handler is a pass-through handler.
+					$container['logs.handler.cli'],
+					$container['logs.handler.file'],
+				]
+			);
+		};
+
+		$container['logger.composer'] = function ( $container ) {
+			return new ComposerLogger(
+				$container['logs.level'],
+				[
+					$container['logs.handler.file'],
+				]
+			);
+		};
+
+		$container['logger.composer.cli'] = function ( $container ) {
+			return new ComposerLogger(
+				LogLevel::INFO,
+				[
+					// Use both loggers to display in the CLI and log into the log files.
+					// The CLI handler is a pass-through handler.
+					$container['logs.handler.cli'],
+					$container['logs.handler.file'],
 				]
 			);
 		};
@@ -142,17 +170,17 @@ class ServiceProvider implements ServiceProviderInterface {
 			return $level ?? LogLevel::NOTICE;
 		};
 
-		$container['logs.handlers.file'] = function () {
+		$container['logs.handler.file'] = function () {
 			return new FileLogHandler();
 		};
 
-		$container['logs.handlers.cli'] = function () {
+		$container['logs.handler.cli'] = function () {
 			return new CLILogHandler();
 		};
 
 		$container['logs.manager'] = function ( $container ) {
 			return new LogsManager(
-				$container['logs.logger'],
+				$container['logger.main'],
 				$container['queue.action']
 			);
 		};
