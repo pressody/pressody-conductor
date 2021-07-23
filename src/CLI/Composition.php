@@ -430,6 +430,9 @@ class Composition extends \WP_CLI_Command {
 	 * [--force]
 	 * : Try to recreate the composition based on LT details stored in the composer.json file (if they are still present).
 	 *
+	 * [--silent]
+	 * : Do not trigger action hooks.
+	 *
 	 * [--verbose]
 	 * : Output more info regarding issues encountered with the composition update.
 	 *
@@ -460,7 +463,10 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::log( '' );
 
 			// We will first reinitialise the composer.json contents since we we've been instructed to do so.
-			$result = $compositionManager->reinitialise( Utils\get_flag_value( $assoc_args, 'verbose', false ) );
+			$result = $compositionManager->reinitialise(
+				Utils\get_flag_value( $assoc_args, 'verbose', false ),
+				Utils\get_flag_value( $assoc_args, 'silent', false )
+			);
 
 			if ( $result ) {
 				WP_CLI::warning( 'The site\'s composition (composer.json file) has been reinitialised (due to the --force flag).' );
@@ -474,7 +480,11 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::log( '' );
 		}
 
-		$result = $compositionManager->check_update( false, Utils\get_flag_value( $assoc_args, 'verbose', false ) );
+		$result = $compositionManager->check_update(
+			false,
+			Utils\get_flag_value( $assoc_args, 'verbose', false ),
+			Utils\get_flag_value( $assoc_args, 'silent', false )
+		);
 
 		WP_CLI::log( '' );
 		WP_CLI::log( '---' );
@@ -993,9 +1003,9 @@ class Composition extends \WP_CLI_Command {
 		$did_revert = false;
 
 		/**
-		 *  Run 'lt composition update'
+		 *  1. Run 'lt composition update'
 		 */
-		$current_command = 'lt composition update' . ( $force ? ' --force' : '' );
+		$current_command = 'lt composition update --silent' . ( $force ? ' --force' : '' );
 		if ( ! $whisper ) {
 			WP_CLI::log( '---' );
 		}
@@ -1016,7 +1026,9 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::log( $result['stderr'] );
 
 			if ( 0 !== $result['return_code'] ) {
-				// Revert the composition and run the needed steps again.
+				/**
+				 * 1.1 Revert the composition and run the needed steps again.
+				 */
 				$current_command = 'lt composition revert-backup';
 				if ( ! $whisper ) {
 					WP_CLI::log( '---' );
@@ -1046,7 +1058,7 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  Run 'lt composition composer-update'
+		 *  2. Run 'lt composition composer-update'
 		 */
 		$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
 		if ( ! $whisper ) {
@@ -1068,8 +1080,10 @@ class Composition extends \WP_CLI_Command {
 			// Output the sub-command errors.
 			WP_CLI::log( $result['stderr'] );
 
-			// Composer update failed and probably the composition was reverted to the backup.
-			// Run composer-update again, with the new composer.json contents.
+			/**
+			 * Composer update failed and probably the composition was reverted to the backup.
+			 * 2.1 Run composer-update again, with the new composer.json contents.
+			 */
 			$current_command = 'lt composition composer-update';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
@@ -1100,7 +1114,7 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  Run 'lt composition update-cache --force'
+		 *  3. Run 'lt composition update-cache --force'
 		 */
 		$current_command = 'lt composition update-cache --force --silent';
 		if ( ! $whisper ) {
@@ -1128,7 +1142,7 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  Run 'lt composition activate'
+		 *  4. Run 'lt composition activate'
 		 */
 		$current_command = 'lt composition activate';
 		if ( ! $whisper ) {
@@ -1150,8 +1164,10 @@ class Composition extends \WP_CLI_Command {
 			// Output the sub-command errors.
 			WP_CLI::log( $result['stderr'] );
 
-			// Failed to activate plugins and theme.
-			// Revert the composition if it was not already reverted and run the needed steps again.
+			/**
+			 * Failed to activate plugins and theme.
+			 * 4.1 Revert the composition if it was not already reverted and run the needed steps again.
+			 */
 			$current_command = 'lt composition revert-backup';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
@@ -1178,7 +1194,7 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  Run 'lt composition composer-update'
+			 *  4.2 Run 'lt composition composer-update'
 			 */
 			$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
 			if ( ! $whisper ) {
@@ -1206,7 +1222,7 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  Run 'lt composition update-cache --force'
+			 *  4.3 Run 'lt composition update-cache --force'
 			 */
 			$current_command = 'lt composition update-cache --force --silent';
 			if ( ! $whisper ) {
@@ -1235,7 +1251,7 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  Run 'lt composition activate'
+			 *  4.4 Run 'lt composition activate'
 			 */
 			$current_command = 'lt composition activate';
 			if ( ! $whisper ) {

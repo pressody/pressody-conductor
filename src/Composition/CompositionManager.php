@@ -116,8 +116,8 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param QueueInterface   $queue  Queue.
-	 * @param LoggerInterface  $logger Logger.
+	 * @param QueueInterface           $queue  Queue.
+	 * @param LoggerInterface          $logger Logger.
 	 * @param ComposerWrapperInterface $composerWrapper
 	 */
 	public function __construct(
@@ -125,8 +125,8 @@ class CompositionManager extends AbstractHookProvider {
 		LoggerInterface $logger,
 		ComposerWrapperInterface $composerWrapper
 	) {
-		$this->queue  = $queue;
-		$this->logger = $logger;
+		$this->queue           = $queue;
+		$this->logger          = $logger;
 		$this->composerWrapper = $composerWrapper;
 	}
 
@@ -140,7 +140,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
 		// On updated composition, refresh the DB cache.
-		add_action( 'pixelgradelt_conductor/updated_composer_json', [ $this, 'refresh_composition_db_cache' ] );
+		$this->add_action( 'pixelgradelt_conductor/updated_composer_json', 'hook_refresh_composition_db_cache' );
 		// On updated DB cache, schedule activate plugins and theme.
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
 		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
@@ -336,7 +336,7 @@ class CompositionManager extends AbstractHookProvider {
 			if ( ! wp_mkdir_p( \dirname( $backup_file ) ) ) {
 				$this->logger->error( 'Failed to BACKUP the site\'s "composer.json" since we could not create the directory structure of the backup file ("{backupFile}").',
 					[
-						'backupFile' => $backup_file,
+						'backupFile'  => $backup_file,
 						'logCategory' => 'composition',
 					]
 				);
@@ -345,7 +345,7 @@ class CompositionManager extends AbstractHookProvider {
 			}
 
 			$temphandle = @fopen( $backup_file, 'w+' ); // @codingStandardsIgnoreLine.
-			@fclose( $temphandle ); // @codingStandardsIgnoreLine.
+			@fclose( $temphandle );                     // @codingStandardsIgnoreLine.
 
 			if ( Constants::is_defined( 'FS_CHMOD_FILE' ) ) {
 				@chmod( $backup_file, FS_CHMOD_FILE ); // @codingStandardsIgnoreLine.
@@ -355,7 +355,7 @@ class CompositionManager extends AbstractHookProvider {
 		if ( ! copy( $this->get_composer_json_path(), $backup_file ) ) {
 			$this->logger->error( 'Failed to BACKUP the site\'s "composer.json" to the backup file "{backupFile}" (could not copy).',
 				[
-					'backupFile' => $backup_file,
+					'backupFile'  => $backup_file,
 					'logCategory' => 'composition',
 				]
 			);
@@ -388,7 +388,7 @@ class CompositionManager extends AbstractHookProvider {
 
 			// Create the site's composer.json file.
 			$temphandle = @fopen( $composer_file, 'w+' ); // @codingStandardsIgnoreLine.
-			@fclose( $temphandle ); // @codingStandardsIgnoreLine.
+			@fclose( $temphandle );                       // @codingStandardsIgnoreLine.
 
 			if ( Constants::is_defined( 'FS_CHMOD_FILE' ) ) {
 				@chmod( $composer_file, FS_CHMOD_FILE ); // @codingStandardsIgnoreLine.
@@ -399,7 +399,7 @@ class CompositionManager extends AbstractHookProvider {
 		if ( ! file_exists( $backup_file ) ) {
 			$this->logger->error( 'Could not REVERT the site\'s composer.json file since the backup file could not be found ("{backupFile}").',
 				[
-					'backupFile' => $backup_file,
+					'backupFile'  => $backup_file,
 					'logCategory' => 'composition',
 				]
 			);
@@ -427,10 +427,11 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @param bool $skip_write Whether to skip writing the updated composition contents to composer.json.
 	 * @param bool $debug      Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $silent     Whether to trigger actions or not.
 	 *
 	 * @return bool
 	 */
-	public function check_update( bool $skip_write = false, bool $debug = false ): bool {
+	public function check_update( bool $skip_write = false, bool $debug = false, bool $silent = false ): bool {
 		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
@@ -564,15 +565,17 @@ class CompositionManager extends AbstractHookProvider {
 				]
 			);
 
-			/**
-			 * After the composer.json has been updated.
-			 *
-			 * @since 0.1.0
-			 *
-			 * @param array $newContents The written composer.json data.
-			 * @param array $oldContents The previous composer.json data.
-			 */
-			do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+			if ( ! $silent ) {
+				/**
+				 * After the composer.json has been updated.
+				 *
+				 * @since 0.1.0
+				 *
+				 * @param array $newContents The written composer.json data.
+				 * @param array $oldContents The previous composer.json data.
+				 */
+				do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+			}
 		} else {
 			$this->logger->warning( 'The site\'s composer.json contents need to be UPDATED according to LT Records.',
 				[
@@ -598,10 +601,11 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 *
 	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $silent     Whether to trigger actions or not.
 	 *
 	 * @return bool
 	 */
-	public function reinitialise( bool $debug = false ): bool {
+	public function reinitialise( bool $debug = false, bool $silent = false ): bool {
 		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
 		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
 		     || ! defined( 'LT_RECORDS_COMPOSITION_CREATE_URL' ) || empty( LT_RECORDS_COMPOSITION_CREATE_URL )
@@ -698,15 +702,17 @@ class CompositionManager extends AbstractHookProvider {
 			]
 		);
 
-		/**
-		 * After the composer.json has been reinitialised.
-		 *
-		 * @since 0.1.0
-		 *
-		 * @param array $newContents The written composer.json data.
-		 * @param array $oldContents The previous composer.json data.
-		 */
-		do_action( 'pixelgradelt_conductor/reinitialised_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+		if ( ! $silent ) {
+			/**
+			 * After the composer.json has been reinitialised.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array $newContents The written composer.json data.
+			 * @param array $oldContents The previous composer.json data.
+			 */
+			do_action( 'pixelgradelt_conductor/reinitialised_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+		}
 
 		return true;
 	}
@@ -747,12 +753,12 @@ class CompositionManager extends AbstractHookProvider {
 
 			// Do not allow for non-existent backup files.
 			if ( ! empty( $args['revert-file-path'] ) && ! file_exists( $args['revert-file-path'] ) ) {
-				$args['revert'] = false;
+				$args['revert']           = false;
 				$args['revert-file-path'] = false;
 			}
 		}
 
-		return $this->composerWrapper->install( $composer_json_path, $args);
+		return $this->composerWrapper->install( $composer_json_path, $args );
 	}
 
 	/**
@@ -1090,8 +1096,8 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param bool $force Force the cache update regardless of efficiency checks.
-	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $force  Force the cache update regardless of efficiency checks.
+	 * @param bool $debug  Whether to log detailed exceptions (like stack traces and stuff).
 	 * @param bool $silent Whether to trigger actions or not.
 	 *
 	 * @return bool
@@ -1328,12 +1334,16 @@ class CompositionManager extends AbstractHookProvider {
 		return true;
 	}
 
+	protected function hook_refresh_composition_db_cache() {
+		$this->refresh_composition_db_cache();
+	}
+
 	/**
 	 * Clear the data we cache about it (e.g. included plugins and themes).
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param bool $debug Whether to log detailed exceptions (like stack traces and stuff).
+	 * @param bool $debug  Whether to log detailed exceptions (like stack traces and stuff).
 	 * @param bool $silent Whether to trigger actions or not.
 	 *
 	 * @return bool
