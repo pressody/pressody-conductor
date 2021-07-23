@@ -139,7 +139,9 @@ class CompositionManager extends AbstractHookProvider {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
 		add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
+		// On updated composition, refresh the DB cache.
 		add_action( 'pixelgradelt_conductor/updated_composer_json', [ $this, 'refresh_composition_db_cache' ] );
+		// On updated DB cache, schedule activate plugins and theme.
 		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
 		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
 			$this,
