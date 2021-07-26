@@ -499,6 +499,54 @@ class Composition extends \WP_CLI_Command {
 	}
 
 	/**
+	 * Reinitialize the site composition (composer.json contents) with just the starter bare-bones, no LT Solutions.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--silent]
+	 * : Do not trigger action hooks.
+	 *
+	 * [--verbose]
+	 * : Output more info regarding issues encountered with the composition update.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *  1. wp lt composition reinit
+	 *      - This will reinitialize the site composition (composer.json contents) with just the starter bare-bones, no LT Solutions.
+	 *
+	 * @subcommand reinit
+	 *
+	 * @since      0.9.0
+	 */
+	public function reinit( $args, $assoc_args ) {
+		WP_CLI::log( '---' );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'Reinitializing the site\'s composer.json..' . "%n" ) );
+		WP_CLI::log( '' );
+
+		try {
+			/** @var CompositionManager $compositionManager */
+			$compositionManager = plugin()->get_container()->get( 'cli.composition.manager' );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
+		}
+
+		$result = $compositionManager->reinitialise(
+			Utils\get_flag_value( $assoc_args, 'verbose', false ),
+			Utils\get_flag_value( $assoc_args, 'silent', false )
+		);
+
+		if ( $result ) {
+			WP_CLI::success( 'The site\'s composition (composer.json file) has been reinitialised.' );
+			exit( 0 );
+		} else {
+			WP_CLI::log( 'The site\'s composition (composer.json file) could not be reinitialised! See above for further details.' );
+			WP_CLI::log( WP_CLI::colorize( "%R" . 'Failed to reinitialize the site\'s composition (composer.json file)! See above for further details.' . "%n" ) );
+		}
+
+		exit( 1 );
+	}
+
+	/**
 	 * Backup the current composer.json.
 	 *
 	 * ## OPTIONS

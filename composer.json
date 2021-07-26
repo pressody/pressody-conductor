@@ -52,7 +52,8 @@
 		"psr/log": "^1.0",
 	  	"rmccue/requests": "^1.8",
 		"vlucas/phpdotenv": "^5.3",
-		"woocommerce/action-scheduler": "^3.2"
+		"woocommerce/action-scheduler": "^3.2",
+	  	"wp-cli/wp-cli": "*"
 	},
 	"require-dev": {
 		"brain/monkey": "^2.2",

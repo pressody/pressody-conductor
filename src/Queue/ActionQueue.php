@@ -47,7 +47,7 @@ class ActionQueue implements QueueInterface {
 	 * @return int The action ID.
 	 */
 	public function schedule_single( int $timestamp, string $hook, array $args = array(), string $group = '' ): int {
-		return as_schedule_single_action( $timestamp, $hook, $args, $group );
+		return \as_schedule_single_action( $timestamp, $hook, $args, $group );
 	}
 
 	/**
@@ -62,7 +62,7 @@ class ActionQueue implements QueueInterface {
 	 * @return int The action ID.
 	 */
 	public function schedule_recurring( int $timestamp, int $interval_in_seconds, string $hook, array $args = array(), string $group = '' ): int {
-		return as_schedule_recurring_action( $timestamp, $interval_in_seconds, $hook, $args, $group );
+		return \as_schedule_recurring_action( $timestamp, $interval_in_seconds, $hook, $args, $group );
 	}
 
 	/**
@@ -88,7 +88,7 @@ class ActionQueue implements QueueInterface {
 	 * @return int The action ID
 	 */
 	public function schedule_cron( int $timestamp, string $cron_schedule, string $hook, array $args = array(), string $group = '' ): int {
-		return as_schedule_cron_action( $timestamp, $cron_schedule, $hook, $args, $group );
+		return \as_schedule_cron_action( $timestamp, $cron_schedule, $hook, $args, $group );
 	}
 
 	/**
@@ -108,7 +108,7 @@ class ActionQueue implements QueueInterface {
 	 * @param string $group The group the job is assigned to (if any).
 	 */
 	public function cancel( string $hook, array $args = array(), string $group = '' ) {
-		as_unschedule_action( $hook, $args, $group );
+		\as_unschedule_action( $hook, $args, $group );
 	}
 
 	/**
@@ -119,7 +119,7 @@ class ActionQueue implements QueueInterface {
 	 * @param string $group The group the job is assigned to (if any).
 	 */
 	public function cancel_all( string $hook, array $args = array(), string $group = '' ) {
-		as_unschedule_all_actions( $hook, $args, $group );
+		\as_unschedule_all_actions( $hook, $args, $group );
 	}
 
 	/**
@@ -134,7 +134,7 @@ class ActionQueue implements QueueInterface {
 	 */
 	public function get_next( string $hook, array $args = null, string $group = '' ): ?\DateTime {
 
-		$next_timestamp = as_next_scheduled_action( $hook, $args, $group );
+		$next_timestamp = \as_next_scheduled_action( $hook, $args, $group );
 
 		if ( is_numeric( $next_timestamp ) ) {
 			try {
@@ -170,6 +170,6 @@ class ActionQueue implements QueueInterface {
 	 * @return array
 	 */
 	public function search( array $args = [], string $return_format = OBJECT ): array {
-		return as_get_scheduled_actions( $args, $return_format );
+		return \as_get_scheduled_actions( $args, $return_format );
 	}
 }

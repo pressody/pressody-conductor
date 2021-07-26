@@ -10,7 +10,7 @@
  * Plugin Name: PixelgradeLT Conductor
  * Plugin URI: https://github.com/pixelgradelt/pixelgradelt-conductor
  * Description: Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be a MU plugin.
- * Version: 0.8.1
+ * Version: 0.9.0
  * Author: Pixelgrade
  * Author URI: https://pixelgrade.com/
  * License: GPL-2.0-or-later
@@ -37,9 +37,9 @@ if ( ! \defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-const VERSION = '0.8.1';
+const VERSION = '0.9.0';
 
-// Load the Composer autoloader.
+// Load the Composer autoloader if the vendor packages are installed locally, not at the project level.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require __DIR__ . '/vendor/autoload.php';
 }
@@ -70,9 +70,13 @@ require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 // Load the Action Scheduler directly since it does not use Composer autoload.
 // @link https://github.com/woocommerce/action-scheduler/issues/471
-require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+if ( file_exists( LT_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
+	require_once LT_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+} else if ( file_exists( __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
+	require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+}
 
-// Create a container and register a service provider.
+	// Create a container and register a service provider.
 $pixelgradelt_conductor_container = new Container();
 $pixelgradelt_conductor_container->register( new ServiceProvider() );
 

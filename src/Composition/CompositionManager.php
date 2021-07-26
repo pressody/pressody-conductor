@@ -747,11 +747,12 @@ class CompositionManager extends AbstractHookProvider {
 		if ( empty( $composer_json_path ) ) {
 			$composer_json_path = $this->get_composer_json_path();
 
+			// If instructed to revert in case of errors but not given a backup file path, fallback to the default backup file path.
 			if ( $args['revert'] && empty( $args['revert-file-path'] ) ) {
 				$args['revert-file-path'] = $this->get_composer_json_backup_path();
 			}
 
-			// Do not allow for non-existent backup files.
+			// Do not allow the use of non-existent backup files.
 			if ( ! empty( $args['revert-file-path'] ) && ! file_exists( $args['revert-file-path'] ) ) {
 				$args['revert']           = false;
 				$args['revert-file-path'] = false;
@@ -777,7 +778,7 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return bool True on success. False on failure.
 	 */
 	public function composer_update( string $composer_json_path = '', array $args = [] ): bool {
-		// Force to be in update mode.
+		// Force Composer to work in update mode.
 		$args['update'] = true;
 
 		return $this->composer_install( $composer_json_path, $args );
