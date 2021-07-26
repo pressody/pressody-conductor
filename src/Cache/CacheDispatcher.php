@@ -56,12 +56,14 @@ class CacheDispatcher {
 				];
 				if ( $event instanceof PackageEvent ) {
 					$context['event']['operation_type'] = $event->getOperation()->getOperationType();
-					$context['event']['package_name'] = $event->getOperation()->getPackage()->getName();
-					$context['event']['package_type'] = $event->getOperation()->getPackage()->getType();
+					if ( method_exists( $event->getOperation(), 'getPackage' ) ) {
+						$context['event']['package_name'] = $event->getOperation()->getPackage()->getName();
+						$context['event']['package_type'] = $event->getOperation()->getPackage()->getType();
 
-					// We only schedule for certain package types, not all.
-					if ( ! in_array( $context['event']['package_type'], [ 'wordpress-plugin', 'wordpress-theme', 'wordpress-core', ] ) ) {
-						return;
+						// We only schedule for certain package types, not all.
+						if ( ! in_array( $context['event']['package_type'], [ 'wordpress-plugin', 'wordpress-theme', 'wordpress-core', ] ) ) {
+							return;
+						}
 					}
 				}
 			}
