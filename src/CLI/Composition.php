@@ -922,8 +922,8 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
 		}
 
-		$options   = [
-			'launch'     => true, // Launch a new process, or reuse the existing.
+		$options = [
+			'launch'     => true,  // Launch a new process, or reuse the existing.
 			'exit_error' => false, // Exit on error by default.
 			'return'     => 'all', // Capture and return output, or render in realtime.
 			'parse'      => false, // Parse returned output as a particular format.
@@ -981,7 +981,7 @@ class Composition extends \WP_CLI_Command {
 			WP_CLI::log( '' );
 
 			$theme_activation_result = $compositionManager->handle_composition_themes_activation();
-			$result = $result && $theme_activation_result;
+			$result                  = $result && $theme_activation_result;
 		}
 
 		WP_CLI::log( '' );

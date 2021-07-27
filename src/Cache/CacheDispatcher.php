@@ -273,7 +273,7 @@ class CacheDispatcher {
 	/**
 	 * Get a list of files searched recursively in the path, possibly excluding some of them.
 	 *
-	 * @param string $path Absolute path to the directory to search in.
+	 * @param string $path    Absolute path to the directory to search in.
 	 * @param array  $exclude Patterns to exclude by. See https://symfony.com/doc/current/components/finder.html (the notPath part).
 	 *
 	 * @return \Traversable|\SplFileInfo[]

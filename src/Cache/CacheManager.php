@@ -45,15 +45,15 @@ class CacheManager extends AbstractHookProvider {
 	 *
 	 * @since 0.9.0
 	 *
-	 * @param QueueInterface           $queue  Queue.
-	 * @param LoggerInterface          $logger Logger.
+	 * @param QueueInterface  $queue  Queue.
+	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		QueueInterface $queue,
 		LoggerInterface $logger
 	) {
-		$this->queue           = $queue;
-		$this->logger          = $logger;
+		$this->queue  = $queue;
+		$this->logger = $logger;
 	}
 
 	/**

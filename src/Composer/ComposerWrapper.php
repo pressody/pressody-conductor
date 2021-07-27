@@ -77,11 +77,11 @@ class ComposerWrapper implements ComposerWrapperInterface {
 	 * @see Config::defaultConfig for all available Composer config entries.
 	 *
 	 *
-	 * @param array $args  Various args to change Composer's behavior.
-	 *                     Provide `home_dir` to change the default Composer home directory absolute path.
-	 *                     Provide the `config` entry to overwrite any configuration Composer determines by itself.
-	 *                     Provide entry `revert_file_path` as an absolute path to a composer.json backup to revert to in case of errors.
-	 *                     Provide entry `verbose` to make the installer more verbose.
+	 * @param array  $args               Various args to change Composer's behavior.
+	 *                                   Provide `home_dir` to change the default Composer home directory absolute path.
+	 *                                   Provide the `config` entry to overwrite any configuration Composer determines by itself.
+	 *                                   Provide entry `revert_file_path` as an absolute path to a composer.json backup to revert to in case of errors.
+	 *                                   Provide entry `verbose` to make the installer more verbose.
 	 *
 	 * @param string $composer_json_path The absolute path to the composer.json to use.
 	 *
@@ -311,7 +311,7 @@ class ComposerWrapper implements ComposerWrapperInterface {
 			'file'    => 'Another random string, which would be a filename this time',
 			'line'    => 314,
 		];
-		$io = $this->io;
+		$io              = $this->io;
 
 		register_shutdown_function(
 			static function () use (
