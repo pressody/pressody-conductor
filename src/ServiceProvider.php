@@ -15,6 +15,7 @@ use Cedaro\WP\Plugin\Provider\I18n;
 use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceProviderInterface;
+use PixelgradeLT\Conductor\Composition\CacheManager;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
 use PixelgradeLT\Conductor\Logging\ComposerLogger;
 use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
@@ -37,6 +38,20 @@ class ServiceProvider implements ServiceProviderInterface {
 	 * @param PimpleContainer $container Container instance.
 	 */
 	public function register( PimpleContainer $container ) {
+
+		$container['cache.manager'] = function ( $container ) {
+			return new CacheManager(
+				$container['queue.action'],
+				$container['logger.main']
+			);
+		};
+
+		$container['cli.cache.manager'] = function ( $container ) {
+			return new CacheManager(
+				$container['queue.action'],
+				$container['logger.cli']
+			);
+		};
 
 		$container['composer.wrapper'] = function ( $container ) {
 			return new Composer\ComposerWrapper(

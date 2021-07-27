@@ -86,6 +86,8 @@ class Site extends \WP_CLI_Command {
 			WP_CLI::error( 'Could not read the site\'s composer.json file contents.' );
 		}
 
+		WP_CLI::success( 'Nothing right now..');
+
 		exit( 0 );
 	}
 
@@ -116,6 +118,8 @@ class Site extends \WP_CLI_Command {
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'There was a FATAL error in getting the "cli.composition.manager" container provider.' );
 		}
+
+		WP_CLI::success( 'Nothing right now..');
 
 		exit( 0 );
 	}
