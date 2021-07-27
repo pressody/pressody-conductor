@@ -16,6 +16,6 @@ namespace PixelgradeLT\Conductor\Exception;
  *
  * @since 0.1.0
  */
-interface PixelgradeltConductorException {
+interface ExceptionInterface {
 
 }

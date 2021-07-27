@@ -19,7 +19,7 @@ use WP_Http as HTTP;
  *
  * @since 0.10.0
  */
-class RestException extends \Exception implements PixelgradeltConductorException {
+class RestException extends \Exception implements ExceptionInterface {
 	/**
 	 * HTTP status code.
 	 *

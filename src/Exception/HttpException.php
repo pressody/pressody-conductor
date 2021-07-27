@@ -11,8 +11,6 @@ declare ( strict_types = 1 );
 
 namespace PixelgradeLT\Conductor\Exception;
 
-use PixelgradeLT\Conductor\Solution;
-use PixelgradeLT\Conductor\Release;
 use Throwable;
 use WP_Http as HTTP;
 
@@ -21,7 +19,7 @@ use WP_Http as HTTP;
  *
  * @since 0.1.0
  */
-class HttpException extends \Exception implements PixelgradeltConductorException {
+class HttpException extends \Exception implements ExceptionInterface {
 	/**
 	 * HTTP status code.
 	 *

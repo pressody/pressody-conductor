@@ -18,7 +18,7 @@ use Throwable;
  *
  * @since 0.1.0
  */
-class InvalidFileName extends \InvalidArgumentException implements PixelgradeltConductorException {
+class InvalidFileName extends \InvalidArgumentException implements ExceptionInterface {
 	/**
 	 * Create an exception for an invalid file name argument.
 	 *

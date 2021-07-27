@@ -18,7 +18,7 @@ use Throwable;
  *
  * @since 0.1.0
  */
-class FileNotFound extends \RuntimeException implements PixelgradeltConductorException {
+class FileNotFound extends \RuntimeException implements ExceptionInterface {
 	/**
 	 * Create an exception for invalid checksum operations.
 	 *
