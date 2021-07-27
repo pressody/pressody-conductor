@@ -11,8 +11,16 @@ declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Cache;
 
+use CacheTool\Adapter\FastCGI;
+use CacheTool\CacheTool;
+use Composer\DependencyResolver\Operation\InstallOperation;
+use Composer\DependencyResolver\Operation\UninstallOperation;
+use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\EventDispatcher\Event;
+use Composer\Installer\InstallerEvent;
+use Composer\Installer\InstallerEvents;
 use Composer\Installer\PackageEvent;
+use Composer\Installer\PackageEvents;
 use PixelgradeLT\Conductor\Queue\QueueInterface;
 use PixelgradeLT\Conductor\Queue\ActionQueue;
 
@@ -31,6 +39,97 @@ class CacheDispatcher {
 	 * @var QueueInterface|null
 	 */
 	protected static ?QueueInterface $queue = null;
+
+	/**
+	 * Handle Composer events and fire actions accordingly.
+	 *
+	 * This is intended to be called from Composer scripts and receive Composer events instances.
+	 * @see https://getcomposer.org/doc/articles/scripts.md#event-classes
+	 *
+	 * @since 0.9.0
+	 *
+	 * @param Event|null $event
+	 */
+	public static function handle_event( Event $event = null ) {
+		if ( ! $event ) {
+			return;
+		}
+
+		// Load everything we need.
+		self::load_wp( self::determine_site_root_path( $event ) );
+
+		switch ( $event->getName() ) {
+			case PackageEvents::PRE_PACKAGE_INSTALL:
+			case PackageEvents::PRE_PACKAGE_UPDATE:
+			case PackageEvents::PRE_PACKAGE_UNINSTALL:
+				self::invalidate_package_opcache( $event );
+				break;
+			case PackageEvents::POST_PACKAGE_INSTALL:
+			case PackageEvents::POST_PACKAGE_UPDATE:
+			case PackageEvents::POST_PACKAGE_UNINSTALL:
+				self::schedule_cache_clear( $event );
+				break;
+		}
+
+	}
+
+	/**
+	 * Clear the opcache after a package event (install, update, uninstall).
+	 *
+	 * This is intended to be called from Composer scripts and receive Composer events instances.
+	 * @see https://getcomposer.org/doc/articles/scripts.md#event-classes
+	 *
+	 * @since 0.9.0
+	 *
+	 * @param Event|null $event
+	 */
+	public static function invalidate_package_opcache( Event $event = null ) {
+		if ( ! $event instanceOf PackageEvent || ! method_exists( $event->getOperation(), 'getPackage' ) ) {
+			return;
+		}
+
+		self::load_wp( self::determine_site_root_path( $event ) );
+
+		$package = $event->getOperation()->getPackage();
+		$installationManager = $event->getComposer()->getInstallationManager();
+		$packagePath = $installationManager->getInstallPath($package);
+		if ( empty( $packagePath ) ) {
+			return;
+		}
+
+		$cachetool = self::get_cachetool();
+		$info = $cachetool->opcache_get_status(true);
+		if ( empty( $info['scripts']) ) {
+			// Opcache is either disabled or there are no scripts cached.
+			return;
+		}
+
+		switch ( $event->getOperation()->getOperationType() ) {
+			case InstallOperation::TYPE:
+			case UpdateOperation::TYPE:
+			case UninstallOperation::TYPE:
+				foreach ($info['scripts'] as $script) {
+					if ( empty( $script['full_path'] ) ) {
+						continue;
+					}
+
+					if (preg_match('|' . $packagePath . '|', $script['full_path'])) {
+						$cachetool->opcache_invalidate( $script['full_path'] );
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	protected static function get_cachetool() {
+		$adapter = null;
+		if ( defined('LT_PHP_FCGI_HOST') && ! empty( LT_PHP_FCGI_HOST ) ) {
+			$adapter = new FastCGI(LT_PHP_FCGI_HOST );
+		}
+		return CacheTool::factory( $adapter );
+	}
 
 	/**
 	 * Schedule the async event to refresh the site cache.
