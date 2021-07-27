@@ -6,6 +6,15 @@ PixelgradeLT Conductor provides a series of WP-CLI commands that allow of easy c
 
 All of Conductor's CLI commands are **grouped under the `lt` namespace** as do all other CLI commands of the LT ecosystem.
 
+## Site Commands
+
+This series of commands target the entire site. They are grouped under the `lt site` sub-namespace.
+
+Here are all the commands available:
+- `wp lt site info` for listing the current site info
+- `wp lt site check` to check the status of the site
+- `wp lt site clear-cache` to clear the site cache.
+
 ## Composition Commands
 
 This series of commands target the current site composition. They are grouped under the `lt composition` sub-namespace.
@@ -22,5 +31,14 @@ Here are all the commands available:
 - `wp lt composition clear-cache` to delete the DB cache related to the composition's contents (plugins and themes)
 - `wp lt composition activate` to active the plugins and/or theme installed by the composition.
 - `wp lt composition update-sequence` to run the entire sequence from updating the site's composition to activating. **This is the go-to workhorse for use in cronjobs!**
+
+## SysAdmin Commands
+
+This series of commands are aimed at system-administrators that need to dig deeper. Of course, Linux offers plenty out-of-the box. These are either often used ones, or specially installed on LT servers.
+
+Here is a not-so-exhaustive list of commands:
+- `composer run cache:opcache:status` for displaying the status of the PHP Opcache
+- `composer run cache:opcache:clear` to clear PHP's Opcache
+- `composer run cache:opcache:warm` to compile (preload) all the site's `.php` files into PHP's Opcache.
 
 [Back to Index](index.md)
