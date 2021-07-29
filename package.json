@@ -1,6 +1,6 @@
 {
 	"name": "pixelgradelt-conductor",
-	"version": "0.1.0",
+	"version": "0.9.0",
 	"description": "Define and manage PixelgradeLT solutions to be purchased and used on customers' websites.",
 	"repository": {
 		"type": "git",

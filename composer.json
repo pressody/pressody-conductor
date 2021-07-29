@@ -1,5 +1,6 @@
 {
 	"name": "pixelgradelt/pixelgradelt-conductor",
+  	"version": "0.9.0",
 	"description": "Deliver a smooth, secure existence for a PixelgradeLT WP Site.",
 	"keywords": [
 		"pixelgradelt",

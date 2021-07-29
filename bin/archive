@@ -8,27 +8,6 @@ const makepot = require( 'node-wp-i18n' ).makepot;
 const path = require( 'path' );
 const spawnProcess = require( 'child_process' ).spawn;
 
-const argv = require( 'minimist' )( process.argv.slice( 2 ), {
-	string: [ 'version' ]
-} );
-
-const pluginFile = path.join( __dirname, `../${ config.name }.php` );
-const packageJson = path.join( __dirname, '../package.json' );
-let version = argv.version;
-
-if ( ! version ) {
-	const contents = fs.readFileSync( pluginFile, 'utf8' );
-	version = contents.match( /Version:[\s]+(.+)/ )[1];
-}
-
-replaceInFile( pluginFile, /(Version:[\s]+).+/, `\$1${ version }` )
-	.then( () => replaceInFile( pluginFile, /VERSION = '.+'/, `VERSION = '${ version }'` ) )
-	.then( () => replaceInFile( packageJson, /"version": "[^"]+"/, `"version": "${ version }"` ))
-	.then( () => spawn( 'composer', [ 'install', '--no-dev', '--prefer-dist' ] ) )
-	.then( () => spawn( 'composer', [ 'dump-autoload', '--no-dev', '--optimize' ] ) )
-	.then( () => makepot( { poedit: true } ) )
-	.then( () => compress( config.name, version, config.distFiles ) );
-
 function compress( slug, version, files ) {
 	return new Promise( ( resolve, reject ) => {
 		const dist = path.join( __dirname, '../dist' );
@@ -78,3 +57,26 @@ function spawn( file, args ) {
 		child.on( 'close', resolve );
 	} );
 }
+
+const argv = require( 'minimist' )( process.argv.slice( 2 ), {
+	string: [ 'version' ]
+} );
+
+const pluginFile = path.join( __dirname, `../${ config.name }.php` );
+const packageJson = path.join( __dirname, '../package.json' );
+const composerJson = path.join( __dirname, '../composer.json' );
+let version = argv.version;
+
+if ( ! version ) {
+	const contents = fs.readFileSync( pluginFile, 'utf8' );
+	version = contents.match( /Version:[\s]+(.+)/ )[1];
+}
+
+replaceInFile( pluginFile, /(Version:[\s]+).+/, `\$1${ version }` )
+	.then( () => replaceInFile( pluginFile, /VERSION = '.+'/, `VERSION = '${ version }'` ) )
+	.then( () => replaceInFile( packageJson, /"version": "[^"]+"/, `"version": "${ version }"` ))
+	.then( () => replaceInFile( composerJson, /"version": "[^"]+"/, `"version": "${ version }"` ))
+	.then( () => spawn( 'composer', [ 'install', '--no-dev', '--prefer-dist' ] ) )
+	.then( () => spawn( 'composer', [ 'dump-autoload', '--no-dev', '--optimize' ] ) )
+	.then( () => makepot( { poedit: true } ) )
+	.then( () => compress( config.name, version, config.distFiles ) );
