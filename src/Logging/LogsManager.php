@@ -73,7 +73,7 @@ class LogsManager extends AbstractHookProvider {
 	 */
 	protected function schedule_cleanup_logs_event() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'pixelgrade-conductor' );
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'plt_con' );
 		}
 	}
 

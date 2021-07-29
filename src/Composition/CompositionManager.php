@@ -792,11 +792,11 @@ class CompositionManager extends AbstractHookProvider {
 	 */
 	protected function schedule_recurring_events() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'pixelgrade-conductor' );
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'plt_con' );
 		}
 
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/hourly' ) ) {
-			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pixelgradelt_conductor/hourly', [], 'pixelgrade-conductor' );
+			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pixelgradelt_conductor/hourly', [], 'plt_con' );
 		}
 	}
 
