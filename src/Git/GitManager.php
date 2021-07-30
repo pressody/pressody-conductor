@@ -77,6 +77,7 @@ class GitManager extends AbstractHookProvider {
 	public function register_hooks() {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
+		// Each time the composition DB cache gets updated, update the .gitignore file with the composition plugins and themes.
 		add_action( 'update_option_' . $this->composition_manager::COMPOSITION_PLUGINS_OPTION_NAME, [ $this, 'gitignore_update_composer_plugins' ] );
 		add_action( 'update_option_' . $this->composition_manager::COMPOSITION_THEMES_OPTION_NAME, [ $this, 'gitignore_update_composer_themes' ] );
 	}
