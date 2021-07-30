@@ -1160,7 +1160,7 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		// Check if the "content-hash" is different than what we have.
+		// Check if the "content-hash" is different from what we have.
 		// If they are the same, we don't need to update anything.
 		if ( ! $force && get_option( self::COMPOSER_LOCK_HASH_OPTION_NAME ) === $composerLockJsonCurrentContents['content-hash'] ) {
 			$this->logger->info( 'The site\'s composer.lock file hasn\'t changed. Skipping the cache update.',

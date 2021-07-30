@@ -10,7 +10,7 @@
  * Plugin Name: PixelgradeLT Conductor
  * Plugin URI: https://github.com/pixelgradelt/pixelgradelt-conductor
  * Description: Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be a MU plugin.
- * Version: 0.9.0
+ * Version: 0.10.0
  * Author: Pixelgrade
  * Author URI: https://pixelgrade.com/
  * License: GPL-2.0-or-later
@@ -37,7 +37,7 @@ if ( ! \defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-const VERSION = '0.9.0';
+const VERSION = '0.10.0';
 
 // Load the Composer autoloader if the vendor packages are installed locally, not at the project level.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {

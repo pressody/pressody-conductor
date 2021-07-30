@@ -15,8 +15,9 @@ use Cedaro\WP\Plugin\Provider\I18n;
 use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceProviderInterface;
-use PixelgradeLT\Conductor\Composition\CacheManager;
+use PixelgradeLT\Conductor\Cache\CacheManager;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
+use PixelgradeLT\Conductor\Git\GitManager;
 use PixelgradeLT\Conductor\Logging\ComposerLogger;
 use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
@@ -78,6 +79,14 @@ class ServiceProvider implements ServiceProviderInterface {
 				$container['queue.action'],
 				$container['logger.cli'],
 				$container['cli.composer.wrapper']
+			);
+		};
+
+		$container['git.manager'] = function ( $container ) {
+			return new GitManager(
+				$container['composition.manager'],
+				$container['queue.action'],
+				$container['logger.main']
 			);
 		};
 

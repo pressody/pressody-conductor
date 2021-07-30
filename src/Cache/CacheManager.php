@@ -9,7 +9,7 @@
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Composition;
+namespace PixelgradeLT\Conductor\Cache;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use PixelgradeLT\Conductor\Queue\QueueInterface;

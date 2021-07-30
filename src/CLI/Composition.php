@@ -54,6 +54,10 @@ use function PixelgradeLT\Conductor\plugin;
  *     $ wp lt composition activate
  *     Success: The activation was successful!
  *
+ *     # Run the composition update sequence of steps.
+ *     $ wp lt composition update-sequence
+ *     Success: The composition update sequence was successful!
+ *
  * @since   0.1.0
  * @package PixelgradeLT
  */
