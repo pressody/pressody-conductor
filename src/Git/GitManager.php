@@ -150,7 +150,7 @@ class GitManager extends AbstractHookProvider {
 		}, $ignore_list );
 
 		$contents = preg_replace(
-			'/(# composer_wp_plugins_start #)(\r\n|\r|\n).*(# composer_wp_plugins_end #)/is',
+			'/(#\s*composition_wp_plugins_start\s*#)(\r\n|\r|\n).*(#\s*composition_wp_plugins_end\s*#)/is',
 			'$1$2' . implode( PHP_EOL, $ignore_list ) . (! empty($ignore_list) ? PHP_EOL : '') . '$3',
 			$contents
 		);
@@ -181,7 +181,7 @@ class GitManager extends AbstractHookProvider {
 		}, $ignore_list );
 
 		$contents = preg_replace(
-			'/(# composer_wp_themes_start #)(\r\n|\r|\n).*(# composer_wp_themes_end #)/is',
+			'/(#\s*composition_wp_themes_start\s*#)(\r\n|\r|\n).*(#\s*composition_wp_themes_end\s*#)/is',
 			'$1$2' . implode( PHP_EOL, $ignore_list ) . (! empty($ignore_list) ? PHP_EOL : '') . '$3',
 			$contents
 		);
