@@ -17,7 +17,10 @@ use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceProviderInterface;
 use PixelgradeLT\Conductor\Cache\CacheManager;
 use PixelgradeLT\Conductor\Composition\CompositionManager;
+use PixelgradeLT\Conductor\Git\GitClient;
 use PixelgradeLT\Conductor\Git\GitManager;
+use PixelgradeLT\Conductor\Git\GitRepo;
+use PixelgradeLT\Conductor\Git\GitWrapper;
 use PixelgradeLT\Conductor\Logging\ComposerLogger;
 use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
 use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
@@ -82,11 +85,33 @@ class ServiceProvider implements ServiceProviderInterface {
 			);
 		};
 
+		$container['git.client'] = function ( $container ) {
+			return new GitClient(
+				$container['git.repo'],
+				$container['logger.main']
+			);
+		};
+
 		$container['git.manager'] = function ( $container ) {
 			return new GitManager(
+				$container['git.client'],
 				$container['composition.manager'],
 				$container['queue.action'],
 				$container['logger.main']
+			);
+		};
+
+		$container['git.repo'] = function ( $container ) {
+			return new GitRepo(
+				\LT_ROOT_DIR,
+				$container['git.wrapper'],
+				$container['logger.main']
+			);
+		};
+
+		$container['git.wrapper'] = function ( $container ) {
+			return new GitWrapper(
+				\LT_ROOT_DIR,
 			);
 		};
 

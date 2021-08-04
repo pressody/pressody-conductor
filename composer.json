@@ -45,17 +45,17 @@
 		"composer/composer": "^2.0",
 		"composer/installers": "^1.0",
 		"composer/semver": "^3.2",
-	  	"gordalina/cachetool": "^6.0",
+		"gordalina/cachetool": "^6.0",
 		"hashids/hashids": "^4.1",
 		"htmlburger/carbon-fields": "^3.2",
 		"oscarotero/env": "^2.1",
 		"pimple/pimple": "^3.2",
 		"psr/container": "^1.0",
 		"psr/log": "^1.0",
-	  	"rmccue/requests": "^1.8",
+		"rmccue/requests": "^1.8",
 		"vlucas/phpdotenv": "^5.3",
 		"woocommerce/action-scheduler": "^3.2",
-	  	"wp-cli/wp-cli": "*"
+		"wp-cli/wp-cli": "*"
 	},
 	"require-dev": {
 		"brain/monkey": "^2.2",
