@@ -29,7 +29,7 @@ use function PixelgradeLT\Conductor\plugin;
  */
 class GitManager extends AbstractHookProvider {
 
-	const VERSIONS_TRANSIENT = 'pixelgradelt_conductor_git_versions';
+	const DETAILS_TRANSIENT = 'pixelgradelt_conductor_git_details';
 
 	/**
 	 * The Git client.
@@ -110,12 +110,13 @@ class GitManager extends AbstractHookProvider {
 		// Hook the git logic in all the places that might generate site file changes.
 		// But only if we actually have a git repo and that we can interact with it (like running git commands).
 		if ( $this->git_client->can_interact() ) {
-			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
-			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
-			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
-			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
-			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
-			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
+			add_action( 'wp_loaded', [ $this, 'git_auto_push' ], 11, 0 );
+			//			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
+			//			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
+			//			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
+			//			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
+			//			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
+			//			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
 		}
 	}
 
@@ -289,7 +290,7 @@ class GitManager extends AbstractHookProvider {
 		$commit = $this->git_client->commit_changes( $message, $git_dir );
 		$this->git_client->merge_and_push( $commit );
 
-		$this->refresh_plugin_and_theme_versions_cache();
+		$this->refresh_plugin_and_theme_details_cache();
 
 		// We just let the filtered response pass through.
 		return $response;
@@ -391,8 +392,8 @@ class GitManager extends AbstractHookProvider {
 	 */
 	public function git_auto_push( string $msg_prepend = '' ) {
 		$commits = $this->group_commit_modified_plugins_and_themes( $msg_prepend );
-		$this->git_client->merge_and_push( $commits );
-		$this->refresh_plugin_and_theme_versions_cache();
+		//		$this->git_client->merge_and_push( $commits );
+		$this->refresh_plugin_and_theme_details_cache();
 	}
 
 	/**
@@ -428,10 +429,10 @@ class GitManager extends AbstractHookProvider {
 				$context['version'] = $change['version'];
 			}
 			$message = $this->git_client->format_message( $message . $msg_append, $context );
-			$commit  = $this->git_client->commit_changes( $message, $base_path );
-			if ( $commit ) {
-				$commits[] = $commit;
-			}
+//			$commit  = $this->git_client->commit_changes( $message, $base_path );
+//			if ( $commit ) {
+//				$commits[] = $commit;
+//			}
 		}
 
 		return $commits;
@@ -441,7 +442,7 @@ class GitManager extends AbstractHookProvider {
 	 * This function return the basic info about a path.
 	 *
 	 * base_path - means the path after wp-content dir (themes/plugins)
-	 * type      - can be file/theme/plugin
+	 * type      - can be file/theme/plugin/mu-plugin
 	 * name      - the file name of the path, if it is a file, or the theme/plugin name
 	 * version   - the theme/plugin version, otherwise null
 	 *
@@ -493,9 +494,18 @@ class GitManager extends AbstractHookProvider {
 	 * @return array
 	 */
 	protected function module_by_path( $path ): array {
-		$versions = $this->get_plugin_and_theme_versions();
 
-		// default values
+		/* =====================
+		 * We want to handle all changes in a module (plugin or theme) together.
+		 * So we want to use the base path of that module, if the path given is somewhere within it.
+		 */
+
+		/*
+		 * First, make sure that we are dealing with a path relative to the root of the site (the place that is the root of the git repo).
+		 */
+		$path = trim( str_replace( $this->git_client->get_git_repo_path(), '', $path ), '/' );
+
+		// Default module details.
 		$module = array(
 			'base_path' => $path,
 			'type'      => 'file',
@@ -503,39 +513,104 @@ class GitManager extends AbstractHookProvider {
 			'version'   => null,
 		);
 
-		// find the base_path
-		$split_path = explode( '/', $path );
-		if ( 2 < count( $split_path ) ) {
-			$module['base_path'] = "{$split_path[0]}/{$split_path[1]}/{$split_path[2]}";
-		}
+		/*
+		 * Second, if we have a path to a plugin or a theme, limit it to it's root.
+		 */
+		// Determine the partial path to the directory holding plugins and themes (the regular 'wp-content', but we may not use that).
+		// That is why we rely on the path of this plugin to work our way up.
+		// We go two levels up: one for the plugin directory (aka 'pixelgradelt-conductor') and one for 'plugins' or 'mu-plugins'.
+		$app_dir = dirname( $this->plugin->get_directory(), 2 );
+		// Make it relative to the repo path.
+		$app_dir = trim( str_replace( $this->git_client->get_git_repo_path(), '', $app_dir ), '/' );
 
-		// find other data for theme
-		if ( array_key_exists( 'themes', $versions ) && 0 === strpos( $path, 'wp-content/themes/' ) ) {
-			$module['type'] = 'theme';
-			foreach ( $versions['themes'] as $theme => $data ) {
-				if ( 0 === strpos( $path, "wp-content/themes/$theme" ) ) {
-					$module['name']    = $data['name'];
-					$module['version'] = $data['version'];
-					break;
+		// Get the cached plugins and themes details.
+		$details = $this->get_plugin_and_theme_details();
+
+		$themes_dir_path    = \path_join( $app_dir, 'themes' );
+		$plugins_dir_path   = \path_join( $app_dir, 'plugins' );
+		$muplugins_dir_path = \path_join( $app_dir, 'mu-plugins' );
+
+		// If this is a path to a theme directory or file,
+		// reduce it to the theme directory and find other data for it.
+		if ( 0 === strpos( $path, $themes_dir_path ) ) {
+			if ( array_key_exists( 'themes', $details ) ) {
+				// Set the module type.
+				$module['type'] = 'theme';
+				// Reduce the path to just one level bellow the 'themes' directory path.
+				$temp_path  = trim( substr( $path, strlen( $themes_dir_path ) ), '/' );
+				if ( false !== strpos( $temp_path, '/' ) ) {
+					$split_path = explode( '/', $temp_path );
+					if ( ! empty( $split_path[0] ) ) {
+						$path = \path_join( $themes_dir_path, $split_path[0] );
+					}
+				}
+				// Update the module path and name.
+				$module['path'] = $path;
+				$module['name'] = basename( $path );
+
+				foreach ( $details['themes'] as $theme => $data ) {
+					if ( $path === \path_join( $themes_dir_path, $theme ) ) {
+						// Found the theme we were searching for.
+						$module['name']    = $data['name'];
+						$module['version'] = $data['version'];
+						break;
+					}
 				}
 			}
 		}
+		// If this is a path to a regular plugin directory or file,
+		// reduce it to the plugin directory and find other data for it.
+		else if ( 0 === strpos( $path, $plugins_dir_path ) ) {
+			if ( array_key_exists( 'plugins', $details ) ) {
+				// Set the module type.
+				$module['type'] = 'plugin';
+				// Reduce the path to just one level bellow the 'plugins' directory path.
+				$temp_path  = trim( substr( $path, strlen( $plugins_dir_path ) ), '/' );
+				if ( false !== strpos( $temp_path, '/' ) ) {
+					$split_path = explode( '/', $temp_path );
+					if ( ! empty( $split_path[0] ) ) {
+						$path = \path_join( $plugins_dir_path, $split_path[0] );
+					}
+				}
+				// Update the module path and name.
+				$module['path'] = $path;
+				$module['name'] = basename( $path );
 
-		// find other data for plugin
-		if ( array_key_exists( 'plugins', $versions ) && 0 === strpos( $path, 'wp-content/plugins/' ) ) {
-			$module['type'] = 'plugin';
-			foreach ( $versions['plugins'] as $plugin => $data ) {
-				if ( '.' === dirname( $plugin ) ) { // single file plugin
-					if ( "wp-content/plugins/$plugin" === $path ) {
-						$module['base_path'] = $path;
-						$module['name']      = $data['name'];
-						$module['version']   = $data['version'];
+				foreach ( $details['plugins'] as $plugin => $data ) {
+					if ( ( '.' === dirname( $plugin ) && $path === \path_join( $plugins_dir_path, $plugin ) )
+					     || ( $path === \path_join( $plugins_dir_path, dirname( $plugin ) ) ) ) {
+						$module['name']    = $data['name'];
+						$module['version'] = $data['version'];
 						break;
 					}
-				} else if ( 'wp-content/plugins/' . dirname( $plugin ) === $module['base_path'] ) {
-					$module['name']    = $data['name'];
-					$module['version'] = $data['version'];
-					break;
+				}
+			}
+		}
+		// If this is a path to a must-use plugin directory or file,
+		// reduce it to the plugin directory and find other data for it.
+		else if ( 0 === strpos( $path, $muplugins_dir_path ) ) {
+			if ( array_key_exists( 'mu-plugins', $details ) ) {
+				// Set the module type.
+				$module['type'] = 'mu-plugin';
+				// Reduce the path to just one level bellow the 'plugins' directory path.
+				$temp_path  = trim( substr( $path, strlen( $muplugins_dir_path ) ), '/' );
+				if ( false !== strpos( $temp_path, '/' ) ) {
+					$split_path = explode( '/', $temp_path );
+					if ( ! empty( $split_path[0] ) ) {
+						$path = \path_join( $muplugins_dir_path, $split_path[0] );
+					}
+				}
+				// Update the module path and name.
+				$module['path'] = $path;
+				$module['name'] = basename( $path );
+
+				foreach ( $details['mu-plugins'] as $plugin => $data ) {
+					if ( ( '.' === dirname( $plugin ) && $path === \path_join( $muplugins_dir_path, $plugin ) )
+					     || ( $path === \path_join( $muplugins_dir_path, dirname( $plugin ) ) ) ) {
+						$module['name']    = $data['name'];
+						$module['version'] = $data['version'];
+						break;
+					}
 				}
 			}
 		}
@@ -544,75 +619,96 @@ class GitManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Get the cached plugins and themes versions list.
+	 * Get the cached plugins and themes details list.
 	 *
 	 * @since 0.10.0
 	 *
 	 * @return array|mixed
 	 */
-	protected function get_plugin_and_theme_versions() {
-		$versions = get_transient( self::VERSIONS_TRANSIENT );
+	protected function get_plugin_and_theme_details() {
+		$versions = get_transient( self::DETAILS_TRANSIENT );
 		if ( empty( $versions ) ) {
-			$versions = $this->refresh_plugin_and_theme_versions_cache();
+			$versions = $this->refresh_plugin_and_theme_details_cache();
 		}
 
 		return $versions;
 	}
 
 	/**
-	 * Refresh the cached plugins and themes versions list.
+	 * Refresh the cached plugins and themes details list.
 	 *
 	 * @since 0.10.0
 	 *
 	 * @return array
 	 */
-	protected function refresh_plugin_and_theme_versions_cache(): array {
-		$new_versions = [];
+	protected function refresh_plugin_and_theme_details_cache(): array {
+		$new_data = [];
 
-		// get all themes from WP
+		// Get all themes.
 		$all_themes = wp_get_themes( array( 'allowed' => true ) );
 		foreach ( $all_themes as $theme_name => $theme ) {
-			$theme_versions[ $theme_name ]        = array(
+			$themes_data[ $theme_name ]        = array(
 				'name'    => $theme->get( 'Name' ),
 				'version' => null,
 				'msg'     => '',
 			);
-			$theme_versions[ $theme_name ]['msg'] = '`' . $theme->get( 'Name' ) . '`';
-			$version                              = $theme->get( 'Version' );
+			$themes_data[ $theme_name ]['msg'] = '`' . $theme->get( 'Name' ) . '`';
+			$version                           = $theme->get( 'Version' );
 			if ( ! empty( $version ) ) {
-				$theme_versions[ $theme_name ]['msg']     .= " version $version";
-				$theme_versions[ $theme_name ]['version'] .= $version;
+				$themes_data[ $theme_name ]['msg']     .= " version $version";
+				$themes_data[ $theme_name ]['version'] .= $version;
 			}
 		}
 
-		if ( ! empty( $theme_versions ) ) {
-			$new_versions['themes'] = $theme_versions;
+		if ( ! empty( $themes_data ) ) {
+			$new_data['themes'] = $themes_data;
 		}
-		// get all plugins from WP
+
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
+
+		// Get all regular plugins.
 		$all_plugins = get_plugins();
 		foreach ( $all_plugins as $name => $data ) {
-			$plugin_versions[ $name ]        = array(
+			$plugins_data[ $name ]        = array(
 				'name'    => $data['Name'],
 				'version' => null,
 				'msg'     => '',
 			);
-			$plugin_versions[ $name ]['msg'] = "`{$data['Name']}`";
+			$plugins_data[ $name ]['msg'] = "`{$data['Name']}`";
 			if ( ! empty( $data['Version'] ) ) {
-				$plugin_versions[ $name ]['msg']     .= ' version ' . $data['Version'];
-				$plugin_versions[ $name ]['version'] .= $data['Version'];
+				$plugins_data[ $name ]['msg']     .= ' version ' . $data['Version'];
+				$plugins_data[ $name ]['version'] .= $data['Version'];
 			}
 		}
 
-		if ( ! empty( $plugin_versions ) ) {
-			$new_versions['plugins'] = $plugin_versions;
+		if ( ! empty( $plugins_data ) ) {
+			$new_data['plugins'] = $plugins_data;
 		}
 
-		set_transient( self::VERSIONS_TRANSIENT, $new_versions, 3 * DAY_IN_SECONDS );
+		// Get all must-use plugins.
+		$all_mu_plugins = get_mu_plugins();
+		foreach ( $all_mu_plugins as $name => $data ) {
+			$muplugins_data[ $name ]        = array(
+				'name'    => $data['Name'],
+				'version' => null,
+				'msg'     => '',
+			);
+			$muplugins_data[ $name ]['msg'] = "`{$data['Name']}`";
+			if ( ! empty( $data['Version'] ) ) {
+				$muplugins_data[ $name ]['msg']     .= ' version ' . $data['Version'];
+				$muplugins_data[ $name ]['version'] .= $data['Version'];
+			}
+		}
 
-		return $new_versions;
+		if ( ! empty( $muplugins_data ) ) {
+			$new_data['mu-plugins'] = $muplugins_data;
+		}
+
+		set_transient( self::DETAILS_TRANSIENT, $new_data, 3 * DAY_IN_SECONDS );
+
+		return $new_data;
 	}
 
 	/**

@@ -27,6 +27,13 @@ interface GitClientInterface {
 	public function can_interact(): bool;
 
 	/**
+	 * Get the absolute path of the Git repo that we can interact with.
+	 *
+	 * @return string The absolute path to the Git repo root or empty string on failure.
+	 */
+	public function get_git_repo_path(): string;
+
+	/**
 	 * Checks if repo has uncommitted changes.
 	 *
 	 * @since 0.10.0

@@ -65,6 +65,15 @@ class GitClient implements GitClientInterface {
 	}
 
 	/**
+	 * Get the absolute path of the Git repo that we can interact with.
+	 *
+	 * @return string The absolute path to the Git repo root or empty string on failure.
+	 */
+	public function get_git_repo_path(): string {
+		return $this->git_repo->get_repo_path();
+	}
+
+	/**
 	 * Formats a commit message.
 	 *
 	 * - Interpolates context values into message placeholders.

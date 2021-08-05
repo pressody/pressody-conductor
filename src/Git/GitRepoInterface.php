@@ -27,6 +27,13 @@ interface GitRepoInterface {
 	public function can_interact(): bool;
 
 	/**
+	 * Get the absolute path of the Git repo.
+	 *
+	 * @return string The absolute path to the Git repo root or empty string on failure.
+	 */
+	public function get_repo_path(): string;
+
+	/**
 	 * Get the installed git version.
 	 *
 	 * @return string
