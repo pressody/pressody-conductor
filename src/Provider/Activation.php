@@ -48,6 +48,8 @@ class Activation extends AbstractHookProvider {
 
 		$this->create_cron_jobs();
 //		$this->create_or_update_tables();
+
+		$this->make_ssh_git_file_executable();
 	}
 
 	/**
@@ -107,5 +109,21 @@ CREATE TABLE {$wpdb->prefix}pixelgradelt_conductor_log (
 		global $wpdb;
 
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}pixelgradelt_conductor_log" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	private function make_ssh_git_file_executable() {
+		$ssh_wrapper = $this->plugin->get_path( 'bin/ssh-git' );
+		$process = proc_open(
+			"chmod -f +x $ssh_wrapper",
+			array(
+				0 => array( 'pipe', 'r' ),  // stdin
+				1 => array( 'pipe', 'w' ),  // stdout
+			),
+			$pipes
+		);
+		if ( is_resource( $process ) ) {
+			fclose( $pipes[0] );
+			proc_close( $process );
+		}
 	}
 }
