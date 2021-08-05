@@ -20,6 +20,13 @@ namespace PixelgradeLT\Conductor\Git;
 interface GitClientInterface {
 
 	/**
+	 * Determine if we have a Git repo and that we can interact with it (run commands).
+	 *
+	 * @return bool
+	 */
+	public function can_interact(): bool;
+
+	/**
 	 * Checks if repo has uncommitted changes.
 	 *
 	 * @since 0.10.0

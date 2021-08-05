@@ -13,43 +13,27 @@ declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Git;
 
+use function PixelgradeLT\Conductor\plugin;
+
 class GitWrapper {
 
-	private $last_error = '';
-	private $repo_dir = '';
+	private $last_error = null;
+	private string $repo_dir;
 
 	function __construct( $repo_dir ) {
-		$this->repo_dir    = $repo_dir;
-		$this->private_key = '';
+		$this->repo_dir = $repo_dir;
 	}
 
-	function _git_temp_key_file() {
-		$key_file = tempnam( sys_get_temp_dir(), 'ssh-git' );
-
-		return $key_file;
-	}
-
-	function set_key( $private_key ) {
-		$this->private_key = $private_key;
-	}
-
-	private function get_env() {
-		$env      = array();
-		$key_file = null;
-
-		if ( defined( 'GIT_SSH' ) && GIT_SSH ) {
-			$env['GIT_SSH'] = GIT_SSH;
+	private function get_env(): array {
+		$env = [];
+		if ( defined( 'LT_GIT_SSH' ) && LT_GIT_SSH ) {
+			$env['GIT_SSH'] = LT_GIT_SSH;
 		} else {
-			$env['GIT_SSH'] = dirname( __FILE__ ) . '/ssh-git';
+			$env['GIT_SSH'] = plugin()->get_path( 'bin/ssh-git' );
 		}
 
-		if ( defined( 'GIT_KEY_FILE' ) && GIT_KEY_FILE ) {
-			$env['GIT_KEY_FILE'] = GIT_KEY_FILE;
-		} elseif ( $this->private_key ) {
-			$key_file = $this->_git_temp_key_file();
-			chmod( $key_file, 0600 );
-			file_put_contents( $key_file, $this->private_key );
-			$env['GIT_KEY_FILE'] = $key_file;
+		if ( defined( 'LT_GIT_KEY_FILE' ) && LT_GIT_KEY_FILE ) {
+			$env['GIT_KEY_FILE'] = LT_GIT_KEY_FILE;
 		}
 
 		return $env;
@@ -59,15 +43,15 @@ class GitWrapper {
 		$args     = join( ' ', array_map( 'escapeshellarg', $args ) );
 		$cmd      = "git $args 2>&1";
 		$return   = - 1;
-		$response = array();
+		$response = [];
 		$env      = $this->get_env();
 
 		$proc = proc_open(
 			$cmd,
-			array(
-				0 => array( 'pipe', 'r' ),  // stdin
-				1 => array( 'pipe', 'w' ),  // stdout
-			),
+			[
+				0 => [ 'pipe', 'r' ],  // stdin
+				1 => [ 'pipe', 'w' ],  // stdout
+			],
 			$pipes,
 			$this->repo_dir,
 			$env
@@ -80,16 +64,13 @@ class GitWrapper {
 			$return = (int) proc_close( $proc );
 		}
 
-		if ( ! defined( 'GIT_KEY_FILE' ) && isset( $env['GIT_KEY_FILE'] ) ) {
-			unlink( $env['GIT_KEY_FILE'] );
-		}
 		if ( 0 != $return ) {
 			$this->last_error = join( "\n", $response );
 		} else {
 			$this->last_error = null;
 		}
 
-		return array( $return, $response );
+		return [ $return, $response ];
 	}
 
 	public function get_last_error() {
@@ -197,12 +178,12 @@ class GitWrapper {
 		if ( 1 == count( $args ) && is_array( $args[0] ) ) {
 			$args = $args[0];
 		}
-		$params = array_merge( array( 'add', '-n', '--all' ), $args );
-		list ( , $response ) = call_user_func_array( array( $this, '_call' ), $params );
+		$params = array_merge( [ 'add', '-n', '--all' ], $args );
+		list ( , $response ) = call_user_func_array( [ $this, '_call' ], $params );
 		$count = count( $response );
 
-		$params = array_merge( array( 'add', '--all' ), $args );
-		list ( , $response ) = call_user_func_array( array( $this, '_call' ), $params );
+		$params = array_merge( [ 'add', '--all' ], $args );
+		list ( , $response ) = call_user_func_array( [ $this, '_call' ], $params );
 
 		return $count;
 	}
@@ -235,13 +216,13 @@ class GitWrapper {
 	public function local_status() {
 		list( $return, $response ) = $this->_call( 'status', '-s', '-b', '-u' );
 		if ( 0 !== $return ) {
-			return array( '', array() );
+			return [ '', [] ];
 		}
 
-		$new_response = array();
+		$new_response = [];
 		if ( ! empty( $response ) ) {
 			$branch_status = array_shift( $response );
-			foreach ( $response as $idx => $line ) :
+			foreach ( $response as $idx => $line ) {
 				unset( $index_status, $work_tree_status, $path, $new_path, $old_path );
 
 				if ( empty( $line ) ) {
@@ -262,17 +243,17 @@ class GitWrapper {
 					$path     = trim( $new_path[1] );
 				}
 				$new_response[ $path ] = trim( $index_status . $work_tree_status . ' ' . $old_path );
-			endforeach;
+			}
 		}
 
-		return array( $branch_status, $new_response );
+		return [ $branch_status, $new_response ];
 	}
 
 	public function status( $local_only = false ) {
 		list( $branch_status, $new_response ) = $this->local_status();
 
 		if ( $local_only ) {
-			return array( $branch_status, $new_response );
+			return [ $branch_status, $new_response ];
 		}
 
 		$behind_count = 0;
@@ -301,7 +282,7 @@ class GitWrapper {
 			}
 		}
 
-		return array( $branch_status, $new_response );
+		return [ $branch_status, $new_response ];
 	}
 
 	/**

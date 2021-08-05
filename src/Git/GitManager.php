@@ -107,13 +107,16 @@ class GitManager extends AbstractHookProvider {
 			'maybe_update_gitignore_on_update_composer_themes',
 		] );
 
-		// Hook in all the places that might generate site file changes.
-		add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
-		add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
-		add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
-		add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
-		add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
-		add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
+		// Hook the git logic in all the places that might generate site file changes.
+		// But only if we actually have a git repo and that we can interact with it (like running git commands).
+		if ( $this->git_client->can_interact() ) {
+			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
+			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
+			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
+			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
+			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
+			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
+		}
 	}
 
 	/**

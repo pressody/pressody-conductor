@@ -56,6 +56,15 @@ class GitClient implements GitClientInterface {
 	}
 
 	/**
+	 * Determine if we have a Git repo and that we can interact with it (run commands).
+	 *
+	 * @return bool
+	 */
+	public function can_interact(): bool {
+		return $this->git_repo->is_repo() && $this->git_repo->can_interact();
+	}
+
+	/**
 	 * Formats a commit message.
 	 *
 	 * - Interpolates context values into message placeholders.
@@ -181,14 +190,6 @@ class GitClient implements GitClientInterface {
 	 * @return false|mixed
 	 */
 	public function commit_changes( string $message, string $path = '.' ) {
-		global $git;
-
-		list( , $git_private_key ) = gitium_get_keypair();
-		if ( ! $git_private_key ) {
-			return false;
-		}
-		$git->set_key( $git_private_key );
-
 		if ( ! empty( $path ) ) {
 			$this->git_repo->rm_cached( $path );
 			$this->git_repo->add( $path );
@@ -242,9 +243,8 @@ class GitClient implements GitClientInterface {
 				return false; // timeout
 			}
 		}
-		gitium_error_log( __FUNCTION__ );
 
-		return array( $gitium_lock_path, $gitium_lock_handle );
+		return [ $gitium_lock_path, $gitium_lock_handle ];
 	}
 
 	/**
@@ -254,7 +254,6 @@ class GitClient implements GitClientInterface {
 	 */
 	protected function release_merge_lock( $lock ) {
 		list( $gitium_lock_path, $gitium_lock_handle ) = $lock;
-		gitium_error_log( __FUNCTION__ );
 		flock( $gitium_lock_handle, LOCK_UN );
 		fclose( $gitium_lock_handle );
 	}

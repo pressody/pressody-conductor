@@ -367,7 +367,7 @@ class GitRepo implements GitRepoInterface {
 
 	protected function strpos_haystack_array( $haystack, $needle, $offset = 0 ) {
 		if ( ! is_array( $haystack ) ) {
-			$haystack = array( $haystack );
+			$haystack = [ $haystack ];
 		}
 
 		foreach ( $haystack as $query ) {
@@ -383,13 +383,13 @@ class GitRepo implements GitRepoInterface {
 		list( , $changes ) = $this->status( true );
 		// @todo Maybe log.
 		foreach ( $changes as $path => $change ) {
-			if ( in_array( $change, array( 'UD', 'DD' ) ) ) {
+			if ( in_array( $change, [ 'UD', 'DD' ] ) ) {
 				$this->git_wrapper->_call( 'rm', $path );
 				$message .= "\n\tConflict: $path [removed]";
 			} elseif ( 'DU' == $change ) {
 				$this->git_wrapper->_call( 'add', $path );
 				$message .= "\n\tConflict: $path [added]";
-			} elseif ( in_array( $change, array( 'AA', 'UU', 'AU', 'UA' ) ) ) {
+			} elseif ( in_array( $change, [ 'AA', 'UU', 'AU', 'UA' ] ) ) {
 				$this->git_wrapper->_call( 'checkout', '--theirs', $path );
 				$this->git_wrapper->_call( 'add', '--all', $path );
 				$message .= "\n\tConflict: $path [local version]";
@@ -402,7 +402,7 @@ class GitRepo implements GitRepoInterface {
 		list( , $response ) = $this->status( true );
 		$changes = array_values( $response );
 
-		return ( 0 == count( array_intersect( $changes, array( 'DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU' ) ) ) );
+		return ( 0 == count( array_intersect( $changes, [ 'DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU' ] ) ) );
 	}
 
 	/**
