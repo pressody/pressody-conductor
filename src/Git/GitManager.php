@@ -418,14 +418,14 @@ class GitManager extends AbstractHookProvider {
 		}
 
 		foreach ( $commit_groups as $base_path => $change ) {
-			$message = '{change_action} {change_type} {name}';
+			$message = '{change_action} {change_type} `{name}`';
 			$context = [
-				'change_action' => $change['action'],
+				'change_action' => ucfirst( $change['action'] ),
 				'change_type'   => $change['type'],
 				'name'          => $change['name'],
 			];
 			if ( ! empty( $change['version'] ) ) {
-				$message            .= ' version {version}';
+				$message            .= ' (version {version})';
 				$context['version'] = $change['version'];
 			}
 			$message = $this->git_client->format_message( $message . $msg_append, $context );
@@ -441,47 +441,55 @@ class GitManager extends AbstractHookProvider {
 	/**
 	 * This function return the basic info about a path.
 	 *
-	 * base_path - means the path after wp-content dir (themes/plugins)
+	 * base_path - means the relative path to the module root
 	 * type      - can be file/theme/plugin/mu-plugin
 	 * name      - the file name of the path, if it is a file, or the theme/plugin name
 	 * version   - the theme/plugin version, otherwise null
 	 *
 	 * Some examples:
-	 * with 'wp-content/themes/twentyten/style.css' will return:
+	 * with '.gitignore' will return:
 	 * array(
-	 *  'base_path' => 'wp-content/themes/twentyten'
+	 *  'base_path' => '.gitignore'
+	 *  'type'      => 'file'
+	 *  'name'      => '.gitignore'
+	 *  'version'   => null
+	 * )
+	 *
+	 * with 'web/app/themes/twentyten/style.css' will return:
+	 * array(
+	 *  'base_path' => 'web/app/themes/twentyten'
 	 *  'type'      => 'theme'
 	 *  'name'      => 'TwentyTen'
 	 *  'version'   => '1.12'
 	 * )
 	 *
-	 * with 'wp-content/themes/twentyten/img/foo.png' will return:
+	 * with 'web/app/themes/twentyten/img/foo.png' will return:
 	 * array(
-	 *  'base_path' => 'wp-content/themes/twentyten'
+	 *  'base_path' => 'web/app/themes/twentyten'
 	 *  'type'      => 'theme'
 	 *  'name'      => 'TwentyTen'
 	 *  'version'   => '1.12'
 	 * )
 	 *
-	 * with 'wp-content/plugins/foo.php' will return:
+	 * with 'web/app/plugins/foo.php' will return:
 	 * array(
-	 *  'base_path' => 'wp-content/plugins/foo.php'
+	 *  'base_path' => 'web/app/plugins/foo.php'
 	 *  'type'      => 'plugin'
 	 *  'name'      => 'Foo'
 	 *  'version'   => '2.0'
 	 * )
 	 *
-	 * with 'wp-content/plugins/autover/autover.php' will return:
+	 * with 'web/app/plugins/autover/autover.php' will return:
 	 * array(
-	 *  'base_path' => 'wp-content/plugins/autover'
+	 *  'base_path' => 'web/app/plugins/autover'
 	 *  'type'      => 'plugin'
 	 *  'name'      => 'autover'
 	 *  'version'   => '3.12'
 	 * )
 	 *
-	 * with 'wp-content/plugins/autover/' will return:
+	 * with 'web/app/plugins/autover/' will return:
 	 * array(
-	 *  'base_path' => 'wp-content/plugins/autover'
+	 *  'base_path' => 'web/app/plugins/autover'
 	 *  'type'      => 'plugin'
 	 *  'name'      => 'autover'
 	 *  'version'   => '3.12'
@@ -545,7 +553,7 @@ class GitManager extends AbstractHookProvider {
 					}
 				}
 				// Update the module path and name.
-				$module['path'] = $path;
+				$module['base_path'] = $path;
 				$module['name'] = basename( $path );
 
 				foreach ( $details['themes'] as $theme => $data ) {
@@ -573,7 +581,7 @@ class GitManager extends AbstractHookProvider {
 					}
 				}
 				// Update the module path and name.
-				$module['path'] = $path;
+				$module['base_path'] = $path;
 				$module['name'] = basename( $path );
 
 				foreach ( $details['plugins'] as $plugin => $data ) {
@@ -601,7 +609,7 @@ class GitManager extends AbstractHookProvider {
 					}
 				}
 				// Update the module path and name.
-				$module['path'] = $path;
+				$module['base_path'] = $path;
 				$module['name'] = basename( $path );
 
 				foreach ( $details['mu-plugins'] as $plugin => $data ) {

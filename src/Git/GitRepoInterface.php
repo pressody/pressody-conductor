@@ -141,8 +141,12 @@ interface GitRepoInterface {
 
 	/**
 	 * Remove files version control index.
+	 *
+	 * @param string $path
+	 *
+	 * @return bool
 	 */
-	public function rm_cached( $path ): bool;
+	public function rm_cached( string $path ): bool;
 
 	/**
 	 * @return bool

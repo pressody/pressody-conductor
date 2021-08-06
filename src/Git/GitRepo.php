@@ -68,6 +68,8 @@ class GitRepo implements GitRepoInterface {
 	/**
 	 * Determine if we can interact with the Git repo (run commands).
 	 *
+	 * @since 0.10.0
+	 *
 	 * @return bool
 	 */
 	public function can_interact(): bool {
@@ -76,6 +78,8 @@ class GitRepo implements GitRepoInterface {
 
 	/**
 	 * Get the absolute path of the Git repo.
+	 *
+	 * @since 0.10.0
 	 *
 	 * @return string The absolute path to the Git repo root or empty string on failure.
 	 */
@@ -86,6 +90,8 @@ class GitRepo implements GitRepoInterface {
 	/**
 	 * Get the installed git version.
 	 *
+	 * @since 0.10.0
+	 *
 	 * @return string
 	 */
 	public function get_version(): string {
@@ -94,6 +100,8 @@ class GitRepo implements GitRepoInterface {
 
 	/**
 	 * Checks if we have an actual Git repo.
+	 *
+	 * @since 0.10.0
 	 *
 	 * @param string $path Optional. Absolute path to the directory to test.
 	 *                     Default is empty, meaning that it tests the directory with which the Git wrapper was initialized with.
@@ -123,6 +131,8 @@ class GitRepo implements GitRepoInterface {
 	 *  ...
 	 * ]
 	 *
+	 * @since 0.10.0
+	 *
 	 * @return array
 	 */
 	public function get_local_changes(): array {
@@ -134,6 +144,7 @@ class GitRepo implements GitRepoInterface {
 		$new_response = [];
 		if ( ! empty( $response ) ) {
 			foreach ( $response as $line ) :
+				// For details on statuses see https://git-scm.com/docs/git-status/2.2.3#_output
 				$work_tree_status = substr( $line, 1, 1 );
 				$path             = substr( $line, 3 );
 
@@ -143,11 +154,18 @@ class GitRepo implements GitRepoInterface {
 					$path = substr( $path, 1, strlen( $path ) - 2 );
 				}
 
-				if ( 'D' == $work_tree_status ) {
-					$action = 'deleted';
-				} else {
-					$action = 'modified';
+				switch ( $work_tree_status ) {
+					case 'D':
+						$action = 'delete';
+						break;
+					case '?':
+						$action = 'add';
+						break;
+					default:
+						$action = 'modify';
+						break;
 				}
+
 				$new_response[ $path ] = $action;
 			endforeach;
 		}
@@ -156,6 +174,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @return mixed
 	 */
 	public function get_uncommitted_changes() {
@@ -165,6 +185,11 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 *
+	 * @see https://git-scm.com/docs/git-status/2.2.3#_output
+	 *
+	 * @since 0.10.0
+	 *
 	 * @return array
 	 */
 	public function local_status(): array {
@@ -172,6 +197,11 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 *
+	 * @see https://git-scm.com/docs/git-status/2.2.3#_output
+	 *
+	 * @since 0.10.0
+	 *
 	 * @param bool $local_only
 	 *
 	 * @return array
@@ -182,6 +212,8 @@ class GitRepo implements GitRepoInterface {
 
 	/**
 	 * Checks if repo has uncommitted changes.
+	 *
+	 * @since 0.10.0
 	 *
 	 * @return bool
 	 */
@@ -194,6 +226,8 @@ class GitRepo implements GitRepoInterface {
 	/**
 	 * Add a remote URL for origin.
 	 *
+	 * @since 0.10.0
+	 *
 	 * @param string $url The remote URL to add.
 	 *
 	 * @return bool
@@ -205,14 +239,18 @@ class GitRepo implements GitRepoInterface {
 	/**
 	 * Get the repo's remote origin URL.
 	 *
+	 * @since 0.10.0
+	 *
 	 * @return string The remote URL. Empty string on missing remote URL.
 	 */
 	public function get_remote_url(): string {
-		$this->git_wrapper->get_remote_url();
+		return $this->git_wrapper->get_remote_url();
 	}
 
 	/**
 	 * Remove the repo's remote origin setting.
+	 *
+	 * @since 0.10.0
 	 *
 	 * @return bool
 	 */
@@ -223,6 +261,8 @@ class GitRepo implements GitRepoInterface {
 	/**
 	 * @param string $commit
 	 *
+	 * @since 0.10.0
+	 *
 	 * @return string|false
 	 */
 	public function get_commit_message( string $commit ) {
@@ -231,6 +271,8 @@ class GitRepo implements GitRepoInterface {
 
 	/**
 	 * Return the last n commits
+	 *
+	 * @since 0.10.0
 	 *
 	 * @param int $number
 	 *
@@ -267,6 +309,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @param string $content
 	 *
 	 * @return bool
@@ -276,6 +320,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @return string|false
 	 */
 	public function get_gitignore() {
@@ -284,12 +330,20 @@ class GitRepo implements GitRepoInterface {
 
 	/**
 	 * Remove files version control index.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @param string $path
+	 *
+	 * @return bool
 	 */
-	public function rm_cached( $path ): bool {
+	public function rm_cached( string $path ): bool {
 		return $this->git_wrapper->rm_cached( $path );
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @return bool
 	 */
 	public function fetch_ref(): bool {
@@ -297,37 +351,34 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @param ...$commits
 	 *
 	 * @return bool
 	 */
 	public function merge_with_accept_mine( ...$commits ): bool {
-		do_action( 'gitium_before_merge_with_accept_mine' );
+		do_action( 'pixelgradelt_conductor/git/before_merge_with_accept_mine', $commits );
 
 		if ( 1 == count( $commits ) && is_array( $commits[0] ) ) {
 			$commits = $commits[0];
 		}
 
-		// get ahead commits
 		$ahead_commits = $this->git_wrapper->get_ahead_commits();
 
-		// combine all commits with the ahead commits
+		// Combine all commits with the ahead commits.
 		$commits = array_unique( array_merge( array_reverse( $commits ), $ahead_commits ) );
 		$commits = array_reverse( $commits );
 
-		// get the remote branch
 		$remote_branch = $this->git_wrapper->get_remote_tracking_branch();
-
-		// get the local branch
 		$local_branch = $this->git_wrapper->get_local_branch();
-
-		// rename the local branch to 'merge_local'
+		// Rename the local branch to 'merge_local'
 		$this->git_wrapper->_call( 'branch', '-m', 'merge_local' );
 
-		// local branch set up to track remote branch
+		// Local branch set up to track remote branch.
 		$this->git_wrapper->_call( 'branch', $local_branch, $remote_branch );
 
-		// checkout to the $local_branch
+		// Checkout to the $local_branch.
 		list( $return, ) = $this->git_wrapper->_call( 'checkout', $local_branch );
 		if ( $return != 0 ) {
 			$this->git_wrapper->_call( 'branch', '-M', $local_branch );
@@ -335,13 +386,14 @@ class GitRepo implements GitRepoInterface {
 			return false;
 		}
 
-		// don't cherry pick if there are no commits
+		// Don't cherry-pick if there are no commits
 		if ( count( $commits ) > 0 ) {
 			$this->cherry_pick_commits( $commits );
 		}
 
-		if ( $this->successfully_merged() ) { // git status without states: AA, DD, UA, AU ...
-			// delete the 'merge_local' branch
+		// Git status without states: AA, DD, UA, AU ...
+		if ( $this->successfully_merged() ) {
+			// Delete the 'merge_local' branch.
 			$this->git_wrapper->_call( 'branch', '-D', 'merge_local' );
 
 			return true;
@@ -354,7 +406,14 @@ class GitRepo implements GitRepoInterface {
 		}
 	}
 
-	protected function cherry_pick_commits( array $commits ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param array $commits
+	 *
+	 * @return bool
+	 */
+	protected function cherry_pick_commits( array $commits ): bool {
 		foreach ( $commits as $commit ) {
 			if ( empty( $commit ) ) {
 				return false;
@@ -362,7 +421,7 @@ class GitRepo implements GitRepoInterface {
 
 			list( $return, $response ) = $this->git_wrapper->_call( 'cherry-pick', $commit );
 
-			// abort the cherry-pick if the changes are already pushed
+			// Abort the cherry-pick if the changes are already pushed.
 			if ( false !== $this->strpos_haystack_array( $response, 'previous cherry-pick is now empty' ) ) {
 				$this->git_wrapper->_call( 'cherry-pick', '--abort' );
 				continue;
@@ -372,9 +431,20 @@ class GitRepo implements GitRepoInterface {
 				$this->resolve_merge_conflicts( $this->get_commit_message( $commit ) );
 			}
 		}
+
+		return true;
 	}
 
-	protected function strpos_haystack_array( $haystack, $needle, $offset = 0 ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param     $haystack
+	 * @param     $needle
+	 * @param int $offset
+	 *
+	 * @return bool
+	 */
+	protected function strpos_haystack_array( $haystack, $needle, int $offset = 0 ): bool {
 		if ( ! is_array( $haystack ) ) {
 			$haystack = [ $haystack ];
 		}
@@ -388,6 +458,13 @@ class GitRepo implements GitRepoInterface {
 		return false;
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param $message
+	 *
+	 * @return false|string The commit result or false on failure.
+	 */
 	protected function resolve_merge_conflicts( $message ) {
 		list( , $changes ) = $this->status( true );
 		// @todo Maybe log.
@@ -395,18 +472,24 @@ class GitRepo implements GitRepoInterface {
 			if ( in_array( $change, [ 'UD', 'DD' ] ) ) {
 				$this->git_wrapper->_call( 'rm', $path );
 				$message .= "\n\tConflict: $path [removed]";
-			} elseif ( 'DU' == $change ) {
+			} else if ( 'DU' == $change ) {
 				$this->git_wrapper->_call( 'add', $path );
 				$message .= "\n\tConflict: $path [added]";
-			} elseif ( in_array( $change, [ 'AA', 'UU', 'AU', 'UA' ] ) ) {
+			} else if ( in_array( $change, [ 'AA', 'UU', 'AU', 'UA' ] ) ) {
 				$this->git_wrapper->_call( 'checkout', '--theirs', $path );
 				$this->git_wrapper->_call( 'add', '--all', $path );
 				$message .= "\n\tConflict: $path [local version]";
 			}
 		}
-		$this->commit( $message );
+
+		return $this->commit( $message );
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return bool
+	 */
 	protected function successfully_merged(): bool {
 		list( , $response ) = $this->status( true );
 		$changes = array_values( $response );
@@ -415,6 +498,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @param array|string $args
 	 *
 	 * @return int
@@ -428,6 +513,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @param string $message
 	 * @param string $author_email
 	 * @param string $author_name
@@ -447,6 +534,8 @@ class GitRepo implements GitRepoInterface {
 	}
 
 	/**
+	 * @since 0.10.0
+	 *
 	 * @param string $branch
 	 *
 	 * @return bool

@@ -1,6 +1,6 @@
 <?php
 /**
- * Git command wrapper.
+ * Git shell wrapper.
  *
  * Borrowed (and modified) from Gitium: https://github.com/presslabs/gitium/blob/master/gitium/inc/class-git-wrapper.php
  *
@@ -15,15 +15,26 @@ namespace PixelgradeLT\Conductor\Git;
 
 use function PixelgradeLT\Conductor\plugin;
 
+/**
+ * Git shell wrapper class.
+ *
+ * @since   0.10.0
+ * @package PixelgradeLT
+ */
 class GitWrapper {
 
-	private $last_error = null;
+	private ?string $last_error = null;
 	private string $repo_dir;
 
 	function __construct( $repo_dir ) {
 		$this->repo_dir = $repo_dir;
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return array
+	 */
 	private function get_env(): array {
 		$env = [];
 		if ( defined( 'LT_GIT_SSH' ) && LT_GIT_SSH ) {
@@ -39,7 +50,14 @@ class GitWrapper {
 		return $env;
 	}
 
-	public function _call( ...$args ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param ...$args
+	 *
+	 * @return array
+	 */
+	public function _call( ...$args ): array {
 		$args     = join( ' ', array_map( 'escapeshellarg', $args ) );
 		$cmd      = "git $args 2>&1";
 		$return   = - 1;
@@ -64,7 +82,7 @@ class GitWrapper {
 			$return = (int) proc_close( $proc );
 		}
 
-		if ( 0 != $return ) {
+		if ( 0 !== $return ) {
 			$this->last_error = join( "\n", $response );
 		} else {
 			$this->last_error = null;
@@ -73,107 +91,185 @@ class GitWrapper {
 		return [ $return, $response ];
 	}
 
-	public function get_last_error() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return null|string
+	 */
+	public function get_last_error(): ?string {
 		return $this->last_error;
 	}
 
-	public function can_exec_git() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return bool
+	 */
+	public function can_exec_git(): bool {
 		list( $return, ) = $this->_call( 'version' );
 
-		return ( 0 == $return );
+		return ( 0 === $return );
 	}
 
-	public function is_status_working() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return bool
+	 */
+	public function is_status_working(): bool {
 		list( $return, ) = $this->_call( 'status', '-s' );
 
 		return ( 0 == $return );
 	}
 
-	public function get_version() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return string
+	 */
+	public function get_version(): string {
 		list( $return, $version ) = $this->_call( 'version' );
-		if ( 0 != $return ) {
+		if ( 0 !== $return ) {
 			return '';
 		}
+
+		// The return is something like `git version 2.25.1`.
 		if ( ! empty( $version[0] ) ) {
-			return substr( $version[0], 12 );
+			return str_replace( 'git version ', '', $version[0] );
 		}
 
 		return '';
 	}
 
-	// git rev-list @{u}..
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return mixed
+	 */
 	public function get_ahead_commits() {
 		list( , $commits ) = $this->_call( 'rev-list', '@{u}..' );
 
 		return $commits;
 	}
 
-	// git rev-list ..@{u}
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return mixed
+	 */
 	public function get_behind_commits() {
 		list( , $commits ) = $this->_call( 'rev-list', '..@{u}' );
 
 		return $commits;
 	}
 
-	public function add_remote_url( $url ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param $url
+	 *
+	 * @return bool
+	 */
+	public function add_remote_url( $url ): bool {
 		list( $return, ) = $this->_call( 'remote', 'add', 'origin', $url );
 
-		return ( 0 == $return );
+		return ( 0 === $return );
 	}
 
-	public function get_remote_url() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return string
+	 */
+	public function get_remote_url(): string {
 		list( , $response ) = $this->_call( 'config', '--get', 'remote.origin.url' );
-		if ( isset( $response[0] ) ) {
-			return $response[0];
-		}
 
-		return '';
+		return $response[0] ?? '';
 	}
 
-	public function remove_remote() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return bool
+	 */
+	public function remove_remote(): bool {
 		list( $return, ) = $this->_call( 'remote', 'rm', 'origin' );
 
 		return ( 0 == $return );
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return false|string
+	 */
 	public function get_remote_tracking_branch() {
 		list( $return, $response ) = $this->_call( 'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}' );
-		if ( 0 == $return ) {
+		if ( 0 === $return ) {
 			return $response[0];
 		}
 
 		return false;
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return false|string
+	 */
 	function get_local_branch() {
 		list( $return, $response ) = $this->_call( 'rev-parse', '--abbrev-ref', 'HEAD' );
-		if ( 0 == $return ) {
+		if ( 0 === $return ) {
 			return $response[0];
 		}
 
 		return false;
 	}
 
-	function fetch_ref() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return bool
+	 */
+	function fetch_ref(): bool {
 		list( $return, ) = $this->_call( 'fetch', 'origin' );
 
-		return ( 0 == $return );
+		return ( 0 === $return );
 	}
 
-	public function get_commit_message( $commit ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param string $commit Commit hash.
+	 *
+	 * @return false|string
+	 */
+	public function get_commit_message( string $commit ) {
 		list( $return, $response ) = $this->_call( 'log', '--format=%B', '-n', '1', $commit );
 
 		return ( $return !== 0 ? false : join( "\n", $response ) );
 	}
 
-	function get_remote_branches() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return array
+	 */
+	function get_remote_branches(): array {
 		list( , $response ) = $this->_call( 'branch', '-r' );
-		$response = array_map( 'trim', $response );
-		$response = array_map( create_function( '$b', 'return str_replace("origin/","",$b);' ), $response );
 
-		return $response;
+		return array_map( function ( $b ) {
+			return str_replace( 'origin/', '', trim( $b ) );
+		}, $response );
 	}
 
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param ...$args
+	 *
+	 * @return int|void
+	 */
 	public function add( ...$args ) {
 		if ( 1 == count( $args ) && is_array( $args[0] ) ) {
 			$args = $args[0];
@@ -188,7 +284,15 @@ class GitWrapper {
 		return $count;
 	}
 
-	public function commit( $message, $author = '' ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param string $message
+	 * @param string $author
+	 *
+	 * @return false|mixed
+	 */
+	public function commit( string $message, string $author = '' ) {
 		if ( ! empty( $author ) ) {
 			list( $return, $response ) = $this->_call( 'commit', '-m', $message, '--author', $author );
 		} else {
@@ -203,34 +307,51 @@ class GitWrapper {
 		return ( $return === 0 ) ? $response[0] : false;
 	}
 
-	public function push( $branch = '' ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param string $branch
+	 *
+	 * @return bool
+	 */
+	public function push( string $branch = '' ): bool {
 		if ( ! empty( $branch ) ) {
 			list( $return, ) = $this->_call( 'push', '--porcelain', '-u', 'origin', $branch );
 		} else {
 			list( $return, ) = $this->_call( 'push', '--porcelain', '-u', 'origin', 'HEAD' );
 		}
 
-		return ( $return == 0 );
+		return ( $return === 0 );
 	}
 
-	public function local_status() {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @return array
+	 */
+	public function local_status(): array {
+		$branch_status = '';
+		$new_response  = [];
+
 		list( $return, $response ) = $this->_call( 'status', '-s', '-b', '-u' );
 		if ( 0 !== $return ) {
-			return [ '', [] ];
+			return [ $branch_status, $new_response ];
 		}
 
-		$new_response = [];
 		if ( ! empty( $response ) ) {
 			$branch_status = array_shift( $response );
 			foreach ( $response as $idx => $line ) {
 				unset( $index_status, $work_tree_status, $path, $new_path, $old_path );
 
+				// Ignore empty lines like the last item.
 				if ( empty( $line ) ) {
 					continue;
-				} // ignore empty lines like the last item
+				}
+
+				// Ignore branch status.
 				if ( '#' == $line[0] ) {
 					continue;
-				} // ignore branch status
+				}
 
 				$index_status     = substr( $line, 0, 1 );
 				$work_tree_status = substr( $line, 1, 1 );
@@ -249,7 +370,14 @@ class GitWrapper {
 		return [ $branch_status, $new_response ];
 	}
 
-	public function status( $local_only = false ) {
+	/**
+	 * @since 0.10.0
+	 *
+	 * @param false $local_only
+	 *
+	 * @return array
+	 */
+	public function status( bool $local_only = false ): array {
 		list( $branch_status, $new_response ) = $this->local_status();
 
 		if ( $local_only ) {
@@ -287,10 +415,16 @@ class GitWrapper {
 
 	/**
 	 * Remove files in $path from version control index tree.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @param string $path
+	 *
+	 * @return bool
 	 */
-	function rm_cached( $path ) {
+	function rm_cached( string $path ): bool {
 		list( $return, ) = $this->_call( 'rm', '--cached', $path );
 
-		return ( $return == 0 );
+		return ( $return === 0 );
 	}
 }

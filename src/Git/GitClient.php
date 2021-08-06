@@ -143,6 +143,7 @@ class GitClient implements GitClientInterface {
 	 * Get the contents of the site's .gitignore file.
 	 *
 	 * @since 0.10.0
+	 *
 	 * @return string|false The contents or false on failure.
 	 */
 	public function read_gitignore() {
@@ -153,6 +154,7 @@ class GitClient implements GitClientInterface {
 	 * Write the contents of the site's .gitignore file.
 	 *
 	 * @since 0.10.0
+	 *
 	 * @return bool True on success or false on failure.
 	 */
 	public function write_gitignore( string $contents ): bool {
