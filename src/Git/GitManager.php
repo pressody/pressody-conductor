@@ -21,6 +21,7 @@ use PixelgradeLT\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 use function PixelgradeLT\Conductor\is_plugin_file;
 use function PixelgradeLT\Conductor\plugin;
+use function WP_CLI\Utils\get_plugin_name;
 
 /**
  * Class to manage the Git integration of the site.
@@ -112,16 +113,21 @@ class GitManager extends AbstractHookProvider {
 		// If the WordPress environment is in `development` mode we will not do anything to avoid getting in the way.
 		if ( ( ! defined( 'WP_ENV' ) || \WP_ENV !== 'development' ) && $this->git_client->can_interact() ) {
 			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
-			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
+			add_action( 'upgrader_process_complete', [ $this, 'schedule_git_auto_push' ], 11, 0 );
 			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
 			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
 			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
 			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
+
+			// Scheduled actions.
+			add_action( 'pixelgradelt_conductor/git/auto_push', [ $this, 'git_auto_push' ], 10, 1 );
+			add_action( 'pixelgradelt_conductor/git/merge_and_push', [ $this, 'git_merge_and_push' ], 10, 1 );
+			add_action( 'pixelgradelt_conductor/hourly', [ $this, 'git_auto_push' ], 99, 0 );
 		}
 	}
 
 	/**
-	 * Maybe schedule the recurring actions/events, if it is not already scheduled.
+	 * Maybe schedule the recurring actions/events, if they are not already scheduled.
 	 *
 	 * @since 0.10.0
 	 */
@@ -145,7 +151,7 @@ class GitManager extends AbstractHookProvider {
 	 * @return bool
 	 */
 	public function maybe_updated_gitignore_on_update_composer_plugins(): bool {
-		$contents = $this->git_client->read_gitignore();
+		$contents = $original_contents = $this->git_client->read_gitignore();
 		if ( false === $contents ) {
 			return false;
 		}
@@ -164,7 +170,15 @@ class GitManager extends AbstractHookProvider {
 			$contents
 		);
 
-		return $this->git_client->write_gitignore( $contents );
+		if ( $contents === $original_contents ) {
+			return false;
+		}
+
+		if ( $result = $this->git_client->write_gitignore( $contents ) ) {
+			$this->commit_and_push_gitignore_file( 'after composition plugins changes' );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -177,7 +191,7 @@ class GitManager extends AbstractHookProvider {
 	 * @return bool
 	 */
 	public function maybe_update_gitignore_on_update_composer_themes(): bool {
-		$contents = $this->git_client->read_gitignore();
+		$contents = $original_contents = $this->git_client->read_gitignore();
 		if ( false === $contents ) {
 			return false;
 		}
@@ -196,11 +210,19 @@ class GitManager extends AbstractHookProvider {
 			$contents
 		);
 
-		return $this->git_client->write_gitignore( $contents );
+		if ( $contents === $original_contents ) {
+			return false;
+		}
+
+		if ( $result = $this->git_client->write_gitignore( $contents ) ) {
+			$this->commit_and_push_gitignore_file( 'after composition themes changes' );
+		}
+
+		return $result;
 	}
 
 	/**
-	 * Filters the installation response after the installation has finished.
+	 * Filters the installation response after a installation has finished.
 	 *
 	 * @since 0.10.0
 	 *
@@ -287,12 +309,11 @@ class GitManager extends AbstractHookProvider {
 			$context['version'] = $version;
 		}
 
+		// We will commit now and schedule the expensive merge and push.
 		$message = $this->git_client->format_message( $message, $context );
-		$commit = $this->git_client->commit_changes( $message, $path );
+		$commit  = $this->git_client->commit_changes( $message, $path );
 
-		$this->git_client->merge_and_push( $commit );
-
-		$this->refresh_plugin_and_theme_details_cache();
+		$this->schedule_git_merge_and_push( $commit );
 
 		// We just let the filtered response pass through.
 		return $response;
@@ -358,30 +379,48 @@ class GitManager extends AbstractHookProvider {
 			return;
 		}
 
-		if ( $this->git_client->is_dirty() ) {
-			$name    = $path;
-			$version = '';
-			if ( is_plugin_file( $path ) && $plugin_data = get_plugins( '/' . dirname( $path ) ) ) {
+		if ( ! $this->git_client->is_repo_dirty() ) {
+			return;
+		}
+
+		$name    = $path;
+		$version = '';
+		if ( is_plugin_file( $path ) ) {
+			$plugin_data = \get_plugins( '/' . dirname( $path ) );
+			$plugin_data = reset( $plugin_data );
+			if ( $plugin_data ) {
 				$name    = $plugin_data['Name'];
 				$version = $plugin_data['Version'];
-			} else {
-				$theme = wp_get_theme( $path );
-				if ( $theme->exists() ) {
-					$name    = $theme->get( 'Name' );
-					$version = $theme->get( 'Version' );
-				}
 			}
+		} else {
+			$theme = \wp_get_theme( $path );
+			if ( $theme->exists() ) {
+				$name    = $theme->get( 'Name' );
+				$version = $theme->get( 'Version' );
+			}
+		}
 
-			$message = 'After {event} of `{name}`';
-			$context = [
-				'event' => $event,
-				'name'  => $name,
-			];
-			if ( ! empty( $version ) ) {
-				$message            .= ' (version {version})';
-				$context['version'] = $version;
-			}
-			$this->git_auto_push( $this->git_client->format_message( $message, $context ) );
+		$message_append = 'after {event} of `{name}`';
+		$context        = [
+			'event' => $event,
+			'name'  => $name,
+		];
+		if ( ! empty( $version ) ) {
+			$message_append     .= ' (version {version})';
+			$context['version'] = $version;
+		}
+
+		$this->schedule_git_auto_push( $this->git_client->format_message( $message_append, $context ) );
+	}
+
+	/**
+	 * Schedule the async event to git auto-push any changes in the repo.
+	 *
+	 * @since 0.10.0
+	 */
+	protected function schedule_git_auto_push( string $msg_append = '' ) {
+		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/git/auto_push' ) ) {
+			$this->queue->add( 'pixelgradelt_conductor/git/auto_push', [ $msg_append ], 'plt_con' );
 		}
 	}
 
@@ -390,12 +429,45 @@ class GitManager extends AbstractHookProvider {
 	 *
 	 * @since 0.10.0
 	 *
-	 * @param string $msg_prepend Optional. Message part to prepend to commit message.
+	 * @param string $msg_append Optional. Message part to append to commit message.
 	 */
-	public function git_auto_push( string $msg_prepend = '' ) {
-		$commits = $this->group_commit_modified_plugins_and_themes( $msg_prepend );
-		$this->git_client->merge_and_push( $commits );
-		$this->refresh_plugin_and_theme_details_cache();
+	public function git_auto_push( string $msg_append = '' ) {
+		$commits = $this->group_commit_modified_plugins_and_themes( $msg_append );
+		if ( ! empty( $commits ) ) {
+			$this->git_merge_and_push( $commits );
+		}
+	}
+
+	/**
+	 * Schedule the async event to git merge and push any local commits.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @param array|string|false $commits A commit hash, a list of commit hashes or false for no commits.
+	 */
+	protected function schedule_git_merge_and_push( $commits = false ) {
+		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/git/merge_and_push' ) ) {
+			$this->queue->add( 'pixelgradelt_conductor/git/merge_and_push', [ $commits ], 'plt_con' );
+		}
+	}
+
+	/**
+	 * Merges any remote changes and pushes local commits.
+	 *
+	 * Does not commit unstaged changes. Use self::git_auto_push() for that.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @param array|string|false $commits A commit hash, a list of commit hashes or false for no specific commits to cherry-pick.
+	 *
+	 * @return bool
+	 */
+	public function git_merge_and_push( $commits = false ): bool {
+		if ( $result = $this->git_client->merge_and_push( $commits ) ) {
+			$this->refresh_plugin_and_theme_details_cache();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -411,7 +483,7 @@ class GitManager extends AbstractHookProvider {
 		$commits               = [];
 
 		if ( ! empty( $msg_append ) ) {
-			$msg_append = "($msg_append)";
+			$msg_append = " - $msg_append";
 		}
 		foreach ( $not_committed_changes as $path => $action ) {
 			$change                                = $this->module_by_path( $path );
@@ -542,7 +614,7 @@ class GitManager extends AbstractHookProvider {
 				// Set the module type.
 				$module['type'] = 'theme';
 				// Reduce the path to just one level bellow the 'themes' directory path.
-				$temp_path  = trim( substr( $path, strlen( $themes_dir_path ) ), '/' );
+				$temp_path = trim( substr( $path, strlen( $themes_dir_path ) ), '/' );
 				if ( false !== strpos( $temp_path, '/' ) ) {
 					$split_path = explode( '/', $temp_path );
 					if ( ! empty( $split_path[0] ) ) {
@@ -551,7 +623,7 @@ class GitManager extends AbstractHookProvider {
 				}
 				// Update the module path and name.
 				$module['base_path'] = $path;
-				$module['name'] = basename( $path );
+				$module['name']      = basename( $path );
 
 				foreach ( $details['themes'] as $theme => $data ) {
 					if ( $path === \path_join( $themes_dir_path, $theme ) ) {
@@ -570,7 +642,7 @@ class GitManager extends AbstractHookProvider {
 				// Set the module type.
 				$module['type'] = 'plugin';
 				// Reduce the path to just one level bellow the 'plugins' directory path.
-				$temp_path  = trim( substr( $path, strlen( $plugins_dir_path ) ), '/' );
+				$temp_path = trim( substr( $path, strlen( $plugins_dir_path ) ), '/' );
 				if ( false !== strpos( $temp_path, '/' ) ) {
 					$split_path = explode( '/', $temp_path );
 					if ( ! empty( $split_path[0] ) ) {
@@ -579,7 +651,7 @@ class GitManager extends AbstractHookProvider {
 				}
 				// Update the module path and name.
 				$module['base_path'] = $path;
-				$module['name'] = basename( $path );
+				$module['name']      = basename( $path );
 
 				foreach ( $details['plugins'] as $plugin => $data ) {
 					if ( ( '.' === dirname( $plugin ) && $path === \path_join( $plugins_dir_path, $plugin ) )
@@ -598,7 +670,7 @@ class GitManager extends AbstractHookProvider {
 				// Set the module type.
 				$module['type'] = 'mu-plugin';
 				// Reduce the path to just one level bellow the 'plugins' directory path.
-				$temp_path  = trim( substr( $path, strlen( $muplugins_dir_path ) ), '/' );
+				$temp_path = trim( substr( $path, strlen( $muplugins_dir_path ) ), '/' );
 				if ( false !== strpos( $temp_path, '/' ) ) {
 					$split_path = explode( '/', $temp_path );
 					if ( ! empty( $split_path[0] ) ) {
@@ -607,7 +679,7 @@ class GitManager extends AbstractHookProvider {
 				}
 				// Update the module path and name.
 				$module['base_path'] = $path;
-				$module['name'] = basename( $path );
+				$module['name']      = basename( $path );
 
 				foreach ( $details['mu-plugins'] as $plugin => $data ) {
 					if ( ( '.' === dirname( $plugin ) && $path === \path_join( $muplugins_dir_path, $plugin ) )
@@ -663,7 +735,7 @@ class GitManager extends AbstractHookProvider {
 	 * @return array|mixed
 	 */
 	protected function get_plugin_and_theme_details() {
-		$versions = get_transient( self::DETAILS_TRANSIENT );
+		$versions = \get_transient( self::DETAILS_TRANSIENT );
 		if ( empty( $versions ) ) {
 			$versions = $this->refresh_plugin_and_theme_details_cache();
 		}
@@ -682,7 +754,7 @@ class GitManager extends AbstractHookProvider {
 		$new_data = [];
 
 		// Get all themes.
-		$all_themes = wp_get_themes( array( 'allowed' => true ) );
+		$all_themes = \wp_get_themes( array( 'allowed' => true ) );
 		foreach ( $all_themes as $theme_name => $theme ) {
 			$themes_data[ $theme_name ]        = array(
 				'name'    => $theme->get( 'Name' ),
@@ -706,7 +778,7 @@ class GitManager extends AbstractHookProvider {
 		}
 
 		// Get all regular plugins.
-		$all_plugins = get_plugins();
+		$all_plugins = \get_plugins();
 		foreach ( $all_plugins as $name => $data ) {
 			$plugins_data[ $name ]        = array(
 				'name'    => $data['Name'],
@@ -725,7 +797,7 @@ class GitManager extends AbstractHookProvider {
 		}
 
 		// Get all must-use plugins.
-		$all_mu_plugins = get_mu_plugins();
+		$all_mu_plugins = \get_mu_plugins();
 		foreach ( $all_mu_plugins as $name => $data ) {
 			$muplugins_data[ $name ]        = array(
 				'name'    => $data['Name'],
@@ -743,7 +815,7 @@ class GitManager extends AbstractHookProvider {
 			$new_data['mu-plugins'] = $muplugins_data;
 		}
 
-		set_transient( self::DETAILS_TRANSIENT, $new_data, 3 * DAY_IN_SECONDS );
+		\set_transient( self::DETAILS_TRANSIENT, $new_data, 3 * DAY_IN_SECONDS );
 
 		return $new_data;
 	}
@@ -753,11 +825,22 @@ class GitManager extends AbstractHookProvider {
 	 *
 	 * @since 0.10.0
 	 *
+	 * @param string $msg_append
+	 *
 	 * @return bool
 	 */
-	public function commit_and_push_gitignore_file(): bool {
-		$commit = $this->git_client->commit_changes( 'Update the `.gitignore` file', '.gitignore' );
+	public function commit_and_push_gitignore_file( string $msg_append = '' ): bool {
+		$message = 'Update `.gitignore` file';
+		if ( ! empty( $msg_append ) ) {
+			$msg_append = " - $msg_append";
+		}
 
-		return $this->git_client->merge_and_push( $commit );
+		// We will commit now and schedule the expensive merge and push.
+		$commit = $this->git_client->commit_changes( $message . $msg_append, '.gitignore' );
+		if ( false !== $commit ) {
+			$this->schedule_git_merge_and_push( $commit );
+		}
+
+		return ( false !== $commit );
 	}
 }

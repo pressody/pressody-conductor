@@ -143,7 +143,7 @@ class GitRepo implements GitRepoInterface {
 		}
 		$new_response = [];
 		if ( ! empty( $response ) ) {
-			foreach ( $response as $line ) :
+			foreach ( $response as $line ) {
 				// For details on statuses see https://git-scm.com/docs/git-status/2.2.3#_output
 				$work_tree_status = substr( $line, 1, 1 );
 				$path             = substr( $line, 3 );
@@ -167,7 +167,7 @@ class GitRepo implements GitRepoInterface {
 				}
 
 				$new_response[ $path ] = $action;
-			endforeach;
+			}
 		}
 
 		return $new_response;
@@ -383,6 +383,12 @@ class GitRepo implements GitRepoInterface {
 		if ( $return != 0 ) {
 			$this->git_wrapper->_call( 'branch', '-M', $local_branch );
 
+			$this->logger->error( 'Failed to checkout to local branch.',
+				[
+					'logCategory' => 'git',
+				]
+			);
+
 			return false;
 		}
 
@@ -401,6 +407,12 @@ class GitRepo implements GitRepoInterface {
 			$this->git_wrapper->_call( 'cherry-pick', '--abort' );
 			$this->git_wrapper->_call( 'checkout', '-b', 'merge_local' );
 			$this->git_wrapper->_call( 'branch', '-M', $local_branch );
+
+			$this->logger->error( 'Failed to merge with accept mine.',
+				[
+					'logCategory' => 'git',
+				]
+			);
 
 			return false;
 		}

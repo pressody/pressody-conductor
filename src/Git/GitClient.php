@@ -185,7 +185,7 @@ class GitClient implements GitClientInterface {
 	 *
 	 * @return bool
 	 */
-	public function is_dirty(): bool {
+	public function is_repo_dirty(): bool {
 		return $this->git_repo->is_dirty();
 	}
 
@@ -216,13 +216,21 @@ class GitClient implements GitClientInterface {
 	 *
 	 * @since 0.10.0
 	 *
-	 * @param array $commits
+	 * @param array|string|false $commits A commit hash, a list of commit hashes or false for no commits.
 	 *
 	 * @return bool
 	 */
-	public function merge_and_push( array $commits ): bool {
-		$lock = $this->acquire_merge_lock()
-		or trigger_error( 'Timeout when Git merge lock was acquired', E_USER_WARNING );
+	public function merge_and_push( $commits ): bool {
+		$lock = $this->acquire_merge_lock();
+		if ( ! $lock ) {
+			$this->logger->error( 'Failed to acquire the Git merge lock due to timeout.',
+				[
+					'logCategory' => 'git',
+				]
+			);
+
+			return false;
+		}
 
 		if ( ! $this->git_repo->fetch_ref() ) {
 			return false;
@@ -241,13 +249,13 @@ class GitClient implements GitClientInterface {
 	 * @return array|false
 	 */
 	protected function acquire_merge_lock() {
-		$gitium_lock_path   = apply_filters( 'pixelgradelt_conductor/lock_path', sys_get_temp_dir() . '/.gitium-lock' );
-		$gitium_lock_handle = fopen( $gitium_lock_path, 'w+' );
+		$lock_path   = apply_filters( 'pixelgradelt_conductor/lock_path', \trailingslashit( sys_get_temp_dir() ) . '.pixelgradelt-conductor-git-lock' );
+		$lock_handle = fopen( $lock_path, 'w+' );
 
 		$lock_timeout    = intval( ini_get( 'max_execution_time' ) ) > 10 ? intval( ini_get( 'max_execution_time' ) ) - 5 : 10;
 		$lock_timeout_ms = 10;
 		$lock_retries    = 0;
-		while ( ! flock( $gitium_lock_handle, LOCK_EX | LOCK_NB ) ) {
+		while ( ! flock( $lock_handle, LOCK_EX | LOCK_NB ) ) {
 			usleep( $lock_timeout_ms * 1000 );
 			$lock_retries ++;
 			if ( $lock_retries * $lock_timeout_ms > $lock_timeout * 1000 ) {
@@ -255,7 +263,7 @@ class GitClient implements GitClientInterface {
 			}
 		}
 
-		return [ $gitium_lock_path, $gitium_lock_handle ];
+		return [ $lock_path, $lock_handle ];
 	}
 
 	/**
@@ -264,9 +272,9 @@ class GitClient implements GitClientInterface {
 	 * @param $lock
 	 */
 	protected function release_merge_lock( $lock ) {
-		list( $gitium_lock_path, $gitium_lock_handle ) = $lock;
-		flock( $gitium_lock_handle, LOCK_UN );
-		fclose( $gitium_lock_handle );
+		list( $lock_path, $lock_handle ) = $lock;
+		flock( $lock_handle, LOCK_UN );
+		fclose( $lock_handle );
 	}
 
 	/**

@@ -40,7 +40,7 @@ interface GitClientInterface {
 	 *
 	 * @return bool
 	 */
-	public function is_dirty(): bool;
+	public function is_repo_dirty(): bool;
 
 	/**
 	 * Get uncommitted changes.

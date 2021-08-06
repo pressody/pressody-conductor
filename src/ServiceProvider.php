@@ -112,6 +112,7 @@ class ServiceProvider implements ServiceProviderInterface {
 		$container['git.wrapper'] = function ( $container ) {
 			return new GitWrapper(
 				\LT_ROOT_DIR,
+				$container['logger.main']
 			);
 		};
 

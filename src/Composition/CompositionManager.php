@@ -807,7 +807,7 @@ class CompositionManager extends AbstractHookProvider {
 	 */
 	protected function schedule_activate_composition_plugins_and_themes() {
 		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/activate_composition_plugins_and_themes' ) ) {
-			$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'pixelgrade-conductor' );
+			$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'plt_con' );
 		}
 	}
 

@@ -245,7 +245,7 @@ class CacheDispatcher {
 				}
 			}
 			// We schedule 30 seconds into the future.
-			self::get_queue()->schedule_single( time() + 30, 'pixelgradelt_conductor/clear_site_cache', $context, 'pixelgrade-conductor' );
+			self::get_queue()->schedule_single( time() + 30, 'pixelgradelt_conductor/clear_site_cache', $context, 'plt_con' );
 		}
 	}
 

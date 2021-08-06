@@ -13,6 +13,7 @@ declare ( strict_types=1 );
 
 namespace PixelgradeLT\Conductor\Git;
 
+use Psr\Log\LoggerInterface;
 use function PixelgradeLT\Conductor\plugin;
 
 /**
@@ -23,11 +24,39 @@ use function PixelgradeLT\Conductor\plugin;
  */
 class GitWrapper {
 
-	private ?string $last_error = null;
+	/**
+	 * The absolute path to the Git repository directory.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @var string
+	 */
 	private string $repo_dir;
 
-	function __construct( $repo_dir ) {
+	/**
+	 * Logger.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @var LoggerInterface
+	 */
+	protected LoggerInterface $logger;
+
+	/**
+	 * The last error encountered.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @var string|null
+	 */
+	private ?string $last_error = null;
+
+	function __construct(
+		string $repo_dir,
+		LoggerInterface $logger
+	) {
 		$this->repo_dir = $repo_dir;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -80,10 +109,25 @@ class GitWrapper {
 				$response[] = rtrim( $line, "\n\r" );
 			}
 			$return = (int) proc_close( $proc );
+		} else {
+			$this->logger->error( 'Failed git command `{cmd}` due to proc_open() failure.',
+				[
+					'cmd' => $cmd,
+					'logCategory' => 'git',
+				]
+			);
 		}
 
 		if ( 0 !== $return ) {
 			$this->last_error = join( "\n", $response );
+
+			$this->logger->error( 'Failed git command `{cmd}`: {response}',
+				[
+					'cmd' => $cmd,
+					'response' => $this->last_error,
+					'logCategory' => 'git',
+				]
+			);
 		} else {
 			$this->last_error = null;
 		}
@@ -290,7 +334,7 @@ class GitWrapper {
 	 * @param string $message
 	 * @param string $author
 	 *
-	 * @return false|mixed
+	 * @return false|string Commit hash on success. False on failure.
 	 */
 	public function commit( string $message, string $author = '' ) {
 		if ( ! empty( $author ) ) {
