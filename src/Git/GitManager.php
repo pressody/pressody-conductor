@@ -109,14 +109,14 @@ class GitManager extends AbstractHookProvider {
 
 		// Hook the git logic in all the places that might generate site file changes.
 		// But only if we actually have a git repo and that we can interact with it (like running git commands).
-		if ( $this->git_client->can_interact() ) {
-			add_action( 'wp_loaded', [ $this, 'git_auto_push' ], 11, 0 );
-			//			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
-			//			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
-			//			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
-			//			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
-			//			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
-			//			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
+		// If the WordPress environment is in `development` mode we will not do anything to avoid getting in the way.
+		if ( ( ! defined( 'WP_ENV' ) || \WP_ENV !== 'development' ) && $this->git_client->can_interact() ) {
+			add_filter( 'upgrader_post_install', [ $this, 'on_upgrader_post_install' ], 10, 3 );
+			add_action( 'upgrader_process_complete', [ $this, 'git_auto_push' ], 11, 0 );
+			add_action( 'activated_plugin', [ $this, 'check_after_plugin_activate' ], 999, 1 );
+			add_action( 'deactivated_plugin', [ $this, 'check_after_plugin_deactivate' ], 999, 1 );
+			add_action( 'deleted_plugin', [ $this, 'check_after_plugin_deleted' ], 999, 2 );
+			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
 		}
 	}
 
@@ -209,85 +209,87 @@ class GitManager extends AbstractHookProvider {
 	 * @param array $result     Installation result data.
 	 */
 	public function on_upgrader_post_install( bool $response, array $hook_extra, array $result ): bool {
-		_gitium_make_ssh_git_file_exe();
-
 		$action = null;
 		$type   = null;
 
-		// install logic
+		// Install logic.
 		if ( isset( $hook_extra['type'] ) && ( 'plugin' === $hook_extra['type'] ) ) {
-			$action = 'installed';
+			$action = 'install';
 			$type   = 'plugin';
 		} else if ( isset( $hook_extra['type'] ) && ( 'theme' === $hook_extra['type'] ) ) {
-			$action = 'installed';
+			$action = 'install';
 			$type   = 'theme';
 		}
 
-		// update/upgrade logic
+		// Update/upgrade logic.
 		if ( isset( $hook_extra['plugin'] ) ) {
-			$action = 'updated';
+			$action = 'update';
 			$type   = 'plugin';
 		} else if ( isset( $hook_extra['theme'] ) ) {
-			$action = 'updated';
+			$action = 'update';
 			$type   = 'theme';
 		}
 
-		// get action if missed above
+		// Get action if missed above.
 		if ( isset( $hook_extra['action'] ) ) {
 			$action = $hook_extra['action'];
 			if ( 'install' === $action ) {
-				$action = 'installed';
+				$action = 'install';
 			}
 			if ( 'update' === $action ) {
-				$action = 'updated';
+				$action = 'update';
 			}
 		}
 
 		$name    = $result['destination_name'];
 		$version = '';
 
-		$git_dir = $result['destination'];
-		if ( ABSPATH == substr( $git_dir, 0, strlen( ABSPATH ) ) ) {
-			$git_dir = substr( $git_dir, strlen( ABSPATH ) );
-		}
+		$path = $this->make_path_relative_to_git_root( $result['destination'] );
+
 		switch ( $type ) {
 			case 'theme':
-				wp_clean_themes_cache();
-				$theme_data = wp_get_theme( $result['destination_name'] );
-				$name       = $theme_data->get( 'Name' );
-				$version    = $theme_data->get( 'Version' );
+				\wp_clean_themes_cache();
+				$theme_data = \wp_get_theme( $result['destination_name'] );
+				if ( $theme_data->exists() ) {
+					$name    = $theme_data->get( 'Name' );
+					$version = $theme_data->get( 'Version' );
+				}
 				break;
 			case 'plugin':
-				foreach ( $result['source_files'] as $file ) :
-					if ( '.php' != substr( $file, - 4 ) ) {
+				foreach ( $result['source_files'] as $file ) {
+					if ( ! is_plugin_file( $file ) ) {
 						continue;
 					}
-					// every .php file is a possible plugin so we check if it's a plugin
-					$filepath    = trailingslashit( $result['destination'] ) . $file;
-					$plugin_data = get_plugin_data( $filepath );
-					if ( $plugin_data['Name'] ) :
+					// Every .php file is a possible plugin, so we check if it's a plugin.
+					$filepath    = \trailingslashit( $result['destination'] ) . $file;
+					$plugin_data = \get_plugin_data( $filepath );
+
+					// We get info from the first plugin in the package.
+					if ( ! empty( $plugin_data['Name'] ) ) {
 						$name    = $plugin_data['Name'];
 						$version = $plugin_data['Version'];
-						// We get info from the first plugin in the package
 						break;
-					endif;
-				endforeach;
+					}
+				}
+				break;
+			default:
 				break;
 		}
 
-		$message = '{change_action} {change_type} {name}';
+		$message = '{change_action} {change_type} `{name}`';
 		$context = [
-			'change_action' => $action,
+			'change_action' => ucfirst( $action ),
 			'change_type'   => $type,
 			'name'          => $name,
 		];
 		if ( ! empty( $version ) ) {
-			$message            .= ' version {version}';
+			$message            .= ' (version {version})';
 			$context['version'] = $version;
 		}
-		$message = $this->git_client->format_message( $message, $context );
 
-		$commit = $this->git_client->commit_changes( $message, $git_dir );
+		$message = $this->git_client->format_message( $message, $context );
+		$commit = $this->git_client->commit_changes( $message, $path );
+
 		$this->git_client->merge_and_push( $commit );
 
 		$this->refresh_plugin_and_theme_details_cache();
@@ -304,7 +306,7 @@ class GitManager extends AbstractHookProvider {
 	 * @param string $plugin_file Path to the plugin file relative to the plugins directory.
 	 */
 	public function check_after_plugin_activate( string $plugin_file ) {
-		$this->check_after_event( $plugin_file );
+		$this->check_after_event( $plugin_file, 'activation' );
 	}
 
 	/**
@@ -352,14 +354,14 @@ class GitManager extends AbstractHookProvider {
 
 	protected function check_after_event( string $path, $event = 'activation' ) {
 		// Do not hook on activation of this plugin
-		if ( plugin()->get_basename() == $path ) {
+		if ( plugin()->get_basename() === $path ) {
 			return;
 		}
 
 		if ( $this->git_client->is_dirty() ) {
 			$name    = $path;
 			$version = '';
-			if ( is_plugin_file( $path ) && $plugin_data = get_plugins( $path ) ) {
+			if ( is_plugin_file( $path ) && $plugin_data = get_plugins( '/' . dirname( $path ) ) ) {
 				$name    = $plugin_data['Name'];
 				$version = $plugin_data['Version'];
 			} else {
@@ -370,13 +372,13 @@ class GitManager extends AbstractHookProvider {
 				}
 			}
 
-			$message = 'after {event} of {name}';
+			$message = 'After {event} of `{name}`';
 			$context = [
 				'event' => $event,
 				'name'  => $name,
 			];
 			if ( ! empty( $version ) ) {
-				$message            .= ' version {version}';
+				$message            .= ' (version {version})';
 				$context['version'] = $version;
 			}
 			$this->git_auto_push( $this->git_client->format_message( $message, $context ) );
@@ -392,7 +394,7 @@ class GitManager extends AbstractHookProvider {
 	 */
 	public function git_auto_push( string $msg_prepend = '' ) {
 		$commits = $this->group_commit_modified_plugins_and_themes( $msg_prepend );
-		//		$this->git_client->merge_and_push( $commits );
+		$this->git_client->merge_and_push( $commits );
 		$this->refresh_plugin_and_theme_details_cache();
 	}
 
@@ -429,10 +431,10 @@ class GitManager extends AbstractHookProvider {
 				$context['version'] = $change['version'];
 			}
 			$message = $this->git_client->format_message( $message . $msg_append, $context );
-//			$commit  = $this->git_client->commit_changes( $message, $base_path );
-//			if ( $commit ) {
-//				$commits[] = $commit;
-//			}
+			$commit  = $this->git_client->commit_changes( $message, $base_path );
+			if ( $commit ) {
+				$commits[] = $commit;
+			}
 		}
 
 		return $commits;
@@ -442,7 +444,7 @@ class GitManager extends AbstractHookProvider {
 	 * This function return the basic info about a path.
 	 *
 	 * base_path - means the relative path to the module root
-	 * type      - can be file/theme/plugin/mu-plugin
+	 * type      - can be `file`, `theme`, `plugin`, or `mu-plugin`
 	 * name      - the file name of the path, if it is a file, or the theme/plugin name
 	 * version   - the theme/plugin version, otherwise null
 	 *
@@ -511,7 +513,7 @@ class GitManager extends AbstractHookProvider {
 		/*
 		 * First, make sure that we are dealing with a path relative to the root of the site (the place that is the root of the git repo).
 		 */
-		$path = trim( str_replace( $this->git_client->get_git_repo_path(), '', $path ), '/' );
+		$path = $this->make_path_relative_to_git_root( $path );
 
 		// Default module details.
 		$module = array(
@@ -524,12 +526,7 @@ class GitManager extends AbstractHookProvider {
 		/*
 		 * Second, if we have a path to a plugin or a theme, limit it to it's root.
 		 */
-		// Determine the partial path to the directory holding plugins and themes (the regular 'wp-content', but we may not use that).
-		// That is why we rely on the path of this plugin to work our way up.
-		// We go two levels up: one for the plugin directory (aka 'pixelgradelt-conductor') and one for 'plugins' or 'mu-plugins'.
-		$app_dir = dirname( $this->plugin->get_directory(), 2 );
-		// Make it relative to the repo path.
-		$app_dir = trim( str_replace( $this->git_client->get_git_repo_path(), '', $app_dir ), '/' );
+		$app_dir = $this->get_relative_app_dir_path();
 
 		// Get the cached plugins and themes details.
 		$details = $this->get_plugin_and_theme_details();
@@ -624,6 +621,38 @@ class GitManager extends AbstractHookProvider {
 		}
 
 		return $module;
+	}
+
+	/**
+	 * Get the git root relative path of the directory where plugins, themes are stored.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @return string
+	 */
+	protected function get_relative_app_dir_path(): string {
+		// Determine the partial path to the directory holding plugins and themes (the regular 'wp-content', but we may not use that).
+		// That is why we rely on the path of this plugin to work our way up.
+		// We go two levels up: one for the plugin directory (aka 'pixelgradelt-conductor') and one for 'plugins' or 'mu-plugins'.
+		$app_dir = dirname( $this->plugin->get_directory(), 2 );
+		// Make it relative to the repo path.
+		$app_dir = trim( str_replace( $this->git_client->get_git_repo_path(), '', $app_dir ), '/' );
+
+		return $app_dir;
+	}
+
+	/**
+	 * If the path is an absolute path to somewhere in the Git repo handled by the Git client,
+	 * make the path relative to the Git repo root.
+	 *
+	 * @since 0.10.0
+	 *
+	 * @param string $path
+	 *
+	 * @return string The Git root relative path if the path points to somewhere within it or the unchanged path.
+	 */
+	protected function make_path_relative_to_git_root( string $path ): string {
+		return trim( str_replace( $this->git_client->get_git_repo_path(), '', $path ), '/' );
 	}
 
 	/**
