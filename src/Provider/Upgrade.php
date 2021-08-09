@@ -67,7 +67,7 @@ class Upgrade extends AbstractHookProvider {
 	public function maybe_upgrade() {
 		$saved_version = get_option( self::VERSION_OPTION_NAME, '0' );
 
-		if ( version_compare( $saved_version, '0.1.0', '<' ) ) {
+		if ( version_compare( $saved_version, '1.0.0', '<' ) ) {
 			Caps::register();
 		}
 

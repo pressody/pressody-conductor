@@ -190,7 +190,7 @@ class CompositionManager extends AbstractHookProvider {
 			return null;
 		}
 
-		// Return all plugins data if no single plugin was targeted or found.
+		// Return all composition plugins data if no single plugin was targeted or found.
 		return $cached_data;
 	}
 

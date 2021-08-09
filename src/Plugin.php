@@ -45,6 +45,7 @@ class Plugin extends BasePlugin implements Composable {
 			->register_hooks( $container->get( 'hooks.maintenance' ) )
 			->register_hooks( $container->get( 'hooks.rewrite_rules' ) )
 			->register_hooks( $container->get( 'hooks.request_handler' ) )
+			->register_hooks( $container->get( 'hooks.wpupdates' ) )
 			->register_hooks( $container->get( 'composition.manager' ) )
 			->register_hooks( $container->get( 'git.manager' ) )
 			->register_hooks( $container->get( 'logs.manager' ) );
@@ -53,6 +54,8 @@ class Plugin extends BasePlugin implements Composable {
 			$this
 				->register_hooks( $container->get( 'hooks.upgrade' ) )
 				->register_hooks( $container->get( 'hooks.admin_assets' ) )
+				->register_hooks( $container->get( 'screen.plugins' ) )
+				->register_hooks( $container->get( 'screen.themes' ) )
 				->register_hooks( $container->get( 'screen.settings' ) );
 		}
 

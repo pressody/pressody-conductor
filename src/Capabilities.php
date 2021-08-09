@@ -36,6 +36,13 @@ final class Capabilities {
 	const UPDATE_COMPOSITION = 'pixelgradelt_conductor_update_composition';
 
 	/**
+	 * Primitive capability for updating composition.
+	 *
+	 * @var string
+	 */
+	const SUPPORT_ROLE = 'pixelgradelt_conductor_support';
+
+	/**
 	 * Register roles and capabilities.
 	 *
 	 * @since 0.1.0
@@ -45,31 +52,80 @@ final class Capabilities {
 
 		// Create a special role for users intended to be used by the PixelgradeLT support crew.
 		// First remove it to be able to overwrite it in case it already exists.
-		$wp_roles->remove_role( 'pixelgradelt_conductor_support' );
-		$wp_roles->add_role( 'pixelgradelt_conductor_support', 'LT Support', [
+		$wp_roles->remove_role( self::SUPPORT_ROLE );
+		$wp_roles->add_role( self::SUPPORT_ROLE, 'LT Support', [
 			// The LT Conductor specific capabilities.
 			self::MANAGE_OPTIONS    => true,
 			self::UPDATE_COMPOSITION    => true,
 			// WordPress core capabilities. We try to be as strict as possible.
-			'switch_themes' => true,
-			'edit_themes' => false,
-			'activate_plugins' => true,
-			'edit_plugins' => false,
-			'edit_users' => false,
-			'edit_files' => false,
-			'manage_options' => true,
 			'moderate_comments' => false,
 			'manage_categories' => false,
 			'manage_links' => false,
-			'upload_files' => false,
-			'import' => false,
 			'unfiltered_html' => true,
+
+			'read' => true,
+
+			'edit_pages' => true,
+			'edit_others_pages' => true,
+			'edit_published_pages' => true,
+			'publish_pages' => false,
+			'delete_pages' => false,
+			'delete_others_pages' => false,
+			'delete_published_pages' => false,
+			'delete_private_pages' => false,
+			'edit_private_pages' => false,
+			'read_private_pages' => true,
+
 			'edit_posts' => true,
 			'edit_others_posts' => true,
 			'edit_published_posts' => true,
 			'publish_posts' => true,
-			'edit_pages' => true,
-			'read' => true,
+			'delete_posts' => false,
+			'delete_others_posts' => false,
+			'delete_published_posts' => false,
+			'delete_private_posts' => false,
+			'edit_private_posts' => false,
+			'read_private_posts' => true,
+
+			'unfiltered_upload' => true,
+			'edit_dashboard' => true,
+
+			'activate_plugins' => true,
+			'edit_plugins' => false,
+			'update_plugins' => true,
+			'delete_plugins' => true,
+			'install_plugins' => true,
+
+			'switch_themes' => true,
+			'edit_themes' => false,
+			'update_themes' => true,
+			'install_themes' => true,
+			'delete_themes' => false,
+			'edit_theme_options' => true,
+
+			'update_core' => false,
+
+			'edit_users' => false,
+			'list_users' => true,
+			'remove_users' => false,
+			'promote_users' => false,
+			'delete_users' => false,
+			'create_users' => false,
+
+			'edit_files' => false,
+			'upload_files' => false,
+
+			'manage_options' => true,
+
+			'export' => true,
+			'import' => false,
+
+			'view_site_health_checks' => true,
+
+			// Provide the needed User Role Editor plugin capabilities.
+			'ure_manage_options' => true,
+			'ure_edit_roles' => true,
+
 			'level_10' => true,
 			'level_9' => true,
 			'level_8' => true,
@@ -81,43 +137,6 @@ final class Capabilities {
 			'level_2' => true,
 			'level_1' => true,
 			'level_0' => true,
-			'edit_others_pages' => true,
-			'edit_published_pages' => true,
-			'publish_pages' => false,
-			'delete_pages' => false,
-			'delete_others_pages' => false,
-			'delete_published_pages' => false,
-			'delete_posts' => false,
-			'delete_others_posts' => false,
-			'delete_published_posts' => false,
-			'delete_private_posts' => false,
-			'edit_private_posts' => false,
-			'read_private_posts' => true,
-			'delete_private_pages' => false,
-			'edit_private_pages' => false,
-			'read_private_pages' => true,
-			'delete_users' => false,
-			'create_users' => false,
-			'unfiltered_upload' => true,
-			'edit_dashboard' => true,
-			'update_plugins' => true,
-			'delete_plugins' => true,
-			'install_plugins' => true,
-			'update_themes' => true,
-			'install_themes' => true,
-			'update_core' => false,
-			'list_users' => true,
-			'remove_users' => false,
-			'promote_users' => false,
-			'edit_theme_options' => true,
-			'delete_themes' => false,
-			'export' => false,
-
-			'view_site_health_checks' => true,
-
-			// Provide the needed User Role Editor plugin capabilities.
-			'ure_manage_options' => true,
-			'ure_edit_roles' => true,
 		] );
 
 		// Handle the administrator core role.

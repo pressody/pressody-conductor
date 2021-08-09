@@ -276,28 +276,56 @@ function local_rest_call( string $route, string $method = 'GET', array $query_pa
 }
 
 /**
- * Determine if a user has a certain role.
+ * Determine if the current user has a certain role.
  *
- * @param $user
  * @param string $role
  *
  * @return bool
  */
-function user_has_role( $user, $role): bool {
-
-	if (empty($user)) {
+function current_user_has_role( string $role ): bool {
+	$user = wp_get_current_user();
+	if ( empty( $user ) || ! $user->exists() ) {
 		return false;
 	}
 
-	if (!is_a($user, 'WP_User')) {
+	if ( ! is_a( $user, 'WP_User' ) ) {
 		return false;
 	}
 
-	if (empty($user->roles)) {
+	if ( empty( $user->roles ) ) {
 		return false;
 	}
 
-	if (!in_array( $role, $user->roles ) ) {
+	if ( ! in_array( $role, $user->roles ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Determine if a user has a certain role.
+ *
+ * @param        $user
+ * @param string $role
+ *
+ * @return bool
+ */
+function user_has_role( $user, string $role ): bool {
+
+	if ( empty( $user ) ) {
+		return false;
+	}
+
+	if ( ! is_a( $user, 'WP_User' ) ) {
+		return false;
+	}
+
+	if ( empty( $user->roles ) ) {
+		return false;
+	}
+
+	if ( ! in_array( $role, $user->roles ) ) {
 		return false;
 	}
 

@@ -157,6 +157,12 @@ class ServiceProvider implements ServiceProviderInterface {
 			);
 		};
 
+		$container['hooks.wpupdates'] = function ( $container ) {
+			return new Provider\WPUpdates(
+				$container['composition.manager']
+			);
+		};
+
 		$container['http.request'] = function () {
 			$request = new Request( $_SERVER['REQUEST_METHOD'] ?? '' );
 
@@ -255,8 +261,20 @@ class ServiceProvider implements ServiceProviderInterface {
 			);
 		};
 
+		$container['screen.plugins'] = function ( $container ) {
+			return new Screen\Plugins(
+				$container['composition.manager']
+			);
+		};
+
 		$container['screen.settings'] = function () {
 			return new Screen\Settings();
+		};
+
+		$container['screen.themes'] = function ( $container ) {
+			return new Screen\Themes(
+				$container['composition.manager']
+			);
 		};
 	}
 }
