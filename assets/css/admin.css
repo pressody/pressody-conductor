@@ -1,3 +1,104 @@
+/* Notices - these are just like core notices but with different classes
+/* so they are kept in place and not hoisted up by the core JS.
+------------------------------------------------------------------------------*/
+
+.lt-inline-notice {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	padding: 1px 12px;
+}
+
+.lt-inline-notice p {
+	margin: 0.5em 0;
+	padding: 2px;
+}
+
+.lt-error a {
+	text-decoration: underline;
+}
+
+.lt-updated a {
+	padding-bottom: 2px;
+}
+
+.lt-notice-alt {
+	box-shadow: none;
+}
+
+.lt-notice-large {
+	padding: 10px 20px;
+}
+
+.lt-notice-title {
+	display: inline-block;
+	color: #1d2327;
+	font-size: 18px;
+}
+
+.lt-notice-dismiss {
+	position: absolute;
+	top: 0;
+	right: 1px;
+	border: none;
+	margin: 0;
+	padding: 9px;
+	background: none;
+	color: #787c82;
+	cursor: pointer;
+}
+
+.lt-notice-dismiss:hover:before,
+.lt-notice-dismiss:active:before,
+.lt-notice-dismiss:focus:before {
+	color: #d63638;
+}
+
+.lt-notice-dismiss:focus {
+	outline: none;
+	box-shadow:
+			0 0 0 1px #4f94d4,
+			0 0 2px 1px rgba(79, 148, 212, 0.8);
+}
+
+.lt-notice-success {
+	border-left-color: #00a32a;
+}
+
+.lt-notice-success.lt-notice-alt {
+	background-color: #edfaef;
+}
+
+.lt-notice-warning {
+	border-left-color: #dba617;
+}
+
+.lt-notice-warning.lt-notice-alt {
+	background-color: #fcf9e8;
+}
+
+.lt-notice-error {
+	border-left-color: #d63638;
+}
+
+.lt-notice-error.lt-notice-alt {
+	background-color: #fcf0f1;
+}
+
+.lt-notice-info {
+	border-left-color: #72aee6;
+}
+
+.lt-notice-info.lt-notice-alt {
+	background-color: #f0f6fc;
+}
+
+.lt-wrap.lt-inline-notice {
+	padding-top: 15px;
+	padding-bottom: 15px;
+}
+
 /* Settings Screen
 ------------------------------------------------------------------------------*/
 

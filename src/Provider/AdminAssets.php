@@ -24,6 +24,7 @@ class AdminAssets extends AbstractHookProvider {
 	 */
 	public function register_hooks() {
 		add_action( 'admin_enqueue_scripts', [ $this, 'register_assets' ], 1 );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
 
 	/**
@@ -46,5 +47,14 @@ class AdminAssets extends AbstractHookProvider {
 			[ 'wp-components' ],
 			'20210628'
 		);
+	}
+
+	/**
+	 * Enqueue scripts and styles all over the admin.
+	 *
+	 * @since 0.11.0
+	 */
+	public function enqueue_assets() {
+		wp_enqueue_style( 'pixelgradelt_conductor-admin' );
 	}
 }
