@@ -303,7 +303,7 @@ class WPUpdates extends AbstractHookProvider {
 			if ( $folder_name === $package_folder_name ) {
 				/* translators: 1: plugin or theme */
 				$message = sprintf(
-					wp_kses_post( __( 'You are trying to install a %1$s that <strong>is part of your LT Composition.</strong><br><strong>This is not allowed</strong> as the %1$s\'s installation and updates are handled <strong>automatically,</strong> as promised.<br>Please reach us at Pixelgrade if you have questions or need a helping hand.', 'pixelgrade_conductor' ) ),
+					wp_kses_post( __( 'You are trying to install a <strong>%1$s that is part of your LT Composition.</strong><br><strong>This is not allowed</strong> as the %1$s\'s installation and updates are handled <strong>automatically,</strong> as promised.<br>Please reach us at Pixelgrade if you have questions or need a helping hand.', 'pixelgrade_conductor' ) ),
 					isset( $package_data['plugin-file'] ) ? 'plugin' : 'theme'
 				);
 				$message = '<p class="lt-inline-notice lt-notice-error lt-wrap">' . $message . '</p>';

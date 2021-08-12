@@ -142,11 +142,11 @@ class Settings extends AbstractHookProvider {
 	public function render_screen() {
 
 		$tabs = [
-				'settings'   => [
+				'settings'      => [
 						'name'       => esc_html__( 'Settings', 'pixelgradelt_conductor' ),
 						'capability' => Capabilities::MANAGE_OPTIONS,
 				],
-				'system-status'   => [
+				'system-status' => [
 						'name'       => esc_html__( 'System Status', 'pixelgradelt_conductor' ),
 						'capability' => Capabilities::MANAGE_OPTIONS,
 				],
