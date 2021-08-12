@@ -1,3 +1,10 @@
+/* General WP Admin
+------------------------------------------------------------------------------*/
+
+/* This is the WP core update notice. */
+div.update-nag {
+	display: none !important;
+}
 /* Notices - these are just like core notices but with different classes
 /* so they are kept in place and not hoisted up by the core JS.
 ------------------------------------------------------------------------------*/

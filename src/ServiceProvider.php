@@ -276,5 +276,9 @@ class ServiceProvider implements ServiceProviderInterface {
 				$container['composition.manager']
 			);
 		};
+
+		$container['screen.update-core'] = function () {
+			return new Screen\UpdateCore();
+		};
 	}
 }
