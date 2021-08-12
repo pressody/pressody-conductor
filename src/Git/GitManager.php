@@ -21,7 +21,6 @@ use PixelgradeLT\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 use function PixelgradeLT\Conductor\is_plugin_file;
 use function PixelgradeLT\Conductor\plugin;
-use function WP_CLI\Utils\get_plugin_name;
 
 /**
  * Class to manage the Git integration of the site.
