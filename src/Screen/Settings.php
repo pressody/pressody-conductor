@@ -106,7 +106,7 @@ class Settings extends AbstractHookProvider {
 		add_settings_section(
 				'default',
 				esc_html__( 'General', 'pixelgradelt_conductor' ),
-				'__return_null',
+				[ $this, 'render_general_settings_explainer' ],
 				'pixelgradelt_conductor'
 		);
 	}
@@ -117,13 +117,7 @@ class Settings extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function add_settings() {
-//		add_settings_field(
-//				'github-oauth-token',
-//				'<label for="pixelgradelt_conductor-github-oauth-token">' . esc_html__( 'Github OAuth Token', 'pixelgradelt_conductor' ) . '</label>',
-//				[ $this, 'render_field_github_oauth_token' ],
-//				'pixelgradelt_conductor',
-//				'default'
-//		);
+
 	}
 
 	/**
@@ -136,10 +130,6 @@ class Settings extends AbstractHookProvider {
 	 * @return array Sanitized and filtered settings values.
 	 */
 	public function sanitize_settings( array $value ): array {
-
-//		if ( ! empty( $value['github-oauth-token'] ) ) {
-//			$value['github-oauth-token'] = trim( $value['github-oauth-token'] );
-//		}
 
 		return (array) apply_filters( 'pixelgradelt_conductor/sanitize_settings', $value );
 	}
@@ -169,21 +159,17 @@ class Settings extends AbstractHookProvider {
 	}
 
 	/**
-	 * Display a field for defining the Github OAuth Token.
+	 * Display a some explanation for the General settings.
 	 *
 	 * @since 0.1.0
 	 */
-	public function render_field_github_oauth_token() {
-		$value = $this->get_setting( 'github-oauth-token', '' );
+	public function render_general_settings_explainer() {
 		?>
-		<p>
-			<input type="password" size="80" name="pixelgradelt_conductor[github-oauth-token]"
-			       id="pixelgradelt_conductor-github-oauth-token" value="<?php echo esc_attr( $value ); ?>"><br/>
-			<span class="description">Github has <strong>a rate limit of 60 requests/hour</strong> on their API for <strong>requests not using an OAuth Token.</strong><br>
-				Since most packages on Packagist.org have their source on Github, and you may be using actual Github repos as sources, <strong>you should definitely generate a token and save it here.</strong><br>
-				Learn more about <strong>the steps to take <a
-							href="https://getcomposer.org/doc/articles/authentication-for-private-packages.md#github-oauth">here</a>.</strong> <strong>Be careful about the permissions you grant on the generated token!</strong></span>
-		</p>
+		<div class="pixelgradelt_conductor-card">
+			<p>
+				<?php echo esc_html__( 'None right now.', 'pixelgradelt_conductor' ); ?>
+			</p>
+		</div>
 		<?php
 	}
 
