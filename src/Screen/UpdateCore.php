@@ -101,7 +101,7 @@ class UpdateCore extends AbstractHookProvider {
 	 */
 	public function maybe_start_output_buffering() {
 		// No changes for support people.
-		if ( ! current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
+		if ( current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
 			return;
 		}
 
@@ -120,7 +120,7 @@ class UpdateCore extends AbstractHookProvider {
 	 */
 	public function maybe_end_output_buffering() {
 		// No changes for support people.
-		if ( ! current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
+		if ( current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
 			return;
 		}
 
