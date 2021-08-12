@@ -109,13 +109,6 @@ class Settings extends AbstractHookProvider {
 				'__return_null',
 				'pixelgradelt_conductor'
 		);
-
-		add_settings_section(
-				'ltrecords',
-				esc_html__( 'LT Records Communication', 'pixelgradelt_conductor' ),
-				'__return_null',
-				'pixelgradelt_conductor'
-		);
 	}
 
 	/**
@@ -124,29 +117,13 @@ class Settings extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function add_settings() {
-		add_settings_field(
-				'github-oauth-token',
-				'<label for="pixelgradelt_conductor-github-oauth-token">' . esc_html__( 'Github OAuth Token', 'pixelgradelt_conductor' ) . '</label>',
-				[ $this, 'render_field_github_oauth_token' ],
-				'pixelgradelt_conductor',
-				'default'
-		);
-
-		add_settings_field(
-				'ltrecords-packages-repo-endpoint',
-				'<label for="pixelgradelt_conductor-ltrecords-packages-repo-endpoint">' . esc_html__( 'Packages Repository Endpoint', 'pixelgradelt_conductor' ) . '</label>',
-				[ $this, 'render_field_ltrecords_packages_repo_endpoint' ],
-				'pixelgradelt_conductor',
-				'ltrecords'
-		);
-
-		add_settings_field(
-				'ltrecords-api-key',
-				'<label for="pixelgradelt_conductor-ltrecords-api-key">' . esc_html__( 'Access API Key', 'pixelgradelt_conductor' ) . '</label>',
-				[ $this, 'render_field_ltrecords_api_key' ],
-				'pixelgradelt_conductor',
-				'ltrecords'
-		);
+//		add_settings_field(
+//				'github-oauth-token',
+//				'<label for="pixelgradelt_conductor-github-oauth-token">' . esc_html__( 'Github OAuth Token', 'pixelgradelt_conductor' ) . '</label>',
+//				[ $this, 'render_field_github_oauth_token' ],
+//				'pixelgradelt_conductor',
+//				'default'
+//		);
 	}
 
 	/**
@@ -160,17 +137,9 @@ class Settings extends AbstractHookProvider {
 	 */
 	public function sanitize_settings( array $value ): array {
 
-		if ( ! empty( $value['github-oauth-token'] ) ) {
-			$value['github-oauth-token'] = trim( $value['github-oauth-token'] );
-		}
-
-		if ( ! empty( $value['ltrecords-packages-repo-endpoint'] ) ) {
-			$value['ltrecords-packages-repo-endpoint'] = esc_url( $value['ltrecords-packages-repo-endpoint'] );
-		}
-
-		if ( ! empty( $value['ltrecords-api-key'] ) ) {
-			$value['ltrecords-api-key'] = trim( $value['ltrecords-api-key'] );
-		}
+//		if ( ! empty( $value['github-oauth-token'] ) ) {
+//			$value['github-oauth-token'] = trim( $value['github-oauth-token'] );
+//		}
 
 		return (array) apply_filters( 'pixelgradelt_conductor/sanitize_settings', $value );
 	}
@@ -214,39 +183,6 @@ class Settings extends AbstractHookProvider {
 				Since most packages on Packagist.org have their source on Github, and you may be using actual Github repos as sources, <strong>you should definitely generate a token and save it here.</strong><br>
 				Learn more about <strong>the steps to take <a
 							href="https://getcomposer.org/doc/articles/authentication-for-private-packages.md#github-oauth">here</a>.</strong> <strong>Be careful about the permissions you grant on the generated token!</strong></span>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Display a field for defining the LT Records Packages Repository endpoint.
-	 *
-	 * @since 0.1.0
-	 */
-	public function render_field_ltrecords_packages_repo_endpoint() {
-		$value = $this->get_setting( 'ltrecords-packages-repo-endpoint', '' );
-		?>
-		<p>
-			<input type="url" size="80" name="pixelgradelt_conductor[ltrecords-packages-repo-endpoint]"
-			       id="pixelgradelt_conductor-ltrecords-packages-repo-endpoint"
-			       value="<?php echo esc_attr( $value ); ?>"><br/>
-			<span class="description">Provide here the LT Records Packages Repository endpoint URL.</span>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Display a field for defining the LT Records API Key.
-	 *
-	 * @since 0.1.0
-	 */
-	public function render_field_ltrecords_api_key() {
-		$value = $this->get_setting( 'ltrecords-api-key', '' );
-		?>
-		<p>
-			<input type="text" size="80" name="pixelgradelt_conductor[ltrecords-api-key]"
-			       id="pixelgradelt_conductor-ltrecords-api-key" value="<?php echo esc_attr( $value ); ?>"><br/>
-			<span class="description">Provide here <strong>a valid LT Records API key</strong> for LT Conductor to use to access the repositories above.</span>
 		</p>
 		<?php
 	}
