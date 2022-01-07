@@ -100,7 +100,7 @@ class GitManager extends AbstractHookProvider {
 		// Each time the composition DB cache gets updated, update the .gitignore file with the composition plugins and themes.
 		add_action( 'update_option_' . $this->composition_manager::COMPOSITION_PLUGINS_OPTION_NAME, [
 			$this,
-			'maybe_updated_gitignore_on_update_composer_plugins',
+			'maybe_update_gitignore_on_update_composer_plugins',
 		] );
 		add_action( 'update_option_' . $this->composition_manager::COMPOSITION_THEMES_OPTION_NAME, [
 			$this,
@@ -149,7 +149,7 @@ class GitManager extends AbstractHookProvider {
 	 *
 	 * @return bool
 	 */
-	public function maybe_updated_gitignore_on_update_composer_plugins(): bool {
+	public function maybe_update_gitignore_on_update_composer_plugins(): bool {
 		$contents = $original_contents = $this->git_client->read_gitignore();
 		if ( false === $contents ) {
 			return false;
@@ -221,7 +221,7 @@ class GitManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Filters the installation response after a installation has finished.
+	 * Filters the installation response after an installation has finished.
 	 *
 	 * @since 0.10.0
 	 *
