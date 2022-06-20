@@ -4,31 +4,31 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 use Cedaro\WP\Plugin\Provider\I18n;
 use Pimple\Container as PimpleContainer;
 use Pimple\Psr11\ServiceLocator;
 use Pimple\ServiceProviderInterface;
-use PixelgradeLT\Conductor\Cache\CacheManager;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
-use PixelgradeLT\Conductor\Git\GitClient;
-use PixelgradeLT\Conductor\Git\GitManager;
-use PixelgradeLT\Conductor\Git\GitRepo;
-use PixelgradeLT\Conductor\Git\GitWrapper;
-use PixelgradeLT\Conductor\Logging\ComposerLogger;
-use PixelgradeLT\Conductor\Logging\Handler\CLILogHandler;
-use PixelgradeLT\Conductor\Logging\Handler\FileLogHandler;
-use PixelgradeLT\Conductor\Logging\Logger;
-use PixelgradeLT\Conductor\Logging\LogsManager;
+use Pressody\Conductor\Cache\CacheManager;
+use Pressody\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Git\GitClient;
+use Pressody\Conductor\Git\GitManager;
+use Pressody\Conductor\Git\GitRepo;
+use Pressody\Conductor\Git\GitWrapper;
+use Pressody\Conductor\Logging\ComposerLogger;
+use Pressody\Conductor\Logging\Handler\CLILogHandler;
+use Pressody\Conductor\Logging\Handler\FileLogHandler;
+use Pressody\Conductor\Logging\Logger;
+use Pressody\Conductor\Logging\LogsManager;
 use Psr\Log\LogLevel;
-use PixelgradeLT\Conductor\HTTP\Request;
-use PixelgradeLT\Conductor\Provider;
+use Pressody\Conductor\HTTP\Request;
+use Pressody\Conductor\Provider;
 
 /**
  * Plugin service provider class.
@@ -103,7 +103,7 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['git.repo'] = function ( $container ) {
 			return new GitRepo(
-				\LT_ROOT_DIR,
+				\PD_ROOT_DIR,
 				$container['git.wrapper'],
 				$container['logger.main']
 			);
@@ -111,7 +111,7 @@ class ServiceProvider implements ServiceProviderInterface {
 
 		$container['git.wrapper'] = function ( $container ) {
 			return new GitWrapper(
-				\LT_ROOT_DIR,
+				\PD_ROOT_DIR,
 				$container['logger.main']
 			);
 		};

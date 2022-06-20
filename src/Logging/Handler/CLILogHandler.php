@@ -6,15 +6,15 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Logging\Handler;
+namespace Pressody\Conductor\Logging\Handler;
 
 use Exception;
-use PixelgradeLT\Conductor\Utils\JSONCleaner;
+use Pressody\Conductor\Utils\JSONCleaner;
 use Psr\Log\LogLevel;
 
 /**

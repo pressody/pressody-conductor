@@ -1,6 +1,6 @@
-# PixelgradeLT Conductor Documentation
+# Pressody Conductor Documentation
 
-This is a WordPress plugin intended to be part of every LT WordPress site. Its job is to take care of updating the site composition (composer.json) and ensuring its effects (like activating provided plugins).
+This is a WordPress plugin intended to be part of every PD WordPress site. Its job is to take care of updating the site composition (composer.json) and ensuring its effects (like activating provided plugins).
 
 This should be used as a must-use plugin, but that is up-for-debate.
 

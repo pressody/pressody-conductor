@@ -4,24 +4,24 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Composition;
+namespace Pressody\Conductor\Composition;
 
 use Automattic\Jetpack\Constants;
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Composer\Json\JsonFile;
-use PixelgradeLT\Conductor\Composer\ComposerWrapperInterface;
-use PixelgradeLT\Conductor\Queue\QueueInterface;
+use Pressody\Conductor\Composer\ComposerWrapperInterface;
+use Pressody\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 use Seld\JsonLint\ParsingException;
-use function PixelgradeLT\Conductor\is_debug_mode;
-use function PixelgradeLT\Conductor\is_dev_url;
+use function Pressody\Conductor\is_debug_mode;
+use function Pressody\Conductor\is_dev_url;
 use WP_Http as HTTP;
-use const PixelgradeLT\Conductor\STORAGE_DIR;
+use const Pressody\Conductor\STORAGE_DIR;
 
 /**
  * Class to manage the site composition.
@@ -55,7 +55,7 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @var string
 	 */
-	const LTPART_PACKAGE_NAME_PATTERN = '/^pixelgradelt-records\/part_[a-z0-9]+(([_.]?|-{0,2})[a-z0-9]+)*$/';
+	const PDPART_PACKAGE_NAME_PATTERN = '/^pressody-records\/part_[a-z0-9]+(([_.]?|-{0,2})[a-z0-9]+)*$/';
 
 	/**
 	 * Composer.lock hash option name.
@@ -64,7 +64,7 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @var string
 	 */
-	const COMPOSER_LOCK_HASH_OPTION_NAME = 'pixelgradelt_conductor_composer_lock_hash';
+	const COMPOSER_LOCK_HASH_OPTION_NAME = 'pressody_conductor_composer_lock_hash';
 
 	/**
 	 * The composition plugins option name.
@@ -73,7 +73,7 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @var string
 	 */
-	const COMPOSITION_PLUGINS_OPTION_NAME = 'pixelgradelt_conductor_composition_plugins';
+	const COMPOSITION_PLUGINS_OPTION_NAME = 'pressody_conductor_composition_plugins';
 
 	/**
 	 * The composition themes option name.
@@ -82,7 +82,7 @@ class CompositionManager extends AbstractHookProvider {
 	 *
 	 * @var string
 	 */
-	const COMPOSITION_THEMES_OPTION_NAME = 'pixelgradelt_conductor_composition_themes';
+	const COMPOSITION_THEMES_OPTION_NAME = 'pressody_conductor_composition_themes';
 
 	/**
 	 * Queue.
@@ -139,16 +139,16 @@ class CompositionManager extends AbstractHookProvider {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
 		// For now, we will rely on CLI commands and server cron to do the check and updating.
-		// add_action( 'pixelgradelt_conductor/midnight', [ $this, 'check_update' ] );
+		// add_action( 'pressody_conductor/midnight', [ $this, 'check_update' ] );
 		// On updated composition, refresh the DB cache.
-		$this->add_action( 'pixelgradelt_conductor/updated_composer_json', 'hook_refresh_composition_db_cache' );
+		$this->add_action( 'pressody_conductor/updated_composer_json', 'hook_refresh_composition_db_cache' );
 		// On updated DB cache, schedule activate plugins and theme.
-		$this->add_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
-		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
+		$this->add_action( 'pressody_conductor/updated_composition_plugins_and_themes_cache', 'schedule_activate_composition_plugins_and_themes' );
+		add_action( 'pressody_conductor/activate_composition_plugins_and_themes', [
 			$this,
 			'handle_composition_plugins_activation',
 		], 20 );
-		add_action( 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [
+		add_action( 'pressody_conductor/activate_composition_plugins_and_themes', [
 			$this,
 			'handle_composition_themes_activation',
 		], 30 );
@@ -241,7 +241,7 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return false|array
 	 */
 	public function get_composer_json( bool $debug = false ) {
-		$composerJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.json' ) );
+		$composerJsonFile = new JsonFile( \path_join( PD_ROOT_DIR, 'composer.json' ) );
 		if ( ! $composerJsonFile->exists() ) {
 			$this->logger->error( 'The site\'s composer.json file doesn\'t exist.',
 				[
@@ -284,7 +284,7 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return string
 	 */
 	public function get_composer_json_path(): string {
-		return \path_join( LT_ROOT_DIR, 'composer.json' );
+		return \path_join( PD_ROOT_DIR, 'composer.json' );
 	}
 
 	/**
@@ -422,7 +422,7 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Check with LT Records if the current site composition is valid, should be updated, and update it if LT Records provides updated contents.
+	 * Check with PD Records if the current site composition is valid, should be updated, and update it if PD Records provides updated contents.
 	 *
 	 * @since 0.1.0
 	 *
@@ -433,11 +433,11 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return bool
 	 */
 	public function check_update( bool $skip_write = false, bool $debug = false, bool $silent = false ): bool {
-		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
-		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
-		     || ! defined( 'LT_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( LT_RECORDS_COMPOSITION_REFRESH_URL )
+		if ( ! defined( 'PD_RECORDS_API_KEY' ) || empty( PD_RECORDS_API_KEY )
+		     || ! defined( 'PD_RECORDS_API_PWD' ) || empty( PD_RECORDS_API_PWD )
+		     || ! defined( 'PD_RECORDS_COMPOSITION_REFRESH_URL' ) || empty( PD_RECORDS_COMPOSITION_REFRESH_URL )
 		) {
-			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.',
+			$this->logger->warning( 'Could not check for composition update with PD Records because there are missing or empty environment variables.',
 				[
 					'logCategory' => 'composition',
 				]
@@ -460,19 +460,19 @@ class CompositionManager extends AbstractHookProvider {
 		$request_args = [
 			'headers'   => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . base64_encode( LT_RECORDS_API_KEY . ':' . LT_RECORDS_API_PWD ),
+				'Authorization' => 'Basic ' . base64_encode( PD_RECORDS_API_KEY . ':' . PD_RECORDS_API_PWD ),
 			],
 			'timeout'   => 5,
-			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_REFRESH_URL ) ),
+			'sslverify' => ! ( is_debug_mode() || is_dev_url( PD_RECORDS_COMPOSITION_REFRESH_URL ) ),
 			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
 			'body'      => json_encode( [
 				'composer' => $composerJsonCurrentContents,
 			] ),
 		];
 
-		$response = wp_remote_post( LT_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
+		$response = wp_remote_post( PD_RECORDS_COMPOSITION_REFRESH_URL, $request_args );
 		if ( is_wp_error( $response ) ) {
-			$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+			$this->logger->error( 'The composition update check with PD Records failed with code "{code}": {message}',
 				[
 					'code'        => $response->get_error_code(),
 					'message'     => $response->get_error_message(),
@@ -488,7 +488,7 @@ class CompositionManager extends AbstractHookProvider {
 			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
 			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
 			if ( 'rest_invalid_fingerprint' === $body['code'] ) {
-				$this->logger->error( 'The composition update check with LT Records failed with code "{code}". Most likely, this means that the composer.json file was EDITED MANUALLY!',
+				$this->logger->error( 'The composition update check with PD Records failed with code "{code}". Most likely, this means that the composer.json file was EDITED MANUALLY!',
 					[
 						'code'        => $body['code'],
 						'message'     => $body['message'],
@@ -497,7 +497,7 @@ class CompositionManager extends AbstractHookProvider {
 					]
 				);
 			} else {
-				$this->logger->error( 'The composition update check with LT Records failed with code "{code}": {message}',
+				$this->logger->error( 'The composition update check with PD Records failed with code "{code}": {message}',
 					[
 						'code'        => $body['code'],
 						'message'     => $body['message'],
@@ -527,7 +527,7 @@ class CompositionManager extends AbstractHookProvider {
 		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
 
 		// Double check if we should actually update.
-		// We need to ignore the time entry since that represents the time LT Records generated the composition.
+		// We need to ignore the time entry since that represents the time PD Records generated the composition.
 		// Most of the time it is the current time() and would lead to update without the need to.
 		$tempComposerJsonCurrentContents = $composerJsonCurrentContents;
 		unset( $tempComposerJsonCurrentContents['time'] );
@@ -551,7 +551,7 @@ class CompositionManager extends AbstractHookProvider {
 			$this->backup_composer_json();
 
 			if ( ! $this->write_composer_json( $receivedComposerJson, $jsonOptions, $debug ) ) {
-				$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents.',
+				$this->logger->error( 'The site\'s composer.json file could not be written with the PD Records updated contents.',
 					[
 						'logCategory' => 'composition',
 					]
@@ -560,7 +560,7 @@ class CompositionManager extends AbstractHookProvider {
 				return false;
 			}
 
-			$this->logger->info( 'The site\'s composer.json contents have been UPDATED with the contents provided by LT Records.',
+			$this->logger->info( 'The site\'s composer.json contents have been UPDATED with the contents provided by PD Records.',
 				[
 					'logCategory' => 'composition',
 				]
@@ -575,10 +575,10 @@ class CompositionManager extends AbstractHookProvider {
 				 * @param array $newContents The written composer.json data.
 				 * @param array $oldContents The previous composer.json data.
 				 */
-				do_action( 'pixelgradelt_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+				do_action( 'pressody_conductor/updated_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
 			}
 		} else {
-			$this->logger->warning( 'The site\'s composer.json contents need to be UPDATED according to LT Records.',
+			$this->logger->warning( 'The site\'s composer.json contents need to be UPDATED according to PD Records.',
 				[
 					'logCategory' => 'composition',
 				] + ( $debug ? [ 'newComposerJson' => $receivedComposerJson ] : [] )
@@ -591,10 +591,10 @@ class CompositionManager extends AbstractHookProvider {
 	}
 
 	/**
-	 * Based on the composition's LT details reinitialise the site's composition.
+	 * Based on the composition's PD details reinitialise the site's composition.
 	 *
-	 * The LT details are stored under the "extra" entry of composer.json.
-	 * We are only interested in "lt-composition" (the encrypted LT details)
+	 * The PD details are stored under the "extra" entry of composer.json.
+	 * We are only interested in "pd-composition" (the encrypted PD details)
 	 * since that is what we need to initialize a composition.
 	 *
 	 * After a reinitialisation it is best to run an update check to get the composition up-to-speed.
@@ -607,11 +607,11 @@ class CompositionManager extends AbstractHookProvider {
 	 * @return bool
 	 */
 	public function reinitialise( bool $debug = false, bool $silent = false ): bool {
-		if ( ! defined( 'LT_RECORDS_API_KEY' ) || empty( LT_RECORDS_API_KEY )
-		     || ! defined( 'LT_RECORDS_API_PWD' ) || empty( LT_RECORDS_API_PWD )
-		     || ! defined( 'LT_RECORDS_COMPOSITION_CREATE_URL' ) || empty( LT_RECORDS_COMPOSITION_CREATE_URL )
+		if ( ! defined( 'PD_RECORDS_API_KEY' ) || empty( PD_RECORDS_API_KEY )
+		     || ! defined( 'PD_RECORDS_API_PWD' ) || empty( PD_RECORDS_API_PWD )
+		     || ! defined( 'PD_RECORDS_COMPOSITION_CREATE_URL' ) || empty( PD_RECORDS_COMPOSITION_CREATE_URL )
 		) {
-			$this->logger->warning( 'Could not check for composition update with LT Records because there are missing or empty environment variables.',
+			$this->logger->warning( 'Could not check for composition update with PD Records because there are missing or empty environment variables.',
 				[
 					'logCategory' => 'composition',
 				]
@@ -631,8 +631,8 @@ class CompositionManager extends AbstractHookProvider {
 			return false;
 		}
 
-		if ( empty( $composerJsonCurrentContents['extra']['lt-composition'] ) ) {
-			$this->logger->warning( 'The site\'s composition (composer.json file) doesn\'t have the encrypted LT details (["extra"]["lt-composition"]).',
+		if ( empty( $composerJsonCurrentContents['extra']['pd-composition'] ) ) {
+			$this->logger->warning( 'The site\'s composition (composer.json file) doesn\'t have the encrypted PD details (["extra"]["pd-composition"]).',
 				[
 					'logCategory' => 'composition',
 				]
@@ -644,19 +644,19 @@ class CompositionManager extends AbstractHookProvider {
 		$request_args = [
 			'headers'   => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . base64_encode( LT_RECORDS_API_KEY . ':' . LT_RECORDS_API_PWD ),
+				'Authorization' => 'Basic ' . base64_encode( PD_RECORDS_API_KEY . ':' . PD_RECORDS_API_PWD ),
 			],
 			'timeout'   => 5,
-			'sslverify' => ! ( is_debug_mode() || is_dev_url( LT_RECORDS_COMPOSITION_CREATE_URL ) ),
+			'sslverify' => ! ( is_debug_mode() || is_dev_url( PD_RECORDS_COMPOSITION_CREATE_URL ) ),
 			// Do the json_encode ourselves so it maintains types. Note the added Content-Type header also.
 			'body'      => json_encode( [
-				'ltdetails' => $composerJsonCurrentContents['extra']['lt-composition'],
+				'pddetails' => $composerJsonCurrentContents['extra']['pd-composition'],
 			] ),
 		];
 
-		$response = wp_remote_post( LT_RECORDS_COMPOSITION_CREATE_URL, $request_args );
+		$response = wp_remote_post( PD_RECORDS_COMPOSITION_CREATE_URL, $request_args );
 		if ( is_wp_error( $response ) ) {
-			$this->logger->error( 'The empty composition creation by LT Records failed with code "{code}": {message}',
+			$this->logger->error( 'The empty composition creation by PD Records failed with code "{code}": {message}',
 				[
 					'code'        => $response->get_error_code(),
 					'message'     => $response->get_error_message(),
@@ -671,7 +671,7 @@ class CompositionManager extends AbstractHookProvider {
 			$body          = json_decode( wp_remote_retrieve_body( $response ), true );
 			$accepted_keys = array_fill_keys( [ 'code', 'message', 'data' ], '' );
 			$body          = array_replace( $accepted_keys, array_intersect_key( $body, $accepted_keys ) );
-			$this->logger->error( 'The empty composition creation by LT Records failed with code "{code}": {message}',
+			$this->logger->error( 'The empty composition creation by PD Records failed with code "{code}": {message}',
 				[
 					'code'        => $body['code'],
 					'message'     => $body['message'],
@@ -688,7 +688,7 @@ class CompositionManager extends AbstractHookProvider {
 
 		$jsonOptions = JsonFile::JSON_UNESCAPED_SLASHES | JsonFile::JSON_PRETTY_PRINT | JsonFile::JSON_UNESCAPED_UNICODE;
 		if ( ! $this->write_composer_json( $receivedComposerJson, $jsonOptions, $debug ) ) {
-			$this->logger->error( 'The site\'s composer.json file could not be written with the LT Records updated contents.',
+			$this->logger->error( 'The site\'s composer.json file could not be written with the PD Records updated contents.',
 				[
 					'logCategory' => 'composition',
 				]
@@ -712,7 +712,7 @@ class CompositionManager extends AbstractHookProvider {
 			 * @param array $newContents The written composer.json data.
 			 * @param array $oldContents The previous composer.json data.
 			 */
-			do_action( 'pixelgradelt_conductor/reinitialised_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
+			do_action( 'pressody_conductor/reinitialised_composer_json', $receivedComposerJson, $composerJsonCurrentContents );
 		}
 
 		return true;
@@ -791,12 +791,12 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	protected function schedule_recurring_events() {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/midnight' ) ) {
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pressody_conductor/midnight', [], 'plt_con' );
 		}
 
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/hourly' ) ) {
-			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pixelgradelt_conductor/hourly', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/hourly' ) ) {
+			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pressody_conductor/hourly', [], 'plt_con' );
 		}
 	}
 
@@ -806,8 +806,8 @@ class CompositionManager extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	protected function schedule_activate_composition_plugins_and_themes() {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/activate_composition_plugins_and_themes' ) ) {
-			$this->queue->schedule_single( time(), 'pixelgradelt_conductor/activate_composition_plugins_and_themes', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/activate_composition_plugins_and_themes' ) ) {
+			$this->queue->schedule_single( time(), 'pressody_conductor/activate_composition_plugins_and_themes', [], 'plt_con' );
 		}
 	}
 
@@ -919,7 +919,7 @@ class CompositionManager extends AbstractHookProvider {
 		// For themes, the logic is somewhat more convoluted since we can only have a single theme active at any one time.
 		// Also, the user might bring his or hers own themes (or child-themes).
 		// So, we will only force activate if one of the core themes is active.
-		// @todo Maybe explore a more enforceable path to activate LT Theme(s).
+		// @todo Maybe explore a more enforceable path to activate PD Theme(s).
 		$themes = $this->get_composition_theme();
 		if ( ! empty( $themes ) ) {
 			// Get the currently active theme.
@@ -1106,7 +1106,7 @@ class CompositionManager extends AbstractHookProvider {
 	 */
 	public function refresh_composition_db_cache( bool $force = false, bool $debug = false, bool $silent = false ): bool {
 		// Read the current contents of the site's composer.lock.
-		$composerLockJsonFile = new JsonFile( \path_join( LT_ROOT_DIR, 'composer.lock' ) );
+		$composerLockJsonFile = new JsonFile( \path_join( PD_ROOT_DIR, 'composer.lock' ) );
 		if ( ! $composerLockJsonFile->exists() ) {
 			$this->logger->warning( 'The site\'s composer.lock file doesn\'t exist.',
 				[
@@ -1330,7 +1330,7 @@ class CompositionManager extends AbstractHookProvider {
 			 * @param array $plugins The current composition plugins data.
 			 * @param array $themes  The current composition themes data.
 			 */
-			do_action( 'pixelgradelt_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
+			do_action( 'pressody_conductor/updated_composition_plugins_and_themes_cache', $plugins, $themes );
 		}
 
 		return true;
@@ -1369,7 +1369,7 @@ class CompositionManager extends AbstractHookProvider {
 			 *
 			 * @since 0.1.0
 			 */
-			do_action( 'pixelgradelt_conductor/cleared_composition_plugins_and_themes_cache' );
+			do_action( 'pressody_conductor/cleared_composition_plugins_and_themes_cache' );
 		}
 
 		return true;
@@ -1418,9 +1418,9 @@ class CompositionManager extends AbstractHookProvider {
 		// The plugin file patch relative to the plugins directory (unique identifier of the plugin throughout WordPress).
 		$plugin_file = path_join( $plugin_folder, $plugin_main_file );
 
-		// Determine if this plugin is a LT Part plugin.
+		// Determine if this plugin is a PD Part plugin.
 		$is_lt_part_plugin = false;
-		if ( preg_match( self::LTPART_PACKAGE_NAME_PATTERN, $package['name'] ) ) {
+		if ( preg_match( self::PDPART_PACKAGE_NAME_PATTERN, $package['name'] ) ) {
 			$is_lt_part_plugin = true;
 		}
 
@@ -1442,7 +1442,7 @@ class CompositionManager extends AbstractHookProvider {
 					                   ]
 					                   :
 					                   [] ),
-				'ltpart-plugin' => $is_lt_part_plugin,
+				'pdpart-plugin' => $is_lt_part_plugin,
 			],
 		];
 	}

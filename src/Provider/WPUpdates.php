@@ -2,17 +2,17 @@
 /**
  * WordPress updates adjustments provider.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.11.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Composition\CompositionManager;
 
 /**
  * Class to adjust WordPress updates (core, plugins, themes).
@@ -303,10 +303,10 @@ class WPUpdates extends AbstractHookProvider {
 			if ( $folder_name === $package_folder_name ) {
 				/* translators: 1: plugin or theme */
 				$message = sprintf(
-					wp_kses_post( __( 'You are trying to install a <strong>%1$s that is part of your LT Composition.</strong><br><strong>This is not allowed</strong> as the %1$s\'s installation and updates are handled <strong>automatically,</strong> as promised.<br>Please reach us at Pixelgrade if you have questions or need a helping hand.', 'pixelgrade_conductor' ) ),
+					wp_kses_post( __( 'You are trying to install a <strong>%1$s that is part of your PD Composition.</strong><br><strong>This is not allowed</strong> as the %1$s\'s installation and updates are handled <strong>automatically,</strong> as promised.<br>Please reach us at Pressody if you have questions or need a helping hand.', 'pixelgrade_conductor' ) ),
 					isset( $package_data['plugin-file'] ) ? 'plugin' : 'theme'
 				);
-				$message = '<p class="lt-inline-notice lt-notice-error lt-wrap">' . $message . '</p>';
+				$message = '<p class="pd-inline-notice pd-notice-error pd-wrap">' . $message . '</p>';
 				return new \WP_Error( 'composition_package', $message );
 			}
 		}

@@ -1,31 +1,31 @@
 <?php
 /**
- * PixelgradeLT Conductor
+ * Pressody Conductor
  *
- * @package PixelgradeLT
- * @author  Vlad Olaru <vlad@pixelgrade.com>
+ * @package Pressody
+ * @author  Vlad Olaru <vladpotter85@gmail.com>
  * @license GPL-2.0-or-later
  *
  * @wordpress-plugin
- * Plugin Name: PixelgradeLT Conductor
- * Plugin URI: https://github.com/pixelgradelt/pixelgradelt-conductor
- * Description: Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be a MU plugin.
+ * Plugin Name: Pressody Conductor
+ * Plugin URI: https://github.com/pressody/pressody-conductor
+ * Description: Deliver a smooth, secure existence for a Pressody WP Site. This should be a MU plugin.
  * Version: 0.12.0
- * Author: Pixelgrade
- * Author URI: https://pixelgrade.com/
+ * Author: Pressody
+ * Author URI: https://getpressody.com/
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: pixelgradelt_conductor
+ * Text Domain: pressody_conductor
  * Domain Path: /languages
  * Requires PHP: 7.4
  * Network: false
- * GitHub Plugin URI: pixelgradelt/pixelgradelt-conductor
+ * GitHub Plugin URI: pressody/pressody-conductor
  * Release Asset: true
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 // Exit if accessed directly.
 if ( ! \defined( 'ABSPATH' ) ) {
@@ -70,27 +70,27 @@ require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 // Load the Action Scheduler directly since it does not use Composer autoload.
 // @link https://github.com/woocommerce/action-scheduler/issues/471
-if ( file_exists( LT_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
-	require_once LT_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+if ( file_exists( PD_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
+	require_once PD_ROOT_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
 } else if ( file_exists( __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
 	require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
 }
 
 	// Create a container and register a service provider.
-$pixelgradelt_conductor_container = new Container();
-$pixelgradelt_conductor_container->register( new ServiceProvider() );
+$pressody_conductor_container = new Container();
+$pressody_conductor_container->register( new ServiceProvider() );
 
 // Initialize the plugin and inject the container.
-$pixelgradelt_conductor = plugin()
+$pressody_conductor = plugin()
 	->set_basename( plugin_basename( __FILE__ ) )
 	->set_directory( plugin_dir_path( __FILE__ ) )
-	->set_file( __DIR__ . '/pixelgradelt-conductor.php' )
-	->set_slug( 'pixelgradelt-conductor' )
+	->set_file( __DIR__ . '/pressody-conductor.php' )
+	->set_slug( 'pressody-conductor' )
 	->set_url( plugin_dir_url( __FILE__ ) )
 	->define_constants()
-	->set_container( $pixelgradelt_conductor_container )
+	->set_container( $pressody_conductor_container )
 	->register_wp_cli_commands()
-	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.activation' ) )
-	->register_hooks( $pixelgradelt_conductor_container->get( 'hooks.deactivation' ) );
+	->register_hooks( $pressody_conductor_container->get( 'hooks.activation' ) )
+	->register_hooks( $pressody_conductor_container->get( 'hooks.deactivation' ) );
 
-add_action( 'plugins_loaded', [ $pixelgradelt_conductor, 'compose' ], 5 );
+add_action( 'plugins_loaded', [ $pressody_conductor, 'compose' ], 5 );

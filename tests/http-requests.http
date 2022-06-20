@@ -1,38 +1,38 @@
-GET https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/solutions
-Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pixelgradelt_conductor
+GET https://pd-retailer.local/wp-json/pressody_conductor/v1/solutions
+Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pressody_conductor
 Accept: application/json
 
 ###
 
-GET https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/solutions/parts
-Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pixelgradelt_conductor
+GET https://pd-retailer.local/wp-json/pressody_conductor/v1/solutions/parts
+Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pressody_conductor
 Accept: application/json
 
 ###
 
-GET https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/solutions/processed
-Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pixelgradelt_conductor
+GET https://pd-retailer.local/wp-json/pressody_conductor/v1/solutions/processed
+Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pressody_conductor
 Accept: application/json
 
 ###
 
-GET https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/solutions/processed
-Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pixelgradelt_conductor
+GET https://pd-retailer.local/wp-json/pressody_conductor/v1/solutions/processed
+Authorization: Basic Fry4YDsVZGs7UDvtLrHcR8fjEgdL8iG0 pressody_conductor
 Accept: application/json
 Content-Type: application/json
 
 {
   "solutionsContext": {
-	"pixelgradelt-conductor/first-solution": {
+	"pressody-conductor/first-solution": {
 	  "timestamp": 101
 	},
-	"pixelgradelt-conductor/fourth-solution": {
+	"pressody-conductor/fourth-solution": {
 	  "timestamp": 102
 	},
-	"pixelgradelt-conductor/second-solution": {
+	"pressody-conductor/second-solution": {
 	  "timestamp": 103
 	},
-	"pixelgradelt-conductor/third-solution": {
+	"pressody-conductor/third-solution": {
 	  "timestamp": 104
 	}
   }
@@ -40,17 +40,17 @@ Content-Type: application/json
 
 ###
 
-POST https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/compositions/details_to_update
-Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pixelgradelt_conductor
+POST https://pd-retailer.local/wp-json/pressody_conductor/v1/compositions/details_to_update
+Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pressody_conductor
 Accept: application/json
 Content-Type: application/json
 
 {
   "composer": {
-	"name": "pixelgradelt\/my-site",
+	"name": "pressody\/my-site",
 	"type": "project",
 	"license": "MIT",
-	"description": "A Pixelgrade LT WordPress site.",
+	"description": "A Pressody WordPress site.",
 	"homepage": "https:\/\/local.local",
 	"time": "2021-06-18T10:46:35+00:00",
 	"authors": [
@@ -63,13 +63,13 @@ Content-Type: application/json
 	],
 	"keywords": [],
 	"support": {
-	  "issues": "https:\/\/pixelgradelt.com",
-	  "forum": "https:\/\/pixelgradelt.com"
+	  "issues": "https:\/\/pressody.com",
+	  "forum": "https:\/\/pressody.com"
 	},
 	"repositories": [
 	  {
 		"type": "composer",
-		"url": "https:\/\/lt-records.local\/ltpackagist\/",
+		"url": "https:\/\/pd-records.local\/pdpackagist\/",
 		"options": {
 		  "ssl": {
 			"verify_peer": false
@@ -82,9 +82,9 @@ Content-Type: application/json
 	  }
 	],
 	"require": {
-	  "pixelgradelt-records\/part_another-test": "*, >=3.0.0",
-	  "pixelgradelt-records\/part_test-test": "*, ^4.0",
-	  "pixelgradelt-records\/part_yet-another": "*"
+	  "pressody-records\/part_another-test": "*, >=3.0.0",
+	  "pressody-records\/part_test-test": "*, ^4.0",
+	  "pressody-records\/part_yet-another": "*"
 	},
 	"require-dev": {},
 	"config": {
@@ -105,49 +105,49 @@ Content-Type: application/json
 		  "type:wordpress-theme"
 		]
 	  },
-	  "lt-required-packages": {
-		"pixelgradelt-records\/part_yet-another": {
-		  "name": "pixelgradelt-records\/part_yet-another",
+	  "pd-required-packages": {
+		"pressody-records\/part_yet-another": {
+		  "name": "pressody-records\/part_yet-another",
 		  "version": "*",
 		  "requiredBy": [
 			{
-			  "name": "pixelgradelt-conductor\/first-solution",
+			  "name": "pressody-conductor\/first-solution",
 			  "requiredVersion": "*"
 			}
 		  ]
 		},
-		"pixelgradelt-records\/part_another-test": {
-		  "name": "pixelgradelt-records\/part_another-test",
+		"pressody-records\/part_another-test": {
+		  "name": "pressody-records\/part_another-test",
 		  "version": "*, >=3.0.0",
 		  "requiredBy": [
 			{
-			  "name": "pixelgradelt-conductor\/fourth-solution",
+			  "name": "pressody-conductor\/fourth-solution",
 			  "requiredVersion": "*"
 			},
 			{
-			  "name": "pixelgradelt-conductor\/second-solution",
+			  "name": "pressody-conductor\/second-solution",
 			  "requiredVersion": ">=3.0.0"
 			}
 		  ]
 		},
-		"pixelgradelt-records\/part_test-test": {
-		  "name": "pixelgradelt-records\/part_test-test",
+		"pressody-records\/part_test-test": {
+		  "name": "pressody-records\/part_test-test",
 		  "version": "*, ^4.0",
 		  "requiredBy": [
 			{
-			  "name": "pixelgradelt-conductor\/fourth-solution",
+			  "name": "pressody-conductor\/fourth-solution",
 			  "requiredVersion": "*"
 			},
 			{
-			  "name": "pixelgradelt-conductor\/second-solution",
+			  "name": "pressody-conductor\/second-solution",
 			  "requiredVersion": "^4.0"
 			}
 		  ]
 		}
 	  },
-	  "lt-user": "def5020022eeae1880bd161ba2cf48f1afc4fec03ba2396bcb0124678fe9195f2260c6431e51b0e6d1adea9f0e17b1865702b5e1d980c8c467310b44ef643bbf02b2729eba6197244adb2146ab2814b47e168a2441af7dce5253abc0e13cf4e74ca9ec731f97cbce864e3a3458cf44d832600090d3eda972b337a89188ca28551d59b0a63f",
+	  "pd-user": "def5020022eeae1880bd161ba2cf48f1afc4fec03ba2396bcb0124678fe9195f2260c6431e51b0e6d1adea9f0e17b1865702b5e1d980c8c467310b44ef643bbf02b2729eba6197244adb2146ab2814b47e168a2441af7dce5253abc0e13cf4e74ca9ec731f97cbce864e3a3458cf44d832600090d3eda972b337a89188ca28551d59b0a63f",
 	  "wordpress-install-dir": "web\/wp",
-	  "lt-fingerprint": "44e4291a4eb8be042e08da3fb6f96ce4"
+	  "pd-fingerprint": "44e4291a4eb8be042e08da3fb6f96ce4"
 	},
 	"scripts": {
 	  "post-root-package-install": [
@@ -162,8 +162,8 @@ Content-Type: application/json
 
 ###
 
-POST https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/compositions/check_user_details
-Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pixelgradelt_conductor
+POST https://pd-retailer.local/wp-json/pressody_conductor/v1/compositions/check_user_details
+Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pressody_conductor
 Accept: application/json
 Content-Type: application/json
 
@@ -173,8 +173,8 @@ Content-Type: application/json
 
 ###
 
-POST https://lt-retailer.local/wp-json/pixelgradelt_conductor/v1/compositions/encrypt_user_details
-Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pixelgradelt_conductor
+POST https://pd-retailer.local/wp-json/pressody_conductor/v1/compositions/encrypt_user_details
+Authorization: Basic whtg94kNGV20FuOy7yTbqAi198hBMjyz pressody_conductor
 Accept: application/json
 Content-Type: application/json
 

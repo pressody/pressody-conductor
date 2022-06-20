@@ -4,17 +4,17 @@
  *
  * @since   0.11.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Screen;
+namespace Pressody\Conductor\Screen;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Capabilities;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
-use function PixelgradeLT\Conductor\current_user_has_role;
+use Pressody\Conductor\Capabilities;
+use Pressody\Conductor\Composition\CompositionManager;
+use function Pressody\Conductor\current_user_has_role;
 
 /**
  * Plugins screen provider class.
@@ -75,7 +75,7 @@ class Plugins extends AbstractHookProvider {
 	}
 
 	/**
-	 * Change the screen's meta (the Help section) to better reflect the LT reality.
+	 * Change the screen's meta (the Help section) to better reflect the PD reality.
 	 *
 	 * @since 0.11.0
 	 */
@@ -90,9 +90,9 @@ class Plugins extends AbstractHookProvider {
 			$screen->add_help_tab(
 				array(
 					'id'      => 'compatibility-problems',
-					'title'   => __( 'Troubleshooting', 'pixelgradelt_conductor' ),
+					'title'   => __( 'Troubleshooting', 'pressody_conductor' ),
 					'content' =>
-						'<p>' . __( '<strong>Your site\'s LT Composition</strong> is <strong>constantly tested and updated</strong> by us, the crew at Pixelgrade. You should not encounter issues with the various parts, but if you do, <strong>don\'t hesitate to reach us</strong> and we\'ll do our very best to keep your site in tip-top shape.' ) . '</p>' .
+						'<p>' . __( '<strong>Your site\'s PD Composition</strong> is <strong>constantly tested and updated</strong> by us, the crew at Pressody. You should not encounter issues with the various parts, but if you do, <strong>don\'t hesitate to reach us</strong> and we\'ll do our very best to keep your site in tip-top shape.' ) . '</p>' .
 						'<p>' . __( '<strong>If you install additional plugins,</strong> most of the time they will play nicely with the core of WordPress and with other plugins. Sadly, sometimes, a plugin&#8217;s code will get in the way of another plugin, causing compatibility issues. If your site starts doing strange things, this may be the problem. <strong>Try deactivating all the extra plugins</strong> and re-activating them in various combinations until you isolate which one(s) caused the issue.' ) . '</p>' .
 						'<p>' . sprintf(
 						/* translators: %s: WP_PLUGIN_DIR constant value. */
@@ -108,11 +108,11 @@ class Plugins extends AbstractHookProvider {
 			$screen->add_help_tab(
 				array(
 					'id'      => 'plugins-themes-auto-updates',
-					'title'   => __( 'Auto-updates', 'pixelgradelt_conductor' ),
+					'title'   => __( 'Auto-updates', 'pressody_conductor' ),
 					'content' =>
-						'<p>' . __( 'Plugins delivered and managed by <strong>your site\'s LT Composition</strong> are <strong>updated automatically,</strong> so you don\'t need to worry about them anymore.', 'pixelgradelt_conductor' ) . '</p>' .
-						'<p>' . __( 'For plugins that you\'ve installed besides the LT Composition, auto-updates can be enabled or disabled for each of them. Plugins with auto-updates enabled will display the estimated date of the next auto-update.', 'pixelgradelt_conductor' ) . '</p>' .
-						'<p>' . __( 'Auto-updates are only available for plugins recognized by WordPress.org, or that include a compatible update system.', 'pixelgradelt_conductor' ) . '</p>',
+						'<p>' . __( 'Plugins delivered and managed by <strong>your site\'s PD Composition</strong> are <strong>updated automatically,</strong> so you don\'t need to worry about them anymore.', 'pressody_conductor' ) . '</p>' .
+						'<p>' . __( 'For plugins that you\'ve installed besides the PD Composition, auto-updates can be enabled or disabled for each of them. Plugins with auto-updates enabled will display the estimated date of the next auto-update.', 'pressody_conductor' ) . '</p>' .
+						'<p>' . __( 'Auto-updates are only available for plugins recognized by WordPress.org, or that include a compatible update system.', 'pressody_conductor' ) . '</p>',
 				)
 			);
 		}
@@ -185,16 +185,16 @@ class Plugins extends AbstractHookProvider {
 			return $actions;
 		}
 
-		$lt_flag = '<span class="wp-ui-text-primary">Pixelgrade LT Composition</span>';
+		$lt_flag = '<span class="wp-ui-text-primary">Pressody Composition</span>';
 
-		// Hide certain actions for regular users, not Pixelgrade LT support.
+		// Hide certain actions for regular users, not Pressody support.
 		if ( ! current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
 			unset( $actions['deactivate'] );
 			unset( $actions['delete'] );
 
 			// @todo Maybe determine a more specific URL according to the user linked to this site.
 			$account_url = 'https://pixelgrade.com/my-account/';
-			$lt_flag     = '<a href="' . esc_url( $account_url ) . '">Pixelgrade LT Composition</a>';
+			$lt_flag     = '<a href="' . esc_url( $account_url ) . '">Pressody Composition</a>';
 		}
 
 		array_unshift( $actions, $lt_flag );
@@ -246,7 +246,7 @@ class Plugins extends AbstractHookProvider {
 		}
 
 		// Since we don't allow auto-updates for composition plugins, make that transparent.
-		$html = '<span class="label">LT auto-updates</span>';
+		$html = '<span class="label">PD auto-updates</span>';
 
 		return $html;
 	}

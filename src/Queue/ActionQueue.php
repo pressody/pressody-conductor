@@ -6,12 +6,12 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Queue;
+namespace Pressody\Conductor\Queue;
 
 /**
  * Action Queue

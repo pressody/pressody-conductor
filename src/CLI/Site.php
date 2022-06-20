@@ -4,38 +4,38 @@
  *
  * @since   0.9.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\CLI;
+namespace Pressody\Conductor\CLI;
 
-use PixelgradeLT\Conductor\Cache\CacheDispatcher;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Cache\CacheDispatcher;
+use Pressody\Conductor\Composition\CompositionManager;
 use \WP_CLI;
 use WP_CLI\Formatter;
 use WP_CLI\Utils;
-use function PixelgradeLT\Conductor\plugin;
+use function Pressody\Conductor\plugin;
 
 /**
- * Monitor and manage the entire LT Site.
+ * Monitor and manage the entire PD Site.
  *
  * ## EXAMPLES
  *
  *     # List the current site's info
- *     $ wp lt site info
+ *     $ wp pd site info
  *
  *     # Check the current site.
- *     $ wp lt site check
+ *     $ wp pd site check
  *     Success: ...
  *
  *     # Clear the site's cache.
- *     $ wp lt site clear-cache
+ *     $ wp pd site clear-cache
  *     Success: The site's cache has been CLEARED!
  *
  * @since   0.9.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 class Site extends \WP_CLI_Command {
 
@@ -60,10 +60,10 @@ class Site extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition info
+	 *  1. wp pd composition info
 	 *      - List all the site info.
 	 *
-	 *  2. wp lt composition info --verbose
+	 *  2. wp pd composition info --verbose
 	 *      - List all the site info with even more details.
 	 *
 	 * @subcommand info
@@ -101,7 +101,7 @@ class Site extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt site check
+	 *  1. wp pd site check
 	 *
 	 * @subcommand check
 	 *
@@ -137,7 +137,7 @@ class Site extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt site clear-cache
+	 *  1. wp pd site clear-cache
 	 *      - This will clear the site's cache(s).
 	 *
 	 * @subcommand clear-cache

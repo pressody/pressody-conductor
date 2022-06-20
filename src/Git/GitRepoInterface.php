@@ -4,18 +4,18 @@
  *
  * @since   0.10.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Git;
+namespace Pressody\Conductor\Git;
 
 /**
  * Git repository interface.
  *
  * @since   0.10.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 interface GitRepoInterface {
 

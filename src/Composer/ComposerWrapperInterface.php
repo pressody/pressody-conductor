@@ -4,18 +4,18 @@
  *
  * @since   0.8.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Composer;
+namespace Pressody\Conductor\Composer;
 
 /**
  * Client interface.
  *
  * @since   0.8.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 interface ComposerWrapperInterface {
 

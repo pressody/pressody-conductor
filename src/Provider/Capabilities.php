@@ -2,18 +2,18 @@
 /**
  * Capabilities provider.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Capabilities as Caps;
-use function PixelgradeLT\Conductor\user_has_role;
+use Pressody\Conductor\Capabilities as Caps;
+use function Pressody\Conductor\user_has_role;
 
 /**
  * Capabilities provider class.
@@ -66,7 +66,7 @@ class Capabilities extends AbstractHookProvider {
 	 * @return bool[] Modified array of the user's capabilities.
 	 */
 	public function handle_caps( $allcaps, $caps, $args, $user ) {
-		if ( ! user_has_role( $user, 'pixelgradelt_conductor_support' ) ) {
+		if ( ! user_has_role( $user, 'pressody_conductor_support' ) ) {
 			$allcaps['view_site_health_checks'] = false;
 		}
 

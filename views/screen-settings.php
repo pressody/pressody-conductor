@@ -2,14 +2,14 @@
 /**
  * Views: Settings page
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 /**
  * @global array $system_checks
@@ -19,8 +19,8 @@ namespace PixelgradeLT\Conductor;
 
 ?>
 
-<div class="pixelgradelt_conductor-screen">
-	<div class="pixelgradelt_conductor-screen-content wrap">
+<div class="pressody_conductor-screen">
+	<div class="pressody_conductor-screen-content wrap">
 		<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 		<h2 class="nav-tab-wrapper">
 			<?php
@@ -30,7 +30,7 @@ namespace PixelgradeLT\Conductor;
 				}
 
 				printf(
-						'<a href="#pixelgradelt_conductor-%1$s" class="nav-tab%2$s">%3$s</a>',
+						'<a href="#pressody_conductor-%1$s" class="nav-tab%2$s">%3$s</a>',
 						esc_attr( $tab_id ),
 						$active_tab === $tab_id ? ' nav-tab-active' : '',
 						esc_html( $tab_data['name'] )
@@ -46,7 +46,7 @@ namespace PixelgradeLT\Conductor;
 			}
 
 			printf(
-					'<div id="pixelgradelt_conductor-%1$s" class="pixelgradelt_conductor-%1$s pixelgradelt_conductor-tab-panel%2$s">',
+					'<div id="pressody_conductor-%1$s" class="pressody_conductor-%1$s pressody_conductor-tab-panel%2$s">',
 					esc_attr( $tab_id ),
 					$active_tab === $tab_id ? ' is-active' : ''
 			);
@@ -58,5 +58,5 @@ namespace PixelgradeLT\Conductor;
 		?>
 	</div>
 
-	<div id="pixelgradelt_conductor-screen-sidebar" class="pixelgradelt_conductor-screen-sidebar"></div>
+	<div id="pressody_conductor-screen-sidebar" class="pressody_conductor-screen-sidebar"></div>
 </div>

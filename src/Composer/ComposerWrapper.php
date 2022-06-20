@@ -6,12 +6,12 @@
  *
  * @since   0.8.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Composer;
+namespace Pressody\Conductor\Composer;
 
 use Composer\Composer;
 use Composer\Config;
@@ -20,7 +20,7 @@ use Composer\Installer;
 use Composer\IO\BaseIO;
 use Composer\IO\BufferIO;
 use Composer\IO\IOInterface;
-use const PixelgradeLT\Conductor\VENDOR_DIR;
+use const Pressody\Conductor\VENDOR_DIR;
 
 /**
  * Class for wrapping Composer to be able to run composer commands.
@@ -88,7 +88,7 @@ class ComposerWrapper implements ComposerWrapperInterface {
 	 * @return bool
 	 */
 	public function install( string $composer_json_path, array $args = [] ): bool {
-		$args = apply_filters( 'pixelgradelt_conductor/composer_wrapper_install_args', $args, $composer_json_path );
+		$args = apply_filters( 'pressody_conductor/composer_wrapper_install_args', $args, $composer_json_path );
 
 		// Revert on shutdown if `$args['revert_file_path']` is provided.
 		if ( ! empty( $args['revert-file-path'] ) && file_exists( $args['revert-file-path'] ) ) {

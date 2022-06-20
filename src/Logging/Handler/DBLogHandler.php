@@ -4,17 +4,17 @@
  *
  * Code borrowed and modified from WooCommerce.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Logging\Handler;
+namespace Pressody\Conductor\Logging\Handler;
 
 use Automattic\Jetpack\Constants;
-use PixelgradeLT\Conductor\Logging\LogLevels;
+use Pressody\Conductor\Logging\LogLevels;
 
 /**
  * Handles log entries by writing to database.
@@ -85,7 +85,7 @@ class DBLogHandler extends LogHandler {
 			$insert['context'] = serialize( $context ); // @codingStandardsIgnoreLine.
 		}
 
-		return false !== $wpdb->insert( "{$wpdb->prefix}pixelgradelt_conductor_log", $insert, $format );
+		return false !== $wpdb->insert( "{$wpdb->prefix}pressody_conductor_log", $insert, $format );
 	}
 
 	/**
@@ -96,7 +96,7 @@ class DBLogHandler extends LogHandler {
 	public static function flush(): bool {
 		global $wpdb;
 
-		return $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}pixelgradelt_conductor_log" );
+		return $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}pressody_conductor_log" );
 	}
 
 	/**
@@ -111,7 +111,7 @@ class DBLogHandler extends LogHandler {
 
 		return $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}pixelgradelt_conductor_log WHERE source = %s",
+				"DELETE FROM {$wpdb->prefix}pressody_conductor_log WHERE source = %s",
 				$source
 			)
 		);
@@ -133,7 +133,7 @@ class DBLogHandler extends LogHandler {
 
 		$format   = array_fill( 0, count( $log_ids ), '%d' );
 		$query_in = '(' . implode( ',', $format ) . ')';
-		return $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}pixelgradelt_conductor_log WHERE log_id IN {$query_in}", $log_ids ) ); // @codingStandardsIgnoreLine.
+		return $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}pressody_conductor_log WHERE log_id IN {$query_in}", $log_ids ) ); // @codingStandardsIgnoreLine.
 	}
 
 	/**
@@ -150,7 +150,7 @@ class DBLogHandler extends LogHandler {
 
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}pixelgradelt_conductor_log WHERE timestamp < %s",
+				"DELETE FROM {$wpdb->prefix}pressody_conductor_log WHERE timestamp < %s",
 				date( 'Y-m-d H:i:s', $timestamp )
 			)
 		);

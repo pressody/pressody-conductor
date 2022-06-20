@@ -1,7 +1,7 @@
 <?php
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Tests\Integration;
+namespace Pressody\Conductor\Tests\Integration;
 
 use WP_UnitTestCase;
 

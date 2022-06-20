@@ -6,21 +6,21 @@
  *
  * @since   0.10.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Git;
+namespace Pressody\Conductor\Git;
 
 use Psr\Log\LoggerInterface;
-use function PixelgradeLT\Conductor\plugin;
+use function Pressody\Conductor\plugin;
 
 /**
  * Git shell wrapper class.
  *
  * @since   0.10.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 class GitWrapper {
 
@@ -66,14 +66,14 @@ class GitWrapper {
 	 */
 	private function get_env(): array {
 		$env = [];
-		if ( defined( 'LT_GIT_SSH' ) && LT_GIT_SSH ) {
-			$env['GIT_SSH'] = LT_GIT_SSH;
+		if ( defined( 'PD_GIT_SSH' ) && PD_GIT_SSH ) {
+			$env['GIT_SSH'] = PD_GIT_SSH;
 		} else {
 			$env['GIT_SSH'] = plugin()->get_path( 'bin/ssh-git' );
 		}
 
-		if ( defined( 'LT_GIT_KEY_FILE' ) && LT_GIT_KEY_FILE ) {
-			$env['GIT_KEY_FILE'] = LT_GIT_KEY_FILE;
+		if ( defined( 'PD_GIT_KEY_FILE' ) && PD_GIT_KEY_FILE ) {
+			$env['GIT_KEY_FILE'] = PD_GIT_KEY_FILE;
 		}
 
 		return $env;

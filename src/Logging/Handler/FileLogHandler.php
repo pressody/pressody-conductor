@@ -4,20 +4,20 @@
  *
  * Code borrowed and modified from WooCommerce.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Logging\Handler;
+namespace Pressody\Conductor\Logging\Handler;
 
 use Automattic\Jetpack\Constants;
 use Exception;
-use PixelgradeLT\Conductor\Utils\JSONCleaner;
-use function PixelgradeLT\Conductor\doing_it_wrong;
-use const PixelgradeLT\Conductor\LOG_DIR;
+use Pressody\Conductor\Utils\JSONCleaner;
+use function Pressody\Conductor\doing_it_wrong;
+use const Pressody\Conductor\LOG_DIR;
 
 /**
  * Handles log entries by writing to a file.
@@ -61,7 +61,7 @@ class FileLogHandler extends LogHandler {
 		}
 
 		/** @noinspection \PhpFieldAssignmentTypeMismatchInspection */
-		$this->log_size_limit = apply_filters( 'pixelgradelt_conductor/log_file_size_limit', $log_size_limit );
+		$this->log_size_limit = apply_filters( 'pressody_conductor/log_file_size_limit', $log_size_limit );
 
 		add_action( 'plugins_loaded', array( $this, 'write_cached_logs' ) );
 	}
@@ -282,7 +282,7 @@ class FileLogHandler extends LogHandler {
 			$result = true;
 		}
 
-		do_action( 'pixelgradelt_conductor/log_clear', $handle );
+		do_action( 'pressody_conductor/log_clear', $handle );
 
 		return $result;
 	}
@@ -305,7 +305,7 @@ class FileLogHandler extends LogHandler {
 				$this->close( $file ); // Close first to be certain no processes keep it alive after it is unlinked.
 				$removed = unlink( $file ); // phpcs:ignore WordPress.VIP.FileSystemWritesDisallow.file_ops_unlink
 			}
-			do_action( 'pixelgradelt_conductor/log_remove', $handle, $removed );
+			do_action( 'pressody_conductor/log_remove', $handle, $removed );
 		}
 		return $removed;
 	}
@@ -399,7 +399,7 @@ class FileLogHandler extends LogHandler {
 		if ( function_exists( 'wp_hash' ) ) {
 			return trailingslashit( LOG_DIR ) . self::get_log_file_name( $handle );
 		} else {
-			doing_it_wrong( __METHOD__, __( 'This method should not be called before plugins_loaded.', 'pixelgradelt_conductor' ), '0.1.0' );
+			doing_it_wrong( __METHOD__, __( 'This method should not be called before plugins_loaded.', 'pressody_conductor' ), '0.1.0' );
 			return false;
 		}
 	}
@@ -421,7 +421,7 @@ class FileLogHandler extends LogHandler {
 			$hash_suffix = wp_hash( $handle );
 			return sanitize_file_name( implode( '-', [ $handle, $date_suffix, $hash_suffix ] ) . '.log' );
 		} else {
-			doing_it_wrong( __METHOD__, __( 'This method should not be called before plugins_loaded.', 'pixelgradelt_conductor' ), '0.9.0' );
+			doing_it_wrong( __METHOD__, __( 'This method should not be called before plugins_loaded.', 'pressody_conductor' ), '0.9.0' );
 			return false;
 		}
 	}

@@ -2,18 +2,18 @@
 /**
  * Logger that dispatches log messages to the registered handlers.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Logging;
+namespace Pressody\Conductor\Logging;
 
 use Composer\IO\BaseIO;
 use Psr\Log\LogLevel;
-use function PixelgradeLT\Conductor\doing_it_wrong;
+use function Pressody\Conductor\doing_it_wrong;
 
 /**
  * Default logger class.
@@ -60,13 +60,13 @@ class Logger extends BaseIO {
 	 * @since 0.1.0
 	 *
 	 * @param string     $minimum_level Minimum level to log.
-	 * @param array|null $handlers      Optional. Array of log handlers. If $handlers is not provided, the filter 'pixelgradelt_conductor_register_log_handlers' will be used to define the handlers. If $handlers is provided, the filter will not be applied and the handlers will be used directly.
+	 * @param array|null $handlers      Optional. Array of log handlers. If $handlers is not provided, the filter 'pressody_conductor_register_log_handlers' will be used to define the handlers. If $handlers is provided, the filter will not be applied and the handlers will be used directly.
 	 */
 	public function __construct( string $minimum_level, array $handlers = null ) {
 		$this->minimum_level_severity = LogLevels::get_level_severity( $minimum_level );
 
 		if ( null === $handlers ) {
-			$handlers = apply_filters( 'pixelgradelt_conductor/register_log_handlers', array() );
+			$handlers = apply_filters( 'pressody_conductor/register_log_handlers', array() );
 		}
 
 		$register_handlers = array();
@@ -74,16 +74,16 @@ class Logger extends BaseIO {
 		if ( ! empty( $handlers ) && is_array( $handlers ) ) {
 			foreach ( $handlers as $handler ) {
 				$implements = class_implements( $handler );
-				if ( is_object( $handler ) && is_array( $implements ) && in_array( 'PixelgradeLT\Conductor\Logging\Handler\LogHandlerInterface', $implements, true ) ) {
+				if ( is_object( $handler ) && is_array( $implements ) && in_array( 'Pressody\Conductor\Logging\Handler\LogHandlerInterface', $implements, true ) ) {
 					$register_handlers[] = $handler;
 				} else {
 					doing_it_wrong(
 						__METHOD__,
 						sprintf(
 						/* translators: 1: class name 2: WC_Log_Handler_Interface */
-							__( 'The provided handler %1$s does not implement %2$s.', 'pixelgradelt_conductor' ),
+							__( 'The provided handler %1$s does not implement %2$s.', 'pressody_conductor' ),
 							'<code>' . esc_html( is_object( $handler ) ? get_class( $handler ) : $handler ) . '</code>',
-							'<code>PixelgradeLT\Conductor\Logging\Handler\LogHandlerInterface</code>'
+							'<code>Pressody\Conductor\Logging\Handler\LogHandlerInterface</code>'
 						),
 						'0.1.0'
 					);
@@ -117,7 +117,7 @@ class Logger extends BaseIO {
 	public function log( $level, $message, array $context = [] ) {
 		if ( ! LogLevels::is_valid_level( $level ) ) {
 			/* translators: 1: WC_Logger::log 2: level */
-			doing_it_wrong( __METHOD__, sprintf( __( '%1$s was called with an invalid level "%2$s".', 'pixelgradelt_conductor' ), '<code>PixelgradeLT\Conductor\Logging\Logger::log</code>', $level ), '0.1.0' );
+			doing_it_wrong( __METHOD__, sprintf( __( '%1$s was called with an invalid level "%2$s".', 'pressody_conductor' ), '<code>Pressody\Conductor\Logging\Logger::log</code>', $level ), '0.1.0' );
 		}
 
 		if ( ! $this->should_handle( $level ) ) {
@@ -125,7 +125,7 @@ class Logger extends BaseIO {
 		}
 
 		$timestamp = current_time( 'timestamp', 1 );
-		$message   = apply_filters( 'pixelgradelt_conductor/logger_log_message', $message, $level, $context );
+		$message   = apply_filters( 'pressody_conductor/logger_log_message', $message, $level, $context );
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->handle( $timestamp, $level, $message, $context ) ) {
@@ -308,7 +308,7 @@ class Logger extends BaseIO {
 	 * @since 0.1.0
 	 */
 	public function clear_expired_logs() {
-		$days      = absint( apply_filters( 'pixelgradelt_conductor/logger_days_to_retain_logs', 30 ) );
+		$days      = absint( apply_filters( 'pressody_conductor/logger_days_to_retain_logs', 30 ) );
 		$timestamp = strtotime( "-{$days} days" );
 
 		foreach ( $this->handlers as $handler ) {

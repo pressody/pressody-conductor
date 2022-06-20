@@ -2,16 +2,16 @@
 /**
  * Composer Logger/IO that dispatches log messages to the registered handlers.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.8.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Logging;
+namespace Pressody\Conductor\Logging;
 
-use PixelgradeLT\Conductor\Utils\ArrayHelpers;
+use Pressody\Conductor\Utils\ArrayHelpers;
 use Psr\Log\LogLevel;
 
 /**

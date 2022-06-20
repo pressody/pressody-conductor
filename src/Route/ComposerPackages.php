@@ -2,22 +2,22 @@
 /**
  * Composer packages.json rendering.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Route;
+namespace Pressody\Conductor\Route;
 
-use PixelgradeLT\Conductor\Capabilities;
-use PixelgradeLT\Conductor\Exception\HttpException;
-use PixelgradeLT\Conductor\HTTP\Request;
-use PixelgradeLT\Conductor\HTTP\Response;
-use PixelgradeLT\Conductor\HTTP\ResponseBody\JsonBody;
-use PixelgradeLT\Conductor\Repository\PackageRepository;
-use PixelgradeLT\Conductor\Transformer\PackageRepositoryTransformer;
+use Pressody\Conductor\Capabilities;
+use Pressody\Conductor\Exception\HttpException;
+use Pressody\Conductor\HTTP\Request;
+use Pressody\Conductor\HTTP\Response;
+use Pressody\Conductor\HTTP\ResponseBody\JsonBody;
+use Pressody\Conductor\Repository\PackageRepository;
+use Pressody\Conductor\Transformer\PackageRepositoryTransformer;
 use WP_Http as HTTP;
 
 /**

@@ -1,26 +1,26 @@
 <?php
 /**
- * PixelgradeLT Conductor request handler.
+ * Pressody Conductor request handler.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use Psr\Container\ContainerInterface;
-use PixelgradeLT\Conductor\Exception\AuthenticationException;
-use PixelgradeLT\Conductor\HTTP\Request;
-use PixelgradeLT\Conductor\HTTP\Response;
-use PixelgradeLT\Conductor\Route\Route;
+use Pressody\Conductor\Exception\AuthenticationException;
+use Pressody\Conductor\HTTP\Request;
+use Pressody\Conductor\HTTP\Response;
+use Pressody\Conductor\Route\Route;
 use WP;
 use WP_REST_Server;
-use function PixelgradeLT\Conductor\is_debug_mode;
-use function PixelgradeLT\Conductor\is_running_unit_tests;
+use function Pressody\Conductor\is_debug_mode;
+use function Pressody\Conductor\is_running_unit_tests;
 
 /**
  * Request handler class.
@@ -73,15 +73,15 @@ class RequestHandler extends AbstractHookProvider {
 	 * @throws \Exception If an exception is caught and debug mode is enabled.
 	 */
 	public function dispatch( WP $wp ) {
-		if ( empty( $wp->query_vars['pixelgradelt_conductor_route'] ) ) {
+		if ( empty( $wp->query_vars['pressody_conductor_route'] ) ) {
 			return;
 		}
 
-		$route = $wp->query_vars['pixelgradelt_conductor_route'];
+		$route = $wp->query_vars['pressody_conductor_route'];
 		$this->request->set_route( $route );
 
-		if ( ! empty( $wp->query_vars['pixelgradelt_conductor_params'] ) ) {
-			$this->request->set_url_params( $wp->query_vars['pixelgradelt_conductor_params'] );
+		if ( ! empty( $wp->query_vars['pressody_conductor_params'] ) ) {
+			$this->request->set_url_params( $wp->query_vars['pressody_conductor_params'] );
 		}
 
 		try {

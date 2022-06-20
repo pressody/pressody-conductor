@@ -4,12 +4,12 @@
  *
  * @since   0.9.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Cache;
+namespace Pressody\Conductor\Cache;
 
 use CacheTool\Adapter\FastCGI;
 use CacheTool\CacheTool;
@@ -21,8 +21,8 @@ use Composer\Installer\InstallerEvent;
 use Composer\Installer\InstallerEvents;
 use Composer\Installer\PackageEvent;
 use Composer\Installer\PackageEvents;
-use PixelgradeLT\Conductor\Queue\QueueInterface;
-use PixelgradeLT\Conductor\Queue\ActionQueue;
+use Pressody\Conductor\Queue\QueueInterface;
+use Pressody\Conductor\Queue\ActionQueue;
 use Symfony\Component\Finder\Finder;
 
 /**
@@ -192,8 +192,8 @@ class CacheDispatcher {
 
 	protected static function get_cachetool() {
 		$adapter = null;
-		if ( defined( 'LT_PHP_FCGI_HOST' ) && ! empty( LT_PHP_FCGI_HOST ) ) {
-			$adapter = new FastCGI( LT_PHP_FCGI_HOST );
+		if ( defined( 'PD_PHP_FCGI_HOST' ) && ! empty( PD_PHP_FCGI_HOST ) ) {
+			$adapter = new FastCGI( PD_PHP_FCGI_HOST );
 		}
 
 		return CacheTool::factory( $adapter );
@@ -221,7 +221,7 @@ class CacheDispatcher {
 			return;
 		}
 
-		if ( ! self::get_queue()->get_next( 'pixelgradelt_conductor/clear_site_cache' ) ) {
+		if ( ! self::get_queue()->get_next( 'pressody_conductor/clear_site_cache' ) ) {
 			$context = [];
 			if ( $event ) {
 				$context['event'] = [
@@ -245,7 +245,7 @@ class CacheDispatcher {
 				}
 			}
 			// We schedule 30 seconds into the future.
-			self::get_queue()->schedule_single( time() + 30, 'pixelgradelt_conductor/clear_site_cache', $context, 'plt_con' );
+			self::get_queue()->schedule_single( time() + 30, 'pressody_conductor/clear_site_cache', $context, 'plt_con' );
 		}
 	}
 

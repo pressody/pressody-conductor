@@ -1,27 +1,27 @@
 {
-	"name": "pixelgradelt/pixelgradelt-conductor",
-  	"version": "0.11.0",
-	"description": "Deliver a smooth, secure existence for a PixelgradeLT WP Site.",
+	"name": "pressody/pressody-conductor",
+  	"version": "0.12.0",
+	"description": "Deliver a smooth, secure existence for a Pressody WP Site.",
 	"keywords": [
-		"pixelgradelt",
+		"pressody",
 		"pixelgrade",
 		"infrastructure",
 		"wordpress",
 		"composer"
 	],
 	"type": "wordpress-plugin",
-	"homepage": "https://github.com/pixelgradelt/pixelgradelt-conductor",
+	"homepage": "https://github.com/pressody/pressody-conductor",
 	"license": "GPL-2.0-or-later",
 	"authors": [
 		{
 		  "name": "Vlad Olaru",
-		  "email": "vlad@pixelgrade.com",
-		  "homepage": "https://pixelgrade.com/"
+		  "email": "vladpotter85@gmail.com",
+		  "homepage": "https://thinkwritecode.com/"
 		}
 	],
 	"support": {
-		"issues": "https://github.com/pixelgradelt/pixelgradelt-conductor/issues",
-		"source": "https://github.com/pixelgradelt/pixelgradelt-conductor"
+		"issues": "https://github.com/pressody/pressody-conductor/issues",
+		"source": "https://github.com/pressody/pressody-conductor"
 	},
 	"config": {
 	  	"optimize-autoloader": true,
@@ -70,7 +70,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"PixelgradeLT\\Conductor\\": "src/"
+			"Pressody\\Conductor\\": "src/"
 		},
 		"files": [
 			"src/functions.php"
@@ -78,7 +78,7 @@
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"PixelgradeLT\\Conductor\\Tests\\": "tests/phpunit/"
+			"Pressody\\Conductor\\Tests\\": "tests/phpunit/"
 		},
 		"files": [
 
@@ -97,7 +97,7 @@
 		"tests": "./vendor/bin/phpunit --colors=always",
 		"tests-unit": "./vendor/bin/phpunit --testsuite=Unit --colors=always",
 		"tests-integration": "./vendor/bin/phpunit --testsuite=Integration --colors=always",
-		"makepot": "./vendor/bin/wp i18n make-pot . languages/pixelgradelt-conductor.pot",
+		"makepot": "./vendor/bin/wp i18n make-pot . languages/pressody-conductor.pot",
 		"prepare-for-release": [
 		  "composer install",
 		  "composer makepot",

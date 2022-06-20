@@ -4,12 +4,12 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 use Cedaro\WP\Plugin\Plugin as BasePlugin;
 use Psr\Container\ContainerInterface;
@@ -29,14 +29,14 @@ class Plugin extends BasePlugin implements Composable {
 		$container = $this->get_container();
 
 		/**
-		 * Start composing the object graph in PixelgradeLT Conductor.
+		 * Start composing the object graph in Pressody Conductor.
 		 *
 		 * @since 0.1.0
 		 *
 		 * @param Plugin             $plugin    Main plugin instance.
 		 * @param ContainerInterface $container Dependency container.
 		 */
-		do_action( 'pixelgradelt_conductor/compose', $this, $container );
+		do_action( 'pressody_conductor/compose', $this, $container );
 
 		// Register hook providers.
 		$this
@@ -65,23 +65,23 @@ class Plugin extends BasePlugin implements Composable {
 //		}
 
 		/**
-		 * Finished composing the object graph in PixelgradeLT Conductor.
+		 * Finished composing the object graph in Pressody Conductor.
 		 *
 		 * @since 0.1.0
 		 *
 		 * @param Plugin             $plugin    Main plugin instance.
 		 * @param ContainerInterface $container Dependency container.
 		 */
-		do_action( 'pixelgradelt_conductor/composed', $this, $container );
+		do_action( 'pressody_conductor/composed', $this, $container );
 	}
 
 	public function define_constants(): Plugin {
-		if ( ! defined( 'PixelgradeLT\Conductor\STORAGE_DIR' ) ) {
-			define( 'PixelgradeLT\Conductor\STORAGE_DIR', \path_join( \LT_ROOT_DIR, 'lt/' ) );
+		if ( ! defined( 'Pressody\Conductor\STORAGE_DIR' ) ) {
+			define( 'Pressody\Conductor\STORAGE_DIR', \path_join( \PD_ROOT_DIR, 'pd/' ) );
 		}
 
-		if ( ! defined( 'PixelgradeLT\Conductor\LOG_DIR' ) ) {
-			define( 'PixelgradeLT\Conductor\LOG_DIR', \path_join( STORAGE_DIR, 'logs/conductor/' ) );
+		if ( ! defined( 'Pressody\Conductor\LOG_DIR' ) ) {
+			define( 'Pressody\Conductor\LOG_DIR', \path_join( STORAGE_DIR, 'logs/conductor/' ) );
 		}
 
 		return $this;
@@ -98,7 +98,7 @@ class Plugin extends BasePlugin implements Composable {
 		}
 
 		try {
-			\WP_CLI::add_command( 'lt composition', '\PixelgradeLT\Conductor\CLI\Composition' );
+			\WP_CLI::add_command( 'pd composition', '\Pressody\Conductor\CLI\Composition' );
 		} catch ( \Exception $e ) {
 			// Nothing right now.
 		}

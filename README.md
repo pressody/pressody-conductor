@@ -1,10 +1,10 @@
-# PixelgradeLT Conductor
+# Pressody Conductor
 
-Custom WordPress plugin to hold the CONDUCTOR-entity logic for Pixelgrade LT (client-side).
+Custom WordPress plugin to hold the CONDUCTOR-entity logic for Pressody (client-side).
 
 ## About
 
-Deliver a smooth, secure existence for a PixelgradeLT WP Site. This should be used as a MU plugin.
+Deliver a smooth, secure existence for a Pressody WP Site. This should be used as a MU plugin.
 
 ## Development
 

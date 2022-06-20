@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<ruleset name="PixelgradeLT Conductor"
+<ruleset name="Pressody Conductor"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
 
-	<description>Custom ruleset for the PixelgradeLT Conductor plugin.</description>
+	<description>Custom ruleset for the Pressody Conductor plugin.</description>
 
 	<!-- For help in understanding this file: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->
 	<!-- For help in using PHPCS: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->
@@ -54,7 +54,7 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="pixelgradelt-conductor"/>
+				<element value="pressody-conductor"/>
 			</property>
 		</properties>
 		<exclude-pattern>views/</exclude-pattern>
@@ -63,7 +63,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="pixelgradelt-conductor"/>
+				<element value="pressody-conductor"/>
 			</property>
 		</properties>
 	</rule>

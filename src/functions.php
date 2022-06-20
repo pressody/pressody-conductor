@@ -4,12 +4,12 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 /**
  * Retrieve the main plugin instance.
@@ -36,7 +36,7 @@ function plugin(): Plugin {
  * @return mixed
  */
 function get_setting( string $key, $default = null ) {
-	$option = get_option( 'pixelgradelt_conductor' );
+	$option = get_option( 'pressody_conductor' );
 
 	return $option[ $key ] ?? $default;
 }
@@ -135,12 +135,12 @@ function is_plugin_file( string $plugin_file ): bool {
 function display_missing_dependencies_notice() {
 	$message = sprintf(
 	/* translators: %s: documentation URL */
-		__( 'PixelgradeLT Conductor is missing required dependencies. <a href="%s" target="_blank" rel="noopener noreferer">Learn more.</a>', 'pixelgradelt_conductor' ),
-		'https://github.com/pixelgradelt/pixelgradelt-conductor/blob/master/docs/installation.md'
+		__( 'Pressody Conductor is missing required dependencies. <a href="%s" target="_blank" rel="noopener noreferer">Learn more.</a>', 'pressody_conductor' ),
+		'https://github.com/pressody/pressody-conductor/blob/master/docs/installation.md'
 	);
 
 	printf(
-		'<div class="pixelgradelt_conductor-compatibility-notice notice notice-error"><p>%s</p></div>',
+		'<div class="pressody_conductor-compatibility-notice notice notice-error"><p>%s</p></div>',
 		wp_kses(
 			$message,
 			[
@@ -185,7 +185,7 @@ function is_rest_request() {
 	$rest_prefix         = trailingslashit( rest_get_url_prefix() );
 	$is_rest_api_request = ( false !== strpos( $_SERVER['REQUEST_URI'], $rest_prefix ) ); // phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-	return apply_filters( 'pixelgradelt_conductor/is_rest_api_request', $is_rest_api_request );
+	return apply_filters( 'pressody_conductor/is_rest_api_request', $is_rest_api_request );
 }
 
 /**
@@ -196,7 +196,7 @@ function is_rest_request() {
  * @return bool
  */
 function is_running_unit_tests(): bool {
-	return \defined( 'PixelgradeLT\Conductor\RUNNING_UNIT_TESTS' ) && true === RUNNING_UNIT_TESTS;
+	return \defined( 'Pressody\Conductor\RUNNING_UNIT_TESTS' ) && true === RUNNING_UNIT_TESTS;
 }
 
 /**

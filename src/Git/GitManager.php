@@ -1,6 +1,6 @@
 <?php
 /**
- * Git management and integration routines for the entire LT site files.
+ * Git management and integration routines for the entire PD site files.
  *
  * Packages (plugins, themes) delivered and updated by the composition via Composer should not be pushed to Git.
  *
@@ -8,19 +8,19 @@
  *
  * @since   0.10.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Git;
+namespace Pressody\Conductor\Git;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
-use PixelgradeLT\Conductor\Queue\QueueInterface;
+use Pressody\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
-use function PixelgradeLT\Conductor\is_plugin_file;
-use function PixelgradeLT\Conductor\plugin;
+use function Pressody\Conductor\is_plugin_file;
+use function Pressody\Conductor\plugin;
 
 /**
  * Class to manage the Git integration of the site.
@@ -29,7 +29,7 @@ use function PixelgradeLT\Conductor\plugin;
  */
 class GitManager extends AbstractHookProvider {
 
-	const DETAILS_TRANSIENT = 'pixelgradelt_conductor_git_details';
+	const DETAILS_TRANSIENT = 'pressody_conductor_git_details';
 
 	/**
 	 * The Git client.
@@ -119,9 +119,9 @@ class GitManager extends AbstractHookProvider {
 			add_action( 'deleted_theme', [ $this, 'check_after_theme_deleted' ], 999, 2 );
 
 			// Scheduled actions.
-			add_action( 'pixelgradelt_conductor/git/auto_push', [ $this, 'git_auto_push' ], 10, 1 );
-			add_action( 'pixelgradelt_conductor/git/merge_and_push', [ $this, 'git_merge_and_push' ], 10, 1 );
-			add_action( 'pixelgradelt_conductor/hourly', [ $this, 'git_auto_push' ], 99, 0 );
+			add_action( 'pressody_conductor/git/auto_push', [ $this, 'git_auto_push' ], 10, 1 );
+			add_action( 'pressody_conductor/git/merge_and_push', [ $this, 'git_merge_and_push' ], 10, 1 );
+			add_action( 'pressody_conductor/hourly', [ $this, 'git_auto_push' ], 99, 0 );
 		}
 	}
 
@@ -131,12 +131,12 @@ class GitManager extends AbstractHookProvider {
 	 * @since 0.10.0
 	 */
 	protected function schedule_recurring_events() {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/midnight' ) ) {
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pressody_conductor/midnight', [], 'plt_con' );
 		}
 
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/hourly' ) ) {
-			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pixelgradelt_conductor/hourly', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/hourly' ) ) {
+			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pressody_conductor/hourly', [], 'plt_con' );
 		}
 	}
 
@@ -155,7 +155,7 @@ class GitManager extends AbstractHookProvider {
 			return false;
 		}
 
-		$relative_plugins_dir_path = ltrim( str_replace( LT_ROOT_DIR, '', WP_PLUGIN_DIR ), '/' );
+		$relative_plugins_dir_path = ltrim( str_replace( PD_ROOT_DIR, '', WP_PLUGIN_DIR ), '/' );
 
 		$plugins     = $this->composition_manager->get_composition_plugin();
 		$ignore_list = array_keys( $plugins );
@@ -195,7 +195,7 @@ class GitManager extends AbstractHookProvider {
 			return false;
 		}
 
-		$relative_themes_dir_path = ltrim( str_replace( LT_ROOT_DIR, '', WP_CONTENT_DIR . '/themes' ), '/' );
+		$relative_themes_dir_path = ltrim( str_replace( PD_ROOT_DIR, '', WP_CONTENT_DIR . '/themes' ), '/' );
 
 		$themes      = $this->composition_manager->get_composition_theme();
 		$ignore_list = array_keys( $themes );
@@ -418,8 +418,8 @@ class GitManager extends AbstractHookProvider {
 	 * @since 0.10.0
 	 */
 	protected function schedule_git_auto_push( string $msg_append = '' ) {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/git/auto_push' ) ) {
-			$this->queue->add( 'pixelgradelt_conductor/git/auto_push', [ $msg_append ], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/git/auto_push' ) ) {
+			$this->queue->add( 'pressody_conductor/git/auto_push', [ $msg_append ], 'plt_con' );
 		}
 	}
 
@@ -445,8 +445,8 @@ class GitManager extends AbstractHookProvider {
 	 * @param array|string|false $commits A commit hash, a list of commit hashes or false for no commits.
 	 */
 	protected function schedule_git_merge_and_push( $commits = false ) {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/git/merge_and_push' ) ) {
-			$this->queue->add( 'pixelgradelt_conductor/git/merge_and_push', [ $commits ], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/git/merge_and_push' ) ) {
+			$this->queue->add( 'pressody_conductor/git/merge_and_push', [ $commits ], 'plt_con' );
 		}
 	}
 
@@ -704,7 +704,7 @@ class GitManager extends AbstractHookProvider {
 	protected function get_relative_app_dir_path(): string {
 		// Determine the partial path to the directory holding plugins and themes (the regular 'wp-content', but we may not use that).
 		// That is why we rely on the path of this plugin to work our way up.
-		// We go two levels up: one for the plugin directory (aka 'pixelgradelt-conductor') and one for 'plugins' or 'mu-plugins'.
+		// We go two levels up: one for the plugin directory (aka 'pressody-conductor') and one for 'plugins' or 'mu-plugins'.
 		$app_dir = dirname( $this->plugin->get_directory(), 2 );
 		// Make it relative to the repo path.
 		$app_dir = trim( str_replace( $this->git_client->get_git_repo_path(), '', $app_dir ), '/' );

@@ -4,12 +4,12 @@
  *
  * @since   0.10.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Git;
+namespace Pressody\Conductor\Git;
 
 use Psr\Log\LoggerInterface;
 
@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
  * Git repository interaction class.
  *
  * @since   0.10.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 class GitRepo implements GitRepoInterface {
 
@@ -358,7 +358,7 @@ class GitRepo implements GitRepoInterface {
 	 * @return bool
 	 */
 	public function merge_with_accept_mine( ...$commits ): bool {
-		do_action( 'pixelgradelt_conductor/git/before_merge_with_accept_mine', $commits );
+		do_action( 'pressody_conductor/git/before_merge_with_accept_mine', $commits );
 
 		if ( 1 == count( $commits ) && is_array( $commits[0] ) ) {
 			$commits = $commits[0];

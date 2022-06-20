@@ -1,7 +1,7 @@
 <?php
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Tests\Framework;
+namespace Pressody\Conductor\Tests\Framework;
 
 use PHPUnit\TextUI\Command;
 use PHPUnit\Util\Getopt;

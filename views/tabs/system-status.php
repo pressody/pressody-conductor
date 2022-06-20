@@ -4,12 +4,12 @@
  *
  * @since   1.0.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 $allowed_tags = [
 		'a'    => [
@@ -20,16 +20,16 @@ $allowed_tags = [
 		'code' => [],
 ];
 ?>
-<div class="pixelgradelt_conductor-card">
+<div class="pressody_conductor-card">
 	<p>
-		<?php echo wp_kses( __( 'These are a series of system checks to reassure or warn you of <strong>how fit is the webserver for running PixelgradeLT Conductor.</strong>', 'pixelgradelt_conductor' ), $allowed_tags ); ?>
+		<?php echo wp_kses( __( 'These are a series of system checks to reassure or warn you of <strong>how fit is the webserver for running Pressody Conductor.</strong>', 'pressody_conductor' ), $allowed_tags ); ?>
 	</p>
 </div>
 
-<div class="pixelgradelt_conductor-card">
+<div class="pressody_conductor-card">
 	<p>
-		<?php echo wp_kses( __( 'None right now.', 'pixelgradelt_conductor' ), $allowed_tags ); ?>
+		<?php echo wp_kses( __( 'None right now.', 'pressody_conductor' ), $allowed_tags ); ?>
 	</p>
 </div>
 
-<div id="pixelgradelt_conductor-status"></div>
+<div id="pressody_conductor-status"></div>

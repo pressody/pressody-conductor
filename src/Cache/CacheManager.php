@@ -4,15 +4,15 @@
  *
  * @since   0.9.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Cache;
+namespace Pressody\Conductor\Cache;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Queue\QueueInterface;
+use Pressody\Conductor\Queue\QueueInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,7 +64,7 @@ class CacheManager extends AbstractHookProvider {
 	public function register_hooks() {
 		$this->add_action( 'init', 'schedule_recurring_events' );
 
-		add_action( 'pixelgradelt_conductor/clear_site_cache', [ $this, 'clear_site_cache' ] );
+		add_action( 'pressody_conductor/clear_site_cache', [ $this, 'clear_site_cache' ] );
 	}
 
 	/**
@@ -73,12 +73,12 @@ class CacheManager extends AbstractHookProvider {
 	 * @since 0.9.0
 	 */
 	protected function schedule_recurring_events() {
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/midnight' ) ) {
-			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pixelgradelt_conductor/midnight', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/midnight' ) ) {
+			$this->queue->schedule_recurring( strtotime( 'tomorrow' ), DAY_IN_SECONDS, 'pressody_conductor/midnight', [], 'plt_con' );
 		}
 
-		if ( ! $this->queue->get_next( 'pixelgradelt_conductor/hourly' ) ) {
-			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pixelgradelt_conductor/hourly', [], 'plt_con' );
+		if ( ! $this->queue->get_next( 'pressody_conductor/hourly' ) ) {
+			$this->queue->schedule_recurring( (int) floor( ( time() + HOUR_IN_SECONDS ) / HOUR_IN_SECONDS ), HOUR_IN_SECONDS, 'pressody_conductor/hourly', [], 'plt_con' );
 		}
 	}
 

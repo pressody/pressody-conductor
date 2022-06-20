@@ -2,14 +2,14 @@
 /**
  * Assets provider.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 
@@ -34,7 +34,7 @@ class AdminAssets extends AbstractHookProvider {
 	 */
 	public function register_assets() {
 		wp_register_script(
-			'pixelgradelt_conductor-admin',
+			'pressody_conductor-admin',
 			$this->plugin->get_url( 'assets/js/admin.js' ),
 			[ 'jquery' ],
 			'20210628',
@@ -42,7 +42,7 @@ class AdminAssets extends AbstractHookProvider {
 		);
 
 		wp_register_style(
-			'pixelgradelt_conductor-admin',
+			'pressody_conductor-admin',
 			$this->plugin->get_url( 'assets/css/admin.css' ),
 			[ 'wp-components' ],
 			'20210628'
@@ -55,6 +55,6 @@ class AdminAssets extends AbstractHookProvider {
 	 * @since 0.11.0
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_style( 'pixelgradelt_conductor-admin' );
+		wp_enqueue_style( 'pressody_conductor-admin' );
 	}
 }

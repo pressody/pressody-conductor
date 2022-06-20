@@ -2,22 +2,22 @@
 /**
  * HTTP response.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\HTTP;
+namespace Pressody\Conductor\HTTP;
 
 use Exception;
 use InvalidArgumentException;
-use PixelgradeLT\Conductor\Exception\HttpException;
-use PixelgradeLT\Conductor\HTTP\ResponseBody\ErrorBody;
-use PixelgradeLT\Conductor\HTTP\ResponseBody\FileBody;
-use PixelgradeLT\Conductor\HTTP\ResponseBody\JsonBody;
-use PixelgradeLT\Conductor\HTTP\ResponseBody\ResponseBody;
+use Pressody\Conductor\Exception\HttpException;
+use Pressody\Conductor\HTTP\ResponseBody\ErrorBody;
+use Pressody\Conductor\HTTP\ResponseBody\FileBody;
+use Pressody\Conductor\HTTP\ResponseBody\JsonBody;
+use Pressody\Conductor\HTTP\ResponseBody\ResponseBody;
 use WP_Error;
 use WP_Http as HTTP;
 use WP_REST_Response;

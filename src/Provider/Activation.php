@@ -2,14 +2,14 @@
 /**
  * Plugin activation routines.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 
@@ -39,12 +39,12 @@ class Activation extends AbstractHookProvider {
 	 *   registered.
 	 * - Registers capabilities for the admin role.
 	 *
-	 * @see \PixelgradeLT\Conductor\Provider\RewriteRules::maybe_flush_rewrite_rules()
+	 * @see \Pressody\Conductor\Provider\RewriteRules::maybe_flush_rewrite_rules()
 	 *
 	 * @since 0.1.0
 	 */
 	public function activate() {
-		update_option( 'pixelgradelt_conductor_flush_rewrite_rules', 'yes' );
+		update_option( 'pressody_conductor_flush_rewrite_rules', 'yes' );
 
 		$this->create_cron_jobs();
 //		$this->create_or_update_tables();
@@ -56,21 +56,21 @@ class Activation extends AbstractHookProvider {
 	 * Create cron jobs (clear them first).
 	 */
 	private function create_cron_jobs() {
-//		wp_clear_scheduled_hook( 'pixelgradelt_conductor/check_update' );
-//		wp_schedule_event( time() + ( 2 * HOUR_IN_SECONDS ), 'daily', 'pixelgradelt_conductor/check_update' );
+//		wp_clear_scheduled_hook( 'pressody_conductor/check_update' );
+//		wp_schedule_event( time() + ( 2 * HOUR_IN_SECONDS ), 'daily', 'pressody_conductor/check_update' );
 	}
 
 	private function create_or_update_tables() {
 		global $wpdb;
 
 		// We only do something if the DB version is different
-		if ( self::DB_VERSION === get_option( 'pixelgradelt_conductor_dbversion' ) ) {
+		if ( self::DB_VERSION === get_option( 'pressody_conductor_dbversion' ) ) {
 			return;
 		}
 
 		// Create/update the log table
 		$log_table = "
-CREATE TABLE {$wpdb->prefix}pixelgradelt_conductor_log (
+CREATE TABLE {$wpdb->prefix}pressody_conductor_log (
   log_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   timestamp datetime NOT NULL,
   level smallint(4) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE {$wpdb->prefix}pixelgradelt_conductor_log (
 		$this->dbdelta( $log_table );
 
 		// Remember the current DB version
-		update_option( 'pixelgradelt_conductor_dbversion', self::DB_VERSION );
+		update_option( 'pressody_conductor_dbversion', self::DB_VERSION );
 	}
 
 	protected function dbdelta( $sql ) {
@@ -108,7 +108,7 @@ CREATE TABLE {$wpdb->prefix}pixelgradelt_conductor_log (
 	public static function drop_tables() {
 		global $wpdb;
 
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}pixelgradelt_conductor_log" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}pressody_conductor_log" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	private function make_ssh_git_file_executable() {

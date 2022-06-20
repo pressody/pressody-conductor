@@ -1,6 +1,6 @@
 # Settings
 
-At _Settings &rarr; PixelgradeLT Conductor_, you'll find the settings page:
+At _Settings &rarr; Pressody Conductor_, you'll find the settings page:
 
 ...
 

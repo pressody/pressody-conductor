@@ -9,7 +9,7 @@ div.update-nag {
 /* so they are kept in place and not hoisted up by the core JS.
 ------------------------------------------------------------------------------*/
 
-.lt-inline-notice {
+.pd-inline-notice {
 	background: #fff;
 	border: 1px solid #c3c4c7;
 	border-left-width: 4px;
@@ -17,34 +17,34 @@ div.update-nag {
 	padding: 1px 12px;
 }
 
-.lt-inline-notice p {
+.pd-inline-notice p {
 	margin: 0.5em 0;
 	padding: 2px;
 }
 
-.lt-error a {
+.pd-error a {
 	text-decoration: underline;
 }
 
-.lt-updated a {
+.pd-updated a {
 	padding-bottom: 2px;
 }
 
-.lt-notice-alt {
+.pd-notice-alt {
 	box-shadow: none;
 }
 
-.lt-notice-large {
+.pd-notice-large {
 	padding: 10px 20px;
 }
 
-.lt-notice-title {
+.pd-notice-title {
 	display: inline-block;
 	color: #1d2327;
 	font-size: 18px;
 }
 
-.lt-notice-dismiss {
+.pd-notice-dismiss {
 	position: absolute;
 	top: 0;
 	right: 1px;
@@ -56,52 +56,52 @@ div.update-nag {
 	cursor: pointer;
 }
 
-.lt-notice-dismiss:hover:before,
-.lt-notice-dismiss:active:before,
-.lt-notice-dismiss:focus:before {
+.pd-notice-dismiss:hover:before,
+.pd-notice-dismiss:active:before,
+.pd-notice-dismiss:focus:before {
 	color: #d63638;
 }
 
-.lt-notice-dismiss:focus {
+.pd-notice-dismiss:focus {
 	outline: none;
 	box-shadow:
 			0 0 0 1px #4f94d4,
 			0 0 2px 1px rgba(79, 148, 212, 0.8);
 }
 
-.lt-notice-success {
+.pd-notice-success {
 	border-left-color: #00a32a;
 }
 
-.lt-notice-success.lt-notice-alt {
+.pd-notice-success.pd-notice-alt {
 	background-color: #edfaef;
 }
 
-.lt-notice-warning {
+.pd-notice-warning {
 	border-left-color: #dba617;
 }
 
-.lt-notice-warning.lt-notice-alt {
+.pd-notice-warning.pd-notice-alt {
 	background-color: #fcf9e8;
 }
 
-.lt-notice-error {
+.pd-notice-error {
 	border-left-color: #d63638;
 }
 
-.lt-notice-error.lt-notice-alt {
+.pd-notice-error.pd-notice-alt {
 	background-color: #fcf0f1;
 }
 
-.lt-notice-info {
+.pd-notice-info {
 	border-left-color: #72aee6;
 }
 
-.lt-notice-info.lt-notice-alt {
+.pd-notice-info.pd-notice-alt {
 	background-color: #f0f6fc;
 }
 
-.lt-wrap.lt-inline-notice {
+.pd-wrap.pd-inline-notice {
 	padding-top: 15px;
 	padding-bottom: 15px;
 }
@@ -109,29 +109,29 @@ div.update-nag {
 /* Settings Screen
 ------------------------------------------------------------------------------*/
 
-.pixelgradelt_conductor-screen {
+.pressody_conductor-screen {
 	display: flex;
 	flex-wrap: nowrap;
 }
 
-.pixelgradelt_conductor-screen-content {
+.pressody_conductor-screen-content {
 	width: 100%;
 }
 
-.js .pixelgradelt_conductor-tab-panel {
+.js .pressody_conductor-tab-panel {
 	display: none;
 	margin-top: 1em;
 }
 
-.pixelgradelt_conductor-tab-panel.is-active {
+.pressody_conductor-tab-panel.is-active {
 	display: block;
 }
 
-.pixelgradelt_conductor-field-error {
+.pressody_conductor-field-error {
 	color: #ff0000;
 }
 
-.pixelgradelt_conductor-composer-snippet {
+.pressody_conductor-composer-snippet {
 	background: #333;
 	color: #fff;
 	line-height: 1.2;
@@ -139,11 +139,11 @@ div.update-nag {
 	overflow: scroll;
 }
 
-.pixelgradelt_conductor-composer-snippet code {
+.pressody_conductor-composer-snippet code {
 	background: transparent;
 }
 
-.pixelgradelt_conductor-screen-sidebar {
+.pressody_conductor-screen-sidebar {
 	background: #fff;
 	color: #1e1e1e;
 	display: none;
@@ -157,7 +157,7 @@ div.update-nag {
 	z-index: 10;
 }
 
-.pixelgradelt_conductor-screen-sidebar .components-panel__header {
+.pressody_conductor-screen-sidebar .components-panel__header {
 	background: #fff;
 	border-top-width: 0;
 	padding-right: 4px;
@@ -166,7 +166,7 @@ div.update-nag {
 	z-index: 2;
 }
 
-.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tabs {
+.pressody_conductor-screen-sidebar .components-tab-panel__tabs {
 	background: #fff;
 	border-bottom: 1px solid #ddd;
 	position: sticky;
@@ -174,23 +174,23 @@ div.update-nag {
 	z-index: 1;
 }
 
-.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tab-content {
+.pressody_conductor-screen-sidebar .components-tab-panel__tab-content {
 	padding: 16px;
 }
 
-.pixelgradelt_conductor-screen-sidebar .components-tab-panel__tab-content > :first-child {
+.pressody_conductor-screen-sidebar .components-tab-panel__tab-content > :first-child {
 	margin-top: 0;
 }
 
-.sidebar-is-open .pixelgradelt_conductor-screen-content {
+.sidebar-is-open .pressody_conductor-screen-content {
 	margin-right: 370px;
 }
 
-.sidebar-is-open .pixelgradelt_conductor-screen-sidebar {
+.sidebar-is-open .pressody_conductor-screen-sidebar {
 	display: block;
 }
 
-.pixelgradelt_conductor-card {
+.pressody_conductor-card {
 	background: #fff;
 	border: 1px solid #e5e5e5;
 	box-shadow: 0 1px 1px rgba(0,0,0,0.04);
@@ -204,7 +204,7 @@ div.update-nag {
 /* Repository Tab
 ----------------------------------------------------------------------------- */
 
-.pixelgradelt_conductor-repository .components-placeholder {
+.pressody_conductor-repository .components-placeholder {
 	margin-top: 20px;
 	padding: 0.7em 2em 1em;
 	max-width: 620px;
@@ -212,39 +212,39 @@ div.update-nag {
 	box-shadow: inset 0 0 0 1px #ccd0d4;
 }
 
-.pixelgradelt_conductor-repository > .components-button.is-pressed {
+.pressody_conductor-repository > .components-button.is-pressed {
 	padding-right: 12px;
 }
 
-.pixelgradelt_conductor-package {
+.pressody_conductor-package {
 	margin-top: 20px;
 }
 
-.pixelgradelt_conductor-package thead .components-button {
+.pressody_conductor-package thead .components-button {
 	float: right;
 }
 
-.pixelgradelt_conductor-package thead a.edit-package {
+.pressody_conductor-package thead a.edit-package {
 	float: right;
 }
 
-.pixelgradelt_conductor-package .error-message {
+.pressody_conductor-package .error-message {
 	color: #ff0000;
 }
 
-.pixelgradelt_conductor-package tbody th,
-.pixelgradelt_conductor-package tbody td {
+.pressody_conductor-package tbody th,
+.pressody_conductor-package tbody td {
 	word-break: break-all;
 }
 
-.pixelgradelt_conductor-package tbody th {
+.pressody_conductor-package tbody th {
 	font-size: 13px;
 	width: 150px;
 }
 
-.pixelgradelt_conductor-release.button,
-.pixelgradelt_conductor-required-package.button,
-.pixelgradelt_conductor-required-by-solution.button {
+.pressody_conductor-release.button,
+.pressody_conductor-required-package.button,
+.pressody_conductor-required-by-solution.button {
 	height: 24px;
 	margin-bottom: 3px;
 	margin-top: 3px;
@@ -252,47 +252,47 @@ div.update-nag {
 	padding-right: 6px;
 }
 
-.pixelgradelt_conductor-release-actions {
+.pressody_conductor-release-actions {
 	background: #f9f9f9;
 	border: 1px solid #dedede;
 	margin-top: 1em;
 }
 
-.pixelgradelt_conductor-release-actions td,
-.pixelgradelt_conductor-release-actions th {
+.pressody_conductor-release-actions td,
+.pressody_conductor-release-actions th {
 	padding: 5px 10px;
 }
 
-.pixelgradelt_conductor-release-actions tbody th {
+.pressody_conductor-release-actions tbody th {
 	width: auto;
 }
 
-.pixelgradelt_conductor-release-actions tr:first-child td,
-.pixelgradelt_conductor-release-actions tr:first-child th {
+.pressody_conductor-release-actions tr:first-child td,
+.pressody_conductor-release-actions tr:first-child th {
 	padding-top: 8px;
 }
 
-.pixelgradelt_conductor-release-actions tr:last-child td,
-.pixelgradelt_conductor-release-actions tr:last-child th {
+.pressody_conductor-release-actions tr:last-child td,
+.pressody_conductor-release-actions tr:last-child th {
 	padding-bottom: 10px;
 }
 
-.pixelgradelt_conductor-release-actions .components-base-control {
+.pressody_conductor-release-actions .components-base-control {
 	width: 35em;
 }
 
-.pixelgradelt_conductor-release-actions .components-base-control__field {
+.pressody_conductor-release-actions .components-base-control__field {
 	margin-bottom: 1px;
 }
 
-.pixelgradelt_conductor-release-actions .components-text-control__input {
+.pressody_conductor-release-actions .components-text-control__input {
 	background: #fff;
 	max-width: 100%;
 	width: 35em;
 }
 
 @media screen and ( max-width: 782px ) {
-	.pixelgradelt_conductor-release.button {
+	.pressody_conductor-release.button {
 		line-height: normal;
 		height: auto;
 	}
@@ -302,71 +302,71 @@ div.update-nag {
 /* API Keys Table
 ----------------------------------------------------------------------------- */
 
-.pixelgradelt_conductor-api-key-table {
+.pressody_conductor-api-key-table {
 	margin: 1em 0;
 }
 
-.pixelgradelt_conductor-api-key-table td,
-.pixelgradelt_conductor-api-key-table th {
+.pressody_conductor-api-key-table td,
+.pressody_conductor-api-key-table th {
 	width: auto;
 }
 
-.pixelgradelt_conductor-api-key-table tbody td,
-.pixelgradelt_conductor-api-key-table tbody th {
+.pressody_conductor-api-key-table tbody td,
+.pressody_conductor-api-key-table tbody th {
 	vertical-align: middle;
 }
 
-.pixelgradelt_conductor-api-key-table tfoot td {
+.pressody_conductor-api-key-table tfoot td {
 	background-color: #f9f9f9;
 }
 
-.pixelgradelt_conductor-api-key-table tfoot td input {
+.pressody_conductor-api-key-table tfoot td input {
 	margin-left: 0;
 	padding: 0 6px;
 	width: 20em;
 }
 
-.pixelgradelt_conductor-api-key-table tfoot td label {
+.pressody_conductor-api-key-table tfoot td label {
 	display: inline-block;
 	line-height: 1;
 }
 
-.pixelgradelt_conductor-api-key-table tfoot td .spinner {
+.pressody_conductor-api-key-table tfoot td .spinner {
 	float: none;
 }
 
-.pixelgradelt_conductor-api-key-table .column-actions {
+.pressody_conductor-api-key-table .column-actions {
 	text-align: right;
 }
 
-.pixelgradelt_conductor-api-key-table .column-token input {
+.pressody_conductor-api-key-table .column-token input {
 	font-family: monospace;
 	max-width: 282px;
 }
 
-.screen-profile .pixelgradelt_conductor-api-key-table .column-user,
-.screen-user-edit .pixelgradelt_conductor-api-key-table .column-user,
-.network-admin.profile-php .pixelgradelt_conductor-api-key-table .column-user,
-.network-admin.user-edit-php .pixelgradelt_conductor-api-key-table .column-user {
+.screen-profile .pressody_conductor-api-key-table .column-user,
+.screen-user-edit .pressody_conductor-api-key-table .column-user,
+.network-admin.profile-php .pressody_conductor-api-key-table .column-user,
+.network-admin.user-edit-php .pressody_conductor-api-key-table .column-user {
 	display: none;
 }
 
-.pixelgradelt_conductor-api-key-form .components-base-control {
+.pressody_conductor-api-key-form .components-base-control {
 	width: 25em;
 }
 
-.pixelgradelt_conductor-api-key-form .components-base-control__field {
+.pressody_conductor-api-key-form .components-base-control__field {
 	margin-bottom: 1px;
 }
 
-.pixelgradelt_conductor-api-key-form .components-text-control__input {
+.pressody_conductor-api-key-form .components-text-control__input {
 	height: 36px;
 }
 
 /* Composer Tab
 ----------------------------------------------------------------------------- */
 
-input.pixelgradelt_conductor-cli-field {
+input.pressody_conductor-cli-field {
 	background: #f6f6f6;
 	font-family: monospace;
 	max-width: 720px;
@@ -379,14 +379,14 @@ input.pixelgradelt_conductor-cli-field {
 	margin-right: 15px;
 }
 
-.pixelgradelt_conductor-solution-preview .components-placeholder {
+.pressody_conductor-solution-preview .components-placeholder {
 	margin-top: 20px;
 	padding: 0.7em 2em 1em;
 
 	box-shadow: inset 0 0 0 1px #ccd0d4;
 }
 
-.pixelgradelt_conductor-solution-preview a.edit-package {
+.pressody_conductor-solution-preview a.edit-package {
 	display: none;
 }
 

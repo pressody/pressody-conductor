@@ -4,68 +4,68 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\CLI;
+namespace Pressody\Conductor\CLI;
 
 use Composer\Semver\VersionParser;
-use PixelgradeLT\Conductor\Composer\ComposerWrapper;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
-use PixelgradeLT\Conductor\Utils\ArrayHelpers;
-use PixelgradeLT\Conductor\Utils\StringHelpers;
-use PixelgradeLT\Conductor\Utils\TimeHelpers;
+use Pressody\Conductor\Composer\ComposerWrapper;
+use Pressody\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Utils\ArrayHelpers;
+use Pressody\Conductor\Utils\StringHelpers;
+use Pressody\Conductor\Utils\TimeHelpers;
 use WP_CLI;
 use WP_CLI\Formatter;
 use \WP_CLI\Utils;
-use function PixelgradeLT\Conductor\plugin;
+use function Pressody\Conductor\plugin;
 
 /**
- * Monitor and manage the site's LT composition and its effects.
+ * Monitor and manage the site's PD composition and its effects.
  *
  * ## EXAMPLES
  *
  *     # List the current site's composition info
- *     $ wp lt composition info
+ *     $ wp pd composition info
  *
  *     # Check the current composition.
- *     $ wp lt composition check
+ *     $ wp pd composition check
  *     Success: The site's composition (composer.json file) is OK!
  *
  *     # Update the current composition.
- *     $ wp lt composition update
+ *     $ wp pd composition update
  *     Success: The site's composition (composer.json file) is now UP-TO-DATE!
  *
  *     # Install/update/remove all the packages in the composition (composer.json file).
- *     $ wp lt composition composer-update
+ *     $ wp pd composition composer-update
  *     Success: Successfully updated all the composition's packages!
  *
  *     # Update the composition DB cache.
- *     $ wp lt composition update-cache
+ *     $ wp pd composition update-cache
  *     Success: The site's composition DB cache is now UP-TO-DATE!
  *
  *     # Clear the composition DB cache.
- *     $ wp lt composition clear-cache
+ *     $ wp pd composition clear-cache
  *     Success: The site's composition DB cache has been CLEARED!
  *
  *     # Active the plugins and/or theme installed by the composition.
- *     $ wp lt composition activate
+ *     $ wp pd composition activate
  *     Success: The activation was successful!
  *
  *     # Run the composition update sequence of steps.
- *     $ wp lt composition update-sequence
+ *     $ wp pd composition update-sequence
  *     Success: The composition update sequence was successful!
  *
- *     # Reinitialize the composer.json with just the starter bare-bones (no LT Solutions).
- *     # Useful to use in a sequence (probably followed by `wp lt composition update`) for getting out of strange errors.
- *     $ wp lt composition reinit
+ *     # Reinitialize the composer.json with just the starter bare-bones (no PD Solutions).
+ *     # Useful to use in a sequence (probably followed by `wp pd composition update`) for getting out of strange errors.
+ *     $ wp pd composition reinit
  *     Success: The site's composition (composer.json file) has been reinitialised.
  *
  *
  * @since   0.1.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 class Composition extends \WP_CLI_Command {
 
@@ -83,11 +83,11 @@ class Composition extends \WP_CLI_Command {
 	 * [--last-updated]
 	 * : The date and time the composition (composer.json file) was updated.
 	 *
-	 * [--lt-version]
-	 * : The composition's LT version.
+	 * [--pd-version]
+	 * : The composition's PD version.
 	 *
-	 * [--lt-required-packages]
-	 * : The composition's LT required packages.
+	 * [--pd-required-packages]
+	 * : The composition's PD required packages.
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format. Best to use it only when targeting a specific piece of information, not all the info.
@@ -105,28 +105,28 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition info
+	 *  1. wp pd composition info
 	 *      - List all the composition info.
 	 *
-	 *  2. wp lt composition info --verbose
+	 *  2. wp pd composition info --verbose
 	 *      - List all the composition info with even more details.
 	 *
-	 *  3. wp lt composition info --plugin=part_another-test/plugin.php
+	 *  3. wp pd composition info --plugin=part_another-test/plugin.php
 	 *      - List details for a plugin by providing its file path (relative to the plugins directory).
 	 *
-	 *  4. wp lt composition info --plugin="pixelgradelt-records/*"
-	 *      - List all plugins that have the `pixelgradelt-records` vendor in their package name.
+	 *  4. wp pd composition info --plugin="pressody-records/*"
+	 *      - List all plugins that have the `pressody-records` vendor in their package name.
 	 *
-	 *  5. wp lt composition info --plugin="*" --verbose
+	 *  5. wp pd composition info --plugin="*" --verbose
 	 *      - List all plugins with all their details.
 	 *
-	 *  6. wp lt composition info --theme="*"
+	 *  6. wp pd composition info --theme="*"
 	 *      - List all themes.
 	 *
-	 *  7. wp lt composition info --theme="Hi*"
+	 *  7. wp pd composition info --theme="Hi*"
 	 *      - List all themes that begin with `hi`.
 	 *
-	 *  8. wp lt composition info --last-updated --format=json --verbose
+	 *  8. wp pd composition info --last-updated --format=json --verbose
 	 *      - Displays JSON data with multiple versions of the composition's last updated datetime.
 	 *
 	 * @subcommand info
@@ -208,23 +208,23 @@ class Composition extends \WP_CLI_Command {
 			exit( 0 );
 		}
 
-		if ( Utils\get_flag_value( $assoc_args, 'lt-version', false ) ) {
-			if ( empty( $composerJson['extra']['lt-version'] ) ) {
-				WP_CLI::error( 'Missing or invalid composer.json "lt-version" entry.' );
+		if ( Utils\get_flag_value( $assoc_args, 'pd-version', false ) ) {
+			if ( empty( $composerJson['extra']['pd-version'] ) ) {
+				WP_CLI::error( 'Missing or invalid composer.json "pd-version" entry.' );
 			}
 
 			// For the 'table' format we will just display a sentence.
 			if ( in_array( $format, [ 'json', 'yaml', 'csv' ] ) ) {
 				$ltVersionData = [
-					'ltVersion' => $composerJson['extra']['lt-version'],
+					'pdVersion' => $composerJson['extra']['pd-version'],
 				];
 				if ( $verbose ) {
 					$parser        = new VersionParser();
 					$ltVersionData += [
-						'ltVersionNormalized' => $parser->normalize( $composerJson['extra']['lt-version'] ),
+						'pdVersionNormalized' => $parser->normalize( $composerJson['extra']['pd-version'] ),
 					];
 				}
-				$fields     = array_intersect( [ 'ltVersion', 'ltVersionNormalized', ], array_keys( $ltVersionData ) );
+				$fields     = array_intersect( [ 'pdVersion', 'pdVersionNormalized', ], array_keys( $ltVersionData ) );
 				$assoc_args = compact( 'format', 'fields' );
 				$formatter  = new Formatter( $assoc_args );
 				$formatter->display_item( $ltVersionData );
@@ -232,17 +232,17 @@ class Composition extends \WP_CLI_Command {
 				exit( 0 );
 			}
 
-			WP_CLI::log( 'The composition (composer.json file) is at LT version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['lt-version'] . "%n" ) );
+			WP_CLI::log( 'The composition (composer.json file) is at PD version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['pd-version'] . "%n" ) );
 
 			exit( 0 );
 		}
 
-		if ( Utils\get_flag_value( $assoc_args, 'lt-required-packages', false ) ) {
-			if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
-				WP_CLI::error( 'Missing or invalid composer.json "lt-required-packages" entry.' );
+		if ( Utils\get_flag_value( $assoc_args, 'pd-required-packages', false ) ) {
+			if ( empty( $composerJson['extra']['pd-required-packages'] ) ) {
+				WP_CLI::error( 'Missing or invalid composer.json "pd-required-packages" entry.' );
 			}
 
-			$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
+			$ltRequiredPackagesData = array_values( $composerJson['extra']['pd-required-packages'] );
 			$fields                 = [ 'name', 'version', 'requiredBy', ];
 			Utils\format_items( $format, $ltRequiredPackagesData, $fields );
 
@@ -324,12 +324,12 @@ class Composition extends \WP_CLI_Command {
 		WP_CLI::log( '' );
 
 		/**
-		 * The LT version.
+		 * The PD version.
 		 */
-		if ( empty( $composerJson['extra']['lt-version'] ) ) {
-			WP_CLI::error( 'Missing or invalid composer.json "lt-version" entry.' );
+		if ( empty( $composerJson['extra']['pd-version'] ) ) {
+			WP_CLI::error( 'Missing or invalid composer.json "pd-version" entry.' );
 		}
-		WP_CLI::log( 'The composition (composer.json file) is at LT version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['lt-version'] . "%n" ) );
+		WP_CLI::log( 'The composition (composer.json file) is at PD version ' . WP_CLI::colorize( "%Bv" . $composerJson['extra']['pd-version'] . "%n" ) );
 		WP_CLI::log( '' );
 
 		/**
@@ -364,26 +364,26 @@ class Composition extends \WP_CLI_Command {
 		}
 		Utils\format_items( $format, $themes, $fields );
 
-		if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
-			WP_CLI::error( 'Missing or invalid composer.json "lt-required-packages" entry.' );
+		if ( empty( $composerJson['extra']['pd-required-packages'] ) ) {
+			WP_CLI::error( 'Missing or invalid composer.json "pd-required-packages" entry.' );
 		}
 
 		/**
-		 * The composition required LT-packages that determined the installation of all the LT packages present.
+		 * The composition required PD-packages that determined the installation of all the PD packages present.
 		 *
-		 * These are most likely LT Parts.
+		 * These are most likely PD Parts.
 		 */
-		if ( empty( $composerJson['extra']['lt-required-packages'] ) ) {
-			WP_CLI::log( 'No information about the composition\'s required LT-packages.' );
+		if ( empty( $composerJson['extra']['pd-required-packages'] ) ) {
+			WP_CLI::log( 'No information about the composition\'s required PD-packages.' );
 
 			exit( 0 );
 		}
 		WP_CLI::log( '' );
-		WP_CLI::log( WP_CLI::colorize( "%B" . 'The composition\'s REQUIRED LT-PACKAGES' . "%n" ) );
-		WP_CLI::log( '  The LT-Packages that determined the installation of ALL the LT packages present.' );
-		WP_CLI::log( '  These are most likely LT Parts.' );
+		WP_CLI::log( WP_CLI::colorize( "%B" . 'The composition\'s REQUIRED PD-PACKAGES' . "%n" ) );
+		WP_CLI::log( '  The PD-Packages that determined the installation of ALL the PD packages present.' );
+		WP_CLI::log( '  These are most likely PD Parts.' );
 		WP_CLI::log( '' );
-		$ltRequiredPackagesData = array_values( $composerJson['extra']['lt-required-packages'] );
+		$ltRequiredPackagesData = array_values( $composerJson['extra']['pd-required-packages'] );
 		$fields                 = [ 'name', 'version', 'requiredBy', ];
 		Utils\format_items( $format, $ltRequiredPackagesData, $fields );
 
@@ -400,7 +400,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition check
+	 *  1. wp pd composition check
 	 *
 	 * @subcommand check
 	 *
@@ -438,7 +438,7 @@ class Composition extends \WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * [--force]
-	 * : Try to recreate the composition based on LT details stored in the composer.json file (if they are still present).
+	 * : Try to recreate the composition based on PD details stored in the composer.json file (if they are still present).
 	 *
 	 * [--silent]
 	 * : Do not trigger action hooks.
@@ -448,8 +448,8 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition update
-	 *      - This will check and possibly update the current site composition (composer.json contents) by sending it to LT Records.
+	 *  1. wp pd composition update
+	 *      - This will check and possibly update the current site composition (composer.json contents) by sending it to PD Records.
 	 *
 	 * @subcommand update
 	 *
@@ -509,7 +509,7 @@ class Composition extends \WP_CLI_Command {
 	}
 
 	/**
-	 * Reinitialize the site composition (composer.json contents) with just the starter bare-bones, no LT Solutions.
+	 * Reinitialize the site composition (composer.json contents) with just the starter bare-bones, no PD Solutions.
 	 *
 	 * ## OPTIONS
 	 *
@@ -521,8 +521,8 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition reinit
-	 *      - This will reinitialize the site composition (composer.json contents) with just the starter bare-bones, no LT Solutions.
+	 *  1. wp pd composition reinit
+	 *      - This will reinitialize the site composition (composer.json contents) with just the starter bare-bones, no PD Solutions.
 	 *
 	 * @subcommand reinit
 	 *
@@ -563,7 +563,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition backup
+	 *  1. wp pd composition backup
 	 *      - Copy composer.json contents to a standard backup location for easy reverting.
 	 *
 	 * @subcommand backup
@@ -599,7 +599,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition revert-backup
+	 *  1. wp pd composition revert-backup
 	 *      - Copy composer.json contents to a standard backup location for easy reverting.
 	 *
 	 * @subcommand revert-backup
@@ -653,7 +653,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition composer-install
+	 *  1. wp pd composition composer-install
 	 *      - Almost the same as running composer install for the site composition, but better for our use-case.
 	 *
 	 * @subcommand composer-install
@@ -737,7 +737,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition composer-update
+	 *  1. wp pd composition composer-update
 	 *      - Almost the same as running composer update for the site composition, but better for our use-case.
 	 *
 	 * @subcommand composer-update
@@ -810,7 +810,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition update-cache
+	 *  1. wp pd composition update-cache
 	 *      - This will read the composer.json and update the DB cache with the valid plugins and themes present.
 	 *
 	 * @subcommand update-cache
@@ -860,7 +860,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition clear-cache
+	 *  1. wp pd composition clear-cache
 	 *      - This will delete the composition\'s DB cache.
 	 *
 	 * @subcommand clear-cache
@@ -899,7 +899,7 @@ class Composition extends \WP_CLI_Command {
 	/**
 	 * Activates the composition installed plugins and/or theme.
 	 *
-	 * It relies on the DB cache, so it might be useful to refresh the cache before running it with `wp lt composition update-cache`.
+	 * It relies on the DB cache, so it might be useful to refresh the cache before running it with `wp pd composition update-cache`.
 	 *
 	 * ## OPTIONS
 	 *
@@ -911,13 +911,13 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition activate
+	 *  1. wp pd composition activate
 	 *      - This will activate all plugins and theme installed by the composition.
 	 *
-	 *  2. wp lt composition activate --plugins
+	 *  2. wp pd composition activate --plugins
 	 *      - This will activate all plugins installed by the composition.
 	 *
-	 *  3. wp lt composition activate --theme
+	 *  3. wp pd composition activate --theme
 	 *      - This will activate a theme installed by the composition. If a child theme is found it will be activated over it\'s parent theme.
 	 *
 	 * @subcommand activate
@@ -1014,7 +1014,7 @@ class Composition extends \WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * [--force]
-	 * : Try to recreate the composition based on LT details stored in the composer.json file (if they are still present).
+	 * : Try to recreate the composition based on PD details stored in the composer.json file (if they are still present).
 	 *
 	 * [--revert]
 	 * : Backup and revert the composer.json in case of errors.
@@ -1024,7 +1024,7 @@ class Composition extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *  1. wp lt composition update-sequence
+	 *  1. wp pd composition update-sequence
 	 *      - This will go through all the steps to update the site's composition: update, composer-update, update-cache, activate.
 	 *
 	 * @subcommand update-sequence
@@ -1061,9 +1061,9 @@ class Composition extends \WP_CLI_Command {
 		$did_revert = false;
 
 		/**
-		 *  1. Run 'lt composition update'
+		 *  1. Run 'pd composition update'
 		 */
-		$current_command = 'lt composition update --silent' . ( $force ? ' --force' : '' );
+		$current_command = 'pd composition update --silent' . ( $force ? ' --force' : '' );
 		if ( ! $whisper ) {
 			WP_CLI::log( '---' );
 		}
@@ -1087,7 +1087,7 @@ class Composition extends \WP_CLI_Command {
 				/**
 				 * 1.1 Revert the composition and run the needed steps again.
 				 */
-				$current_command = 'lt composition revert-backup';
+				$current_command = 'pd composition revert-backup';
 				if ( ! $whisper ) {
 					WP_CLI::log( '---' );
 				}
@@ -1116,9 +1116,9 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  2. Run 'lt composition composer-update'
+		 *  2. Run 'pd composition composer-update'
 		 */
-		$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
+		$current_command = 'pd composition composer-update' . ( $revert ? ' --revert' : '' );
 		if ( ! $whisper ) {
 			WP_CLI::log( '---' );
 		}
@@ -1142,7 +1142,7 @@ class Composition extends \WP_CLI_Command {
 			 * Composer update failed and probably the composition was reverted to the backup.
 			 * 2.1 Run composer-update again, with the new composer.json contents.
 			 */
-			$current_command = 'lt composition composer-update';
+			$current_command = 'pd composition composer-update';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
 			}
@@ -1172,9 +1172,9 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  3. Run 'lt composition update-cache --force'
+		 *  3. Run 'pd composition update-cache --force'
 		 */
-		$current_command = 'lt composition update-cache --force --silent';
+		$current_command = 'pd composition update-cache --force --silent';
 		if ( ! $whisper ) {
 			WP_CLI::log( '---' );
 		}
@@ -1200,9 +1200,9 @@ class Composition extends \WP_CLI_Command {
 		}
 
 		/**
-		 *  4. Run 'lt composition activate'
+		 *  4. Run 'pd composition activate'
 		 */
-		$current_command = 'lt composition activate';
+		$current_command = 'pd composition activate';
 		if ( ! $whisper ) {
 			WP_CLI::log( '---' );
 		}
@@ -1226,7 +1226,7 @@ class Composition extends \WP_CLI_Command {
 			 * Failed to activate plugins and theme.
 			 * 4.1 Revert the composition if it was not already reverted and run the needed steps again.
 			 */
-			$current_command = 'lt composition revert-backup';
+			$current_command = 'pd composition revert-backup';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
 			}
@@ -1252,9 +1252,9 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  4.2 Run 'lt composition composer-update'
+			 *  4.2 Run 'pd composition composer-update'
 			 */
-			$current_command = 'lt composition composer-update' . ( $revert ? ' --revert' : '' );
+			$current_command = 'pd composition composer-update' . ( $revert ? ' --revert' : '' );
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
 			}
@@ -1280,9 +1280,9 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  4.3 Run 'lt composition update-cache --force'
+			 *  4.3 Run 'pd composition update-cache --force'
 			 */
-			$current_command = 'lt composition update-cache --force --silent';
+			$current_command = 'pd composition update-cache --force --silent';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
 			}
@@ -1309,9 +1309,9 @@ class Composition extends \WP_CLI_Command {
 			}
 
 			/**
-			 *  4.4 Run 'lt composition activate'
+			 *  4.4 Run 'pd composition activate'
 			 */
-			$current_command = 'lt composition activate';
+			$current_command = 'pd composition activate';
 			if ( ! $whisper ) {
 				WP_CLI::log( '---' );
 			}
@@ -1362,7 +1362,7 @@ class Composition extends \WP_CLI_Command {
 	protected function objectToArrayRecursive( object $object ): array {
 		$json = json_encode( $object );
 		if ( json_last_error() !== \JSON_ERROR_NONE ) {
-			$message = esc_html__( 'Unable to encode schema array as JSON', 'pixelgradelt_records' );
+			$message = esc_html__( 'Unable to encode schema array as JSON', 'pressody_records' );
 			if ( function_exists( 'json_last_error_msg' ) ) {
 				$message .= ': ' . json_last_error_msg();
 			}

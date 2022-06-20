@@ -1,21 +1,21 @@
 {
-	"name": "pixelgradelt-conductor",
-	"version": "0.9.0",
-	"description": "Define and manage PixelgradeLT solutions to be purchased and used on customers' websites.",
+	"name": "pressody-conductor",
+	"version": "0.12.0",
+	"description": "Define and manage Pressody solutions to be purchased and used on customers' websites.",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pixelgradelt/pixelgradelt-conductor.git"
+		"url": "https://github.com/pressody/pressody-conductor.git"
 	},
 	"author": {
 		"name": "Vlad Olaru",
-		"email": "vlad@pixelgrade.com",
-		"url": "https://pixelgrade.com/"
+		"email": "vladpotter85@gmail.com",
+		"url": "https://thinkwritecode.com/"
 	},
 	"license": "GPL-2.0+",
 	"bugs": {
-		"url": "https://github.com/pixelgradelt/pixelgradelt-conductor/issues"
+		"url": "https://github.com/pressody/pressody-conductor/issues"
 	},
-	"homepage": "https://github.com/pixelgradelt/pixelgradelt-conductor",
+	"homepage": "https://github.com/pressody/pressody-conductor",
 	"devDependencies": {
 		"archiver": "^5.2.0",
 		"fs-extra": "^9.0.1",
@@ -27,7 +27,7 @@
 		"makepot": "wpi18n makepot --poedit"
 	},
 	"distFiles": [
-		"pixelgradelt-conductor.php",
+		"pressody-conductor.php",
 		"README.md",
 		"{assets,languages,src,views}/**",
 		"vendor/autoload.php",

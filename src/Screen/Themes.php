@@ -4,18 +4,18 @@
  *
  * @since   0.11.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Screen;
+namespace Pressody\Conductor\Screen;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Capabilities;
-use PixelgradeLT\Conductor\Composition\CompositionManager;
-use PixelgradeLT\Conductor\Utils\ArrayHelpers;
-use function PixelgradeLT\Conductor\current_user_has_role;
+use Pressody\Conductor\Capabilities;
+use Pressody\Conductor\Composition\CompositionManager;
+use Pressody\Conductor\Utils\ArrayHelpers;
+use function Pressody\Conductor\current_user_has_role;
 
 /**
  * Themes screen provider class.
@@ -58,7 +58,7 @@ class Themes extends AbstractHookProvider {
 	}
 
 	/**
-	 * Change the screen's meta (the Help section) to better reflect the LT reality.
+	 * Change the screen's meta (the Help section) to better reflect the PD reality.
 	 *
 	 * @since 0.11.0
 	 */
@@ -73,15 +73,15 @@ class Themes extends AbstractHookProvider {
 			$screen->add_help_tab(
 				array(
 					'id'      => 'adding-themes',
-					'title'   => __( 'Adding Themes', 'pixelgradelt_conductor' ),
+					'title'   => __( 'Adding Themes', 'pressody_conductor' ),
 					'content' =>
-						'<p>' . __( '<strong>Your site\'s LT Composition</strong> already comes with all the styling your need (a theme, plugins, etc.) Before deciding to add another theme to your site, <strong>please reach us out at Pixelgrade</strong> to see if we can help you make the most of your LT Composition.', 'pixelgradelt_conductor' ) . '</p>' .
+						'<p>' . __( '<strong>Your site\'s PD Composition</strong> already comes with all the styling your need (a theme, plugins, etc.) Before deciding to add another theme to your site, <strong>please reach us out at Pressody</strong> to see if we can help you make the most of your PD Composition.', 'pressody_conductor' ) . '</p>' .
 						'<p>' . sprintf(
 						/* translators: %s: https://wordpress.org/themes/ */
-							__( 'If you feel adventurous and would like to see more themes to choose from, click on the &#8220;Add New&#8221; button and you will be able to browse or search for additional themes from the <a href="%s">WordPress Theme Directory</a>. Themes in the WordPress Theme Directory are designed and developed by third parties, and are compatible with the license WordPress uses.', 'pixelgradelt_conductor' ),
-							__( 'https://wordpress.org/themes/', 'pixelgradelt_conductor' )
+							__( 'If you feel adventurous and would like to see more themes to choose from, click on the &#8220;Add New&#8221; button and you will be able to browse or search for additional themes from the <a href="%s">WordPress Theme Directory</a>. Themes in the WordPress Theme Directory are designed and developed by third parties, and are compatible with the license WordPress uses.', 'pressody_conductor' ),
+							__( 'https://wordpress.org/themes/', 'pressody_conductor' )
 						) . '</p>' .
-						'<p>' . __( '<strong>Please note</strong> that we, the crew at Pixelgrade, can\'t take responsibility for the styling and behavior of your site if you use themes outside your LT Composition. We believe we have a diverse and versatile set of styling options to cover most of your needs.' ) . '</p>',
+						'<p>' . __( '<strong>Please note</strong> that we, the crew at Pressody, can\'t take responsibility for the styling and behavior of your site if you use themes outside your PD Composition. We believe we have a diverse and versatile set of styling options to cover most of your needs.' ) . '</p>',
 				)
 			);
 		}
@@ -96,9 +96,9 @@ class Themes extends AbstractHookProvider {
 			$screen->add_help_tab(
 				array(
 					'id'      => 'compatibility-problems',
-					'title'   => __( 'Troubleshooting', 'pixelgradelt_conductor' ),
+					'title'   => __( 'Troubleshooting', 'pressody_conductor' ),
 					'content' =>
-						'<p>' . __( '<strong>Your site\'s LT Composition</strong> is <strong>constantly tested and updated</strong> by us, the crew at Pixelgrade. You should not encounter issues with the various parts, but if you do, <strong>don\'t hesitate to reach us</strong> and we\'ll do our very best to keep your site in tip-top shape.' ) . '</p>' .
+						'<p>' . __( '<strong>Your site\'s PD Composition</strong> is <strong>constantly tested and updated</strong> by us, the crew at Pressody. You should not encounter issues with the various parts, but if you do, <strong>don\'t hesitate to reach us</strong> and we\'ll do our very best to keep your site in tip-top shape.' ) . '</p>' .
 						'<p>' . __( '<strong>If you install other WordPress themes</strong> most of the time they will play nicely with the core of WordPress and with other plugins. Sadly, sometimes, a plugin&#8217;s code will get in the way of another plugin, causing compatibility issues. If your site starts doing strange things, this may be the problem. <strong>Try deactivating all the extra plugins</strong> and re-activating them in various combinations until you isolate which one(s) caused the issue.' ) . '</p>' .
 						'<p>' . sprintf(
 						/* translators: %s: WP_PLUGIN_DIR constant value. */
@@ -114,9 +114,9 @@ class Themes extends AbstractHookProvider {
 			$screen->add_help_tab(
 				array(
 					'id'      => 'plugins-themes-auto-updates',
-					'title'   => __( 'Auto-updates', 'pixelgradelt_conductor' ),
+					'title'   => __( 'Auto-updates', 'pressody_conductor' ),
 					'content' =>
-						'<p>' . __( 'Themes delivered and managed by <strong>your site\'s LT Composition</strong> are <strong>updated automatically,</strong> so you don\'t need to worry about them anymore.', 'pixelgradelt_conductor' ) . '</p>',
+						'<p>' . __( 'Themes delivered and managed by <strong>your site\'s PD Composition</strong> are <strong>updated automatically,</strong> so you don\'t need to worry about them anymore.', 'pressody_conductor' ) . '</p>',
 				)
 			);
 		}
@@ -135,14 +135,14 @@ class Themes extends AbstractHookProvider {
 		$composition_themes       = $this->composition_manager->get_composition_theme();
 		$composition_themes_slugs = array_keys( $composition_themes );
 		foreach ( $prepared_themes as $theme_slug => $theme_data ) {
-			$prepared_themes[ $theme_slug ]['isLTTheme']   = false;
+			$prepared_themes[ $theme_slug ]['isPDTheme']   = false;
 
 			if ( ! in_array( $theme_slug, $composition_themes_slugs ) ) {
 				continue;
 			}
 
-			$prepared_themes[ $theme_slug ]['name']   .= '  <em>(LT)</em>';
-			$prepared_themes[ $theme_slug ]['isLTTheme']   = true;
+			$prepared_themes[ $theme_slug ]['name']   .= '  <em>(PD)</em>';
+			$prepared_themes[ $theme_slug ]['isPDTheme']   = true;
 
 			// We handle the updates ourselves
 			$prepared_themes[ $theme_slug ]['hasUpdate']   = false;
@@ -153,9 +153,9 @@ class Themes extends AbstractHookProvider {
 				'forced'    => true,
 			];
 
-			// No deleting the LT composition themes.
+			// No deleting the PD composition themes.
 			$prepared_themes[ $theme_slug ]['actions']['delete'] = null;
-			// Hide certain actions for regular users, not Pixelgrade LT support.
+			// Hide certain actions for regular users, not Pressody support.
 			if ( ! current_user_has_role( Capabilities::SUPPORT_ROLE ) ) {
 				unset( $prepared_themes[ $theme_slug ]['actions']['activate'] );
 			}
@@ -167,7 +167,7 @@ class Themes extends AbstractHookProvider {
 	/**
 	 * Filters the JavaScript template used to display the auto-update setting for a theme (in the overlay).
 	 *
-	 * We need to do this to have a touch of LT in the theme overlay.
+	 * We need to do this to have a touch of PD in the theme overlay.
 	 *
 	 * @since 0.11.0
 	 *
@@ -180,20 +180,20 @@ class Themes extends AbstractHookProvider {
 		<div class="theme-autoupdate">
 			<# if ( data.autoupdate.supported ) { #>
 				<# if ( data.autoupdate.forced === false ) { #>
-					' . __( 'Auto-updates disabled', 'pixelgradelt_conductor' ) . '
+					' . __( 'Auto-updates disabled', 'pressody_conductor' ) . '
 				<# } else if ( data.autoupdate.forced ) { #>
-					<# if ( data.isLTTheme ) { #>
-						<strong>' . __( 'Your LT Composition is handling the auto-updates for this theme.<br>One less thing to worry about! 😌', 'pixelgradelt_conductor' ) . '</strong>
+					<# if ( data.isPDTheme ) { #>
+						<strong>' . __( 'Your PD Composition is handling the auto-updates for this theme.<br>One less thing to worry about! 😌', 'pressody_conductor' ) . '</strong>
 					<# } else { #>
-						' . __( 'Auto-updates enabled', 'pixelgradelt_conductor' ) . '
+						' . __( 'Auto-updates enabled', 'pressody_conductor' ) . '
 					<# } #>
 				<# } else if ( data.autoupdate.enabled ) { #>
 					<button type="button" class="toggle-auto-update button-link" data-slug="{{ data.id }}" data-wp-action="disable">
-						<span class="dashicons dashicons-update spin hidden" aria-hidden="true"></span><span class="label">' . __( 'Disable auto-updates', 'pixelgradelt_conductor' ) . '</span>
+						<span class="dashicons dashicons-update spin hidden" aria-hidden="true"></span><span class="label">' . __( 'Disable auto-updates', 'pressody_conductor' ) . '</span>
 					</button>
 				<# } else { #>
 					<button type="button" class="toggle-auto-update button-link" data-slug="{{ data.id }}" data-wp-action="enable">
-						<span class="dashicons dashicons-update spin hidden" aria-hidden="true"></span><span class="label">' . __( 'Enable auto-updates', 'pixelgradelt_conductor' ) . '</span>
+						<span class="dashicons dashicons-update spin hidden" aria-hidden="true"></span><span class="label">' . __( 'Enable auto-updates', 'pressody_conductor' ) . '</span>
 					</button>
 				<# } #>
 			<# } #>

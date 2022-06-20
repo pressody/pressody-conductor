@@ -4,6 +4,6 @@
 
 ## [0.1.0] - 2021-06-28
 
-* Start from PixelgradeLT Retailer and hack at it.
+* Start from Pressody Retailer and hack at it.
 
 

@@ -2,7 +2,7 @@
 /**
  * Configuration for the WordPress testing suite.
  *
- * @package   PixelgradeLT\Conductor\Tests
+ * @package   Pressody\Conductor\Tests
  * @copyright Copyright (c) 2019 Cedaro, LLC
  * @license   MIT
  */

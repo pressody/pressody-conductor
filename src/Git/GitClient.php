@@ -4,12 +4,12 @@
  *
  * @since   0.10.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Git;
+namespace Pressody\Conductor\Git;
 
 use Psr\Log\LoggerInterface;
 
@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
  * Git client.
  *
  * @since   0.10.0
- * @package PixelgradeLT
+ * @package Pressody
  */
 class GitClient implements GitClientInterface {
 
@@ -130,7 +130,7 @@ class GitClient implements GitClientInterface {
 		}
 
 		return apply_filters(
-			'pixelgradelt_conductor/git/format_message',
+			'pressody_conductor/git/format_message',
 			$entry,
 			[
 				'message' => $message,
@@ -249,7 +249,7 @@ class GitClient implements GitClientInterface {
 	 * @return array|false
 	 */
 	protected function acquire_merge_lock() {
-		$lock_path   = apply_filters( 'pixelgradelt_conductor/lock_path', \trailingslashit( sys_get_temp_dir() ) . '.pixelgradelt-conductor-git-lock' );
+		$lock_path   = apply_filters( 'pressody_conductor/lock_path', \trailingslashit( sys_get_temp_dir() ) . '.pressody-conductor-git-lock' );
 		$lock_handle = fopen( $lock_path, 'w+' );
 
 		$lock_timeout    = intval( ini_get( 'max_execution_time' ) ) > 10 ? intval( ini_get( 'max_execution_time' ) ) - 5 : 10;

@@ -3,16 +3,16 @@
  * Capabilities.
  *
  * Meta capabilities are mapped to primitive capabilities in
- * \PixelgradeLT\Retailer\Provider\Capabilities.
+ * \Pressody\Retailer\Provider\Capabilities.
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor;
+namespace Pressody\Conductor;
 
 /**
  * Capabilities.
@@ -22,25 +22,25 @@ namespace PixelgradeLT\Conductor;
 final class Capabilities {
 
 	/**
-	 * Primitive capability for managing LT Conductor options.
+	 * Primitive capability for managing PD Conductor options.
 	 *
 	 * @var string
 	 */
-	const MANAGE_OPTIONS = 'pixelgradelt_conductor_manage_options';
+	const MANAGE_OPTIONS = 'pressody_conductor_manage_options';
 
 	/**
 	 * Primitive capability for updating composition.
 	 *
 	 * @var string
 	 */
-	const UPDATE_COMPOSITION = 'pixelgradelt_conductor_update_composition';
+	const UPDATE_COMPOSITION = 'pressody_conductor_update_composition';
 
 	/**
 	 * Primitive capability for updating composition.
 	 *
 	 * @var string
 	 */
-	const SUPPORT_ROLE = 'pixelgradelt_conductor_support';
+	const SUPPORT_ROLE = 'pressody_conductor_support';
 
 	/**
 	 * Register roles and capabilities.
@@ -50,11 +50,11 @@ final class Capabilities {
 	public static function register() {
 		$wp_roles = wp_roles();
 
-		// Create a special role for users intended to be used by the PixelgradeLT support crew.
+		// Create a special role for users intended to be used by the Pressody support crew.
 		// First remove it to be able to overwrite it in case it already exists.
 		$wp_roles->remove_role( self::SUPPORT_ROLE );
-		$wp_roles->add_role( self::SUPPORT_ROLE, 'LT Support', [
-			// The LT Conductor specific capabilities.
+		$wp_roles->add_role( self::SUPPORT_ROLE, 'PD Support', [
+			// The PD Conductor specific capabilities.
 			self::MANAGE_OPTIONS    => true,
 			self::UPDATE_COMPOSITION    => true,
 			// WordPress core capabilities. We try to be as strict as possible.

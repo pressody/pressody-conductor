@@ -2,14 +2,14 @@
 /**
  * Register rewrite rules.
  *
- * @package PixelgradeLT
+ * @package Pressody
  * @license GPL-2.0-or-later
  * @since 0.1.0
  */
 
 declare ( strict_types = 1 );
 
-namespace PixelgradeLT\Conductor\Provider;
+namespace Pressody\Conductor\Provider;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
 use WP_Rewrite;
@@ -41,8 +41,8 @@ class RewriteRules extends AbstractHookProvider {
 	 * @return array
 	 */
 	public function register_query_vars( array $vars ): array {
-		$vars[] = 'pixelgradelt_conductor_params';
-		$vars[] = 'pixelgradelt_conductor_route';
+		$vars[] = 'pressody_conductor_params';
+		$vars[] = 'pressody_conductor_route';
 		return $vars;
 	}
 
@@ -53,8 +53,8 @@ class RewriteRules extends AbstractHookProvider {
 	 */
 	public function register_rewrite_rules() {
 		add_rewrite_rule(
-			'ltsolutions/packages.json$',
-			'index.php?pixelgradelt_conductor_route=composer_solutions',
+			'pdsolutions/packages.json$',
+			'index.php?pressody_conductor_route=composer_solutions',
 			'top'
 		);
 	}
@@ -71,8 +71,8 @@ class RewriteRules extends AbstractHookProvider {
 	 */
 	public function register_external_rewrite_rules( WP_Rewrite $wp_rewrite ) {
 		$wp_rewrite->add_external_rule(
-			'ltsolutions/packages.json$',
-			'index.php?pixelgradelt_conductor_route=composer_solutions'
+			'pdsolutions/packages.json$',
+			'index.php?pressody_conductor_route=composer_solutions'
 		);
 	}
 
@@ -82,11 +82,11 @@ class RewriteRules extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function maybe_flush_rewrite_rules() {
-		if ( is_network_admin() || 'no' === get_option( 'pixelgradelt_conductor_flush_rewrite_rules' ) ) {
+		if ( is_network_admin() || 'no' === get_option( 'pressody_conductor_flush_rewrite_rules' ) ) {
 			return;
 		}
 
-		update_option( 'pixelgradelt_conductor_flush_rewrite_rules', 'no' );
+		update_option( 'pressody_conductor_flush_rewrite_rules', 'no' );
 		flush_rewrite_rules();
 	}
 }

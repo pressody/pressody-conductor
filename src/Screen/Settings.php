@@ -4,17 +4,17 @@
  *
  * @since   0.1.0
  * @license GPL-2.0-or-later
- * @package PixelgradeLT
+ * @package Pressody
  */
 
 declare ( strict_types=1 );
 
-namespace PixelgradeLT\Conductor\Screen;
+namespace Pressody\Conductor\Screen;
 
 use Cedaro\WP\Plugin\AbstractHookProvider;
-use PixelgradeLT\Conductor\Capabilities;
+use Pressody\Conductor\Capabilities;
 
-use function PixelgradeLT\Conductor\get_setting;
+use function Pressody\Conductor\get_setting;
 
 /**
  * Settings screen provider class.
@@ -59,10 +59,10 @@ class Settings extends AbstractHookProvider {
 
 		$page_hook = add_submenu_page(
 				$parent_slug,
-				esc_html__( 'PixelgradeLT Conductor', 'pixelgradelt_conductor' ),
-				esc_html__( 'LT Conductor', 'pixelgradelt_conductor' ),
+				esc_html__( 'Pressody Conductor', 'pressody_conductor' ),
+				esc_html__( 'PD Conductor', 'pressody_conductor' ),
 				Capabilities::MANAGE_OPTIONS,
-				'pixelgradelt_conductor',
+				'pressody_conductor',
 				[ $this, 'render_screen' ]
 		);
 
@@ -84,8 +84,8 @@ class Settings extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_script( 'pixelgradelt_conductor-admin' );
-		wp_enqueue_style( 'pixelgradelt_conductor-admin' );
+		wp_enqueue_script( 'pressody_conductor-admin' );
+		wp_enqueue_style( 'pressody_conductor-admin' );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class Settings extends AbstractHookProvider {
 	 * @since 0.1.0
 	 */
 	public function register_settings() {
-		register_setting( 'pixelgradelt_conductor', 'pixelgradelt_conductor', [ $this, 'sanitize_settings' ] );
+		register_setting( 'pressody_conductor', 'pressody_conductor', [ $this, 'sanitize_settings' ] );
 	}
 
 	/**
@@ -105,9 +105,9 @@ class Settings extends AbstractHookProvider {
 	public function add_sections() {
 		add_settings_section(
 				'default',
-				esc_html__( 'General', 'pixelgradelt_conductor' ),
+				esc_html__( 'General', 'pressody_conductor' ),
 				[ $this, 'render_general_settings_explainer' ],
-				'pixelgradelt_conductor'
+				'pressody_conductor'
 		);
 	}
 
@@ -131,7 +131,7 @@ class Settings extends AbstractHookProvider {
 	 */
 	public function sanitize_settings( array $value ): array {
 
-		return (array) apply_filters( 'pixelgradelt_conductor/sanitize_settings', $value );
+		return (array) apply_filters( 'pressody_conductor/sanitize_settings', $value );
 	}
 
 	/**
@@ -143,11 +143,11 @@ class Settings extends AbstractHookProvider {
 
 		$tabs = [
 				'settings'      => [
-						'name'       => esc_html__( 'Settings', 'pixelgradelt_conductor' ),
+						'name'       => esc_html__( 'Settings', 'pressody_conductor' ),
 						'capability' => Capabilities::MANAGE_OPTIONS,
 				],
 				'system-status' => [
-						'name'       => esc_html__( 'System Status', 'pixelgradelt_conductor' ),
+						'name'       => esc_html__( 'System Status', 'pressody_conductor' ),
 						'capability' => Capabilities::MANAGE_OPTIONS,
 				],
 		];
@@ -165,9 +165,9 @@ class Settings extends AbstractHookProvider {
 	 */
 	public function render_general_settings_explainer() {
 		?>
-		<div class="pixelgradelt_conductor-card">
+		<div class="pressody_conductor-card">
 			<p>
-				<?php echo esc_html__( 'None right now.', 'pixelgradelt_conductor' ); ?>
+				<?php echo esc_html__( 'None right now.', 'pressody_conductor' ); ?>
 			</p>
 		</div>
 		<?php
