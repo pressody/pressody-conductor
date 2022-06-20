@@ -58,6 +58,12 @@ use function PixelgradeLT\Conductor\plugin;
  *     $ wp lt composition update-sequence
  *     Success: The composition update sequence was successful!
  *
+ *     # Reinitialize the composer.json with just the starter bare-bones (no LT Solutions).
+ *     # Useful to use in a sequence (probably followed by `wp lt composition update`) for getting out of strange errors.
+ *     $ wp lt composition reinit
+ *     Success: The site's composition (composer.json file) has been reinitialised.
+ *
+ *
  * @since   0.1.0
  * @package PixelgradeLT
  */
@@ -511,7 +517,7 @@ class Composition extends \WP_CLI_Command {
 	 * : Do not trigger action hooks.
 	 *
 	 * [--verbose]
-	 * : Output more info regarding issues encountered with the composition update.
+	 * : Output more info regarding issues encountered with the composition reinitialization.
 	 *
 	 * ## EXAMPLES
 	 *
