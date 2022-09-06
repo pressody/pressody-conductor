@@ -6,4 +6,6 @@
 
 * Start from Pressody Retailer and hack at it.
 
+---
 
+Copyright (c) 2021, 2022 Vlad Olaru (vlad@thinkwritecode.com)

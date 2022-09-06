@@ -57,3 +57,7 @@ For installation notes, information about usage, and more, see the [documentatio
 ## Credits
 
 ...
+
+---
+
+Copyright (c) 2021, 2022 Vlad Olaru (vlad@thinkwritecode.com)
