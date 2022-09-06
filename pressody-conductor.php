@@ -3,7 +3,7 @@
  * Pressody Conductor
  *
  * @package Pressody
- * @author  Vlad Olaru <vladpotter85@gmail.com>
+ * @author  Vlad Olaru <vlad@thinkwritecode.com>
  * @license GPL-2.0-or-later
  *
  * @wordpress-plugin
